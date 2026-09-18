@@ -138,24 +138,29 @@ Extract 100% concrete facts directly from the document. Do not summarize with ge
       .map((s) => s.trim())
       .filter((s) => s.length > 20 && !s.toLowerCase().startsWith("topic:") && !s.toLowerCase().startsWith("target:"));
 
+    const p1 = sentences[0] || `Initialization and boundary setup for ${cleanTopic}`;
+    const p2 = sentences[1] || `Core operational execution and transformation`;
+    const p3 = sentences[2] || `Verification, invariant enforcement, and state resolution`;
+    const p4 = sentences[3] || `Output emission and operational feedback`;
+
     analysisText = `# SECTION 1: DOMAIN THESIS & CORE MECHANISM
-- Primary Principle: ${sentences[0] || `Core foundation of ${cleanTopic}`}
-- Operational Focus: ${sentences[1] || `Key architectural mechanism and system dynamics`}
+- Primary Principle: ${p1}
+- Operational Focus: ${p2}
 
 # SECTION 2: HARD QUANTITATIVE METRICS & BENCHMARK FIGURES
 - Target Scope: ${targetCount} Slide architectural deep dive
-- Key Parameters: ${sentences[2] || `Direct empirical metrics and scaling thresholds`}
+- Key Parameters: ${sentences[4] || `Direct empirical metrics and scaling thresholds`}
 
 # SECTION 3: MATHEMATICAL FORMULAS, INVARIANTS & EQUATIONS
 - System Invariant: Functional state preservation and boundary validation
 - Formulation: Direct parameter evaluation derived from domain context
 
 # SECTION 4: SYSTEM ARCHITECTURE, PIPELINE FLOW & HARDWARE ENTITIES
-- Architectural Pipeline: Ingestion -> Processing -> Invariant Validation -> Output
-- Entity Model: ${sentences[3] || `Hardware interfaces and execution environments`}
+- Architectural Pipeline: ${p1.slice(0, 28)} -> ${p2.slice(0, 28)} -> ${p3.slice(0, 28)} -> ${p4.slice(0, 28)}
+- Entity Model: Technical components and execution runtime
 
 # SECTION 5: KEY TAKEAWAYS & EMPIRICAL TRADE-OFFS
-- Takeaway: ${sentences[4] || `Critical operational considerations for ${cleanTopic}`}`;
+- Takeaway: ${sentences[5] || `Critical operational considerations for ${cleanTopic}`}`;
 
     onChunk("\n\n" + analysisText, false);
   }

@@ -16,14 +16,15 @@ export function extractCleanTopic(rawInput: string): { title: string; summary: s
     // Remove "Chapter X:" prefix if present
     t = t.replace(/^chapter\s+\d+\s*[:\-—]\s*/i, "").trim();
 
-    // If title was a generic file-like name (e.g. "Chapter1Part1"), extract the first meaningful heading line from the body
-    if (/^chapter\s*\d*(?:part\s*\d*)?$/i.test(t) || /^chapter\d+part\d+$/i.test(t)) {
-      const lines = clean
-        .split(/[\r\n]+/)
-        .map((l) => l.trim())
-        .filter((l) => l.length > 5 && !l.toLowerCase().startsWith("topic:") && !l.toLowerCase().startsWith("target:"));
-      if (lines[0]) {
-        t = lines[0].replace(/^chapter\s+\d+\s*[:\-—]\s*/i, "").trim();
+    // If title is a generic label (e.g. "Week 7", "Chapter 1 part 3", "Lecture 4"), extract the real topic heading from document text
+    const isGeneric = /^(?:week|chapter|lecture|unit|module|lab|assignment|part|section|class|session|day|notes|doc|document)\s*\d*(?:[\s\-_]*(?:part|section)\s*\d*)?$/i.test(t) || /^(?:week|chapter|lecture|unit|module|lab|assignment)\d+$/i.test(t);
+    if (isGeneric) {
+      const body = clean.replace(/^(?:TOPIC|TITLE|SUBJECT):[^\n]+/i, "").trim();
+      const sectionMatch = body.match(/(?:\d+\.\d+\s+|\d+\s+)([A-Z][A-Za-z\s]{3,40})/);
+      const headingMatch = body.match(/(?:^|\n)\s*(?:\d+\s+)?([A-Z][A-Za-z0-9\s\-–—:]{4,50})(?:\n|$)/);
+      const foundHeading = (sectionMatch ? sectionMatch[1] : (headingMatch ? headingMatch[1] : "")).trim();
+      if (foundHeading && foundHeading.length >= 4 && !/^(?:page|fig|figure|table|contents|index|start|ocr)/i.test(foundHeading)) {
+        t = `${foundHeading} (${t})`;
       }
     }
     return { title: t, summary: clean.slice(0, 160) };

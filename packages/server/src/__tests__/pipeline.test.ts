@@ -4,6 +4,7 @@ import { parseStoryboardIntoSlides } from "../pipeline/stage3-creative-generator
 import { detectTargetSlideCount } from "../services/slideCountDetector";
 import { presentationCache } from "../pipeline/cache";
 import { convertHtmlToPresentationAst } from "../pipeline/html-to-ast";
+import { extractCleanTopic } from "../pipeline/topic-extractor";
 import { PresentationSchema } from "@presentation/schema";
 
 describe("HyperDeck Pipeline & Engine Test Suite", () => {
@@ -139,6 +140,20 @@ describe("HyperDeck Pipeline & Engine Test Suite", () => {
       // Validate through Zod PresentationSchema
       const validated = PresentationSchema.safeParse(ast);
       expect(validated.success).toBe(true);
+    });
+  });
+
+  describe("extractCleanTopic", () => {
+    it("should keep clean standard topic as is", () => {
+      const res = extractCleanTopic("CRDTs and Eventual Consistency");
+      expect(res.title).toBe("CRDTs and Eventual Consistency");
+    });
+
+    it("should extract true document topic when given generic week/chapter label", () => {
+      const input = "TOPIC: week 7\n50 3 Containers\n3.1 Linux Namespaces\nRun container_demo without any options...";
+      const res = extractCleanTopic(input);
+      expect(res.title).toContain("Containers");
+      expect(res.title).toContain("week 7");
     });
   });
 });

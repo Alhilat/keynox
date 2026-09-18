@@ -143,64 +143,37 @@ CRITICAL MANDATE:
   // Fallback: Synthesize structured storyboard from analysis if API fails
   if (!storyboardText || storyboardText.trim().length < 80) {
     console.warn("[Stage2Storyboard] Generating structured storyboard from analysis...");
-    const baseSlides = [
-      `SLIDE 1: Executive Foundation & Sensing Topology of ${cleanTopic}
-- CATEGORY: PHYSICAL TOPOLOGY
-- NARRATIVE: Foundational architectural paradigms, raw signal acquisition, and boundary invariants.
-- INVARIANTS: Sub-millisecond boundary validation, physical sensing floor.
-- VISUAL_SPEC: Interactive 3D WebGL World (.three-container with data-model="hardware-die-3d") paired with a multi-color .glass-card.card-emerald featuring a KaTeX mathematical derivation.`,
+    const lines = (analysisText || cleanTopic)
+      .split(/[\r\n]+/)
+      .map((l) => l.replace(/^[#*\-\s\d\.]+/, "").trim())
+      .filter((l) => l.length > 20 && !l.toUpperCase().startsWith("SECTION"));
 
-      `SLIDE 2: Real-World Physical Motion Pipeline & Conduit Flow
-- CATEGORY: PHYSICAL PROGRESSION
-- NARRATIVE: End-to-end operational stages from physical sensing to deterministic actuation.
-- MOTION_PIPELINE:
-  * Stage 1 [Emerald]: Signal Ingestion & Edge Sensing
-  * Stage 2 [Cyan]: High-Speed Conduit Transport & Streaming
-  * Stage 3 [Indigo]: Neural Inference & State Transformation
-  * Stage 4 [Amber]: Physical Actuation & Result Telemetry
-- VISUAL_SPEC: 4-Stage Motion Pipeline (.motion-pipeline) with animated packet pulses and multi-color themes.`,
+    const getConcept = (idx: number, fallback: string) => lines[idx] || `${fallback} of ${cleanTopic}`;
 
-      `SLIDE 3: Interactive System Simulator & Invariant Dynamics
-- CATEGORY: DYNAMIC SIMULATION
-- NARRATIVE: Live parameter exploration evaluating real-time operational thresholds and latency.
-- SIMULATOR_SPEC:
-  * Parameter: System Throughput / Concurrency Load (1 to 100)
-  * Dynamic Formula: Response Latency (ms) = (Load * 1.42).toFixed(1)
-  * Visual: Interactive slider updating live telemetry gauge and glowing node indicators.
-- VISUAL_SPEC: Dynamic Interactive Simulator (.sim-container) with live calculation script.`,
-
-      `SLIDE 4: Connected Architecture Flow Topology & Decoupled Nodes
-- CATEGORY: TOPOLOGY & HARDWARE
-- NARRATIVE: Sequential execution phases and decoupled component interfaces.
-- INVARIANTS: Sub-millisecond boundary validation, lossless queue serialization.
-- VISUAL_SPEC: Connected Flow Topology (.flow-diagram) with active status nodes and conduit flows.`,
-
-      `SLIDE 5: Multi-Dimensional Benchmark & Trade-off Matrix
-- CATEGORY: TRADE-OFF ANALYSIS
-- NARRATIVE: Critical performance characteristics, dimensional comparisons, and benchmarks.
-- INVARIANTS: Latency vs. Throughput trade-off, energy efficiency boundaries.
-- VISUAL_SPEC: Dimensional Comparison Matrix (.matrix-table) with emerald/amber/rose status badges.`,
-
-      `SLIDE 6: Performance Scaling & Telemetry Benchmarks
-- CATEGORY: SYSTEM TELEMETRY
-- NARRATIVE: Empirical scaling bounds, throughput benchmarks, and resource utilization.
-- INVARIANTS: Bounded memory footprint, 99.99th percentile response SLA.
-- VISUAL_SPEC: Dynamic Visual Bar Chart (.chart-card) with animated value columns and validation badges.`,
-
-      `SLIDE 7: Fault Isolation Boundaries & Autonomous Failover
-- CATEGORY: FAULT RESILIENCE
-- NARRATIVE: Failure domain containment, graceful degradation, and self-healing mechanisms.
-- INVARIANTS: Zero cascaded partition loss, automated heartbeat recovery.
-- VISUAL_SPEC: Multi-Dimensional Comparison Matrix (.matrix-table) with threshold indicators.`,
-
-      `SLIDE 8: Production Verification & Mission-Critical SLAs
-- CATEGORY: PRODUCTION SLA
-- NARRATIVE: End-to-end telemetry guarantees, formal boundary verification, and operational compliance.
-- INVARIANTS: Continuous automated assertion checking, zero unhandled invariants.
-- VISUAL_SPEC: Connected Architecture Flow Topology (.flow-diagram) with verified status badges.`,
+    const dynamicSlides: string[] = [];
+    const themes = [
+      { cat: "ARCHITECTURAL FOUNDATIONS", arche: "Terminal Window or Split Hero Card", getPoint: () => getConcept(0, "Foundational architectural thesis and primary mechanisms") },
+      { cat: "EXECUTION PIPELINE", arche: "4-Stage Sequential Motion Pipeline (.motion-pipeline)", getPoint: () => getConcept(1, "Deterministic phase transitions and operational sequence") },
+      { cat: "DYNAMIC SIMULATION", arche: "Interactive Parameter Simulator (.sim-container)", getPoint: () => getConcept(2, "Operational parameter space and sensitivity evaluation") },
+      { cat: "SYSTEM TOPOLOGY", arche: "Connected Flow Topology (.flow-diagram)", getPoint: () => getConcept(3, "Component interaction graph and interface boundaries") },
+      { cat: "TRADE-OFF MATRIX", arche: "Dimensional Comparison Matrix (.matrix-table)", getPoint: () => getConcept(4, "Empirical benchmarks, scaling invariants, and resource trade-offs") },
+      { cat: "PERFORMANCE SCALING", arche: "Dynamic Visual Bar Chart (.chart-card)", getPoint: () => getConcept(5, "Throughput characteristics and quantitative bounds") },
+      { cat: "FAULT RESILIENCE", arche: "Multi-Dimensional Comparison Matrix (.matrix-table)", getPoint: () => getConcept(6, "Failure domain containment and recovery mechanisms") },
+      { cat: "PRODUCTION SLA", arche: "Connected Architecture Flow Topology (.flow-diagram)", getPoint: () => getConcept(7, "Operational guarantees and mission-critical verification") },
     ];
 
-    storyboardText = baseSlides.slice(0, targetCount).join("\n\n");
+    for (let i = 0; i < targetCount; i++) {
+      const t = themes[i % themes.length];
+      const point = t.getPoint();
+      const slideTitle = point.length > 55 ? point.slice(0, 52) + "..." : point;
+      dynamicSlides.push(`SLIDE ${i + 1}: ${slideTitle}
+- CATEGORY: ${t.cat}
+- NARRATIVE: ${point}.
+- INVARIANTS: Derived directly from ${cleanTopic} domain analysis.
+- VISUAL_SPEC: ${t.arche} with authentic domain data.`);
+    }
+
+    storyboardText = dynamicSlides.join("\n\n");
 
     onChunk("\n\n" + storyboardText, false);
   }

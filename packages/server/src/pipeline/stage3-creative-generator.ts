@@ -25,10 +25,10 @@ export function parseStoryboardIntoSlides(storyboardText: string, targetCount: n
   }
 
   const diverseThemes = [
-    { category: "PHYSICAL ARCHITECTURE", title: "Physical Architecture & Sensing Mechanism", desc: "Heterogeneous signal acquisition, edge physical boundaries, and raw telemetry ingestion." },
-    { category: "CONDUIT TRANSPORT", title: "Low-Latency Conduit & Protocol Pipeline", desc: "Packetized serialization, deterministic transport latency, and gateway streaming invariants." },
-    { category: "DYNAMIC SIMULATION", title: "Runtime Invariant Simulator & Telemetry Evaluation", desc: "Interactive sensitivity analysis, load parameter modulation, and dynamic system state feedback." },
-    { category: "ARCHITECTURE FLOW", title: "Decoupled Execution Flow & Node Topology", desc: "Connected component state progression, event bus distribution, and failure isolation boundaries." },
+    { category: "SYSTEM FOUNDATIONS", title: "Architectural Foundations & Core Primitives", desc: "Core mechanisms, fundamental isolation boundaries, and primary structural models." },
+    { category: "EXECUTION PIPELINE", title: "Sequential Execution & Component Flow", desc: "Deterministic stage transitions, protocol pipelines, and state transformation." },
+    { category: "DYNAMIC SIMULATION", title: "Runtime Invariant Simulator & Telemetry Evaluation", desc: "Interactive sensitivity analysis, parameter modulation, and dynamic system state feedback." },
+    { category: "SYSTEM TOPOLOGY", title: "Decoupled Execution Flow & Node Topology", desc: "Connected component state progression, interface bindings, and failure isolation boundaries." },
     { category: "SYSTEM BENCHMARKS", title: "Multi-Dimensional Trade-off Matrix & SLA Boundaries", desc: "Comparative evaluation of latency, reliability, throughput bounds, and operational invariants." },
     { category: "OPERATIONAL INTEGRATION", title: "Autonomous Failover & Production Telemetry", desc: "Closed-loop feedback control, telemetry assurance, and mission-critical SLA monitoring." },
   ];
@@ -75,137 +75,140 @@ export function buildSingleSlidePrompt(
 
   const archetypes = [
     {
-      archetypeId: "3D_WORLD_OR_HERO_SPLIT",
-      title: "Interactive 3D WebGL World or Split Hero Topology",
-      mandate: `You MUST use a .grid-split featuring an interactive 3D WebGL World (.three-container with data-model="hardware-die-3d" or "quantum-bloch-sphere" or "neural-constellation-3d") on the left, and a multi-color .glass-card.card-emerald on the right with a KaTeX mathematical equation:
+      archetypeId: "HERO_SPLIT_OR_TERMINAL",
+      title: "Architectural Split Hero or Terminal Execution View",
+      mandate: `You MUST use a .grid-split layout.
+IF the document covers CLI commands, Linux/system calls, Dockerfiles, or code, use a .terminal-card on the left and a .glass-card.card-emerald on the right:
 <div class="grid-split">
-  <div class="three-container" data-model="hardware-die-3d">
-    <div class="three-overlay">
-      <span class="three-badge">⚡ 3D INTERACTIVE WEBGL</span>
-      <span style="font-family: var(--font-display); font-size: 14px; font-weight: bold; color: #fff;">Physical Topology</span>
+  <div class="terminal-card">
+    <div class="terminal-header">
+      <div class="terminal-dots"><span class="terminal-dot dot-red"></span><span class="terminal-dot dot-yellow"></span><span class="terminal-dot dot-green"></span></div>
+      <span class="terminal-title">[Exact Subsystem / Shell Context from Document]</span>
     </div>
-    <div class="three-hint">🖱️ Click &amp; Drag to Rotate 3D Model</div>
+    <pre class="terminal-body"><code><span class="terminal-cmd">$ [Exact command, system call, or directive from Document]</span>
+<span class="terminal-out">[Exact output, flag, or PID from Document]</span></code></pre>
   </div>
   <div class="glass-card card-emerald">
     <div class="glass-card-header">
-      <span class="card-title">Physical Topology &amp; Invariants</span>
-      <span class="badge badge-emerald">PHYSICAL TOPOLOGY</span>
+      <span class="card-title">[Primary Mechanism / Subsystem Title]</span>
+      <span class="badge badge-emerald">[RELEVANT BADGE]</span>
     </div>
     <ul class="points-list">
-      <li><strong>Primary Takeaway:</strong> Core foundational architecture and operational mechanisms.</li>
-      <li><strong>Quantitative Metric:</strong> Validated throughput and low-latency boundary parameters.</li>
-      <li><strong>Mathematical Derivation (KaTeX):</strong><br>\\[ \\text{State}_{t+1} = \\mathcal{T}(\\text{State}_t, \\text{Input}) \\]</li>
+      <li><strong>Core Mechanism:</strong> [Concrete fact extracted directly from Document below]</li>
+      <li><strong>Concrete Metric / Parameter:</strong> [Exact number, PID, memory size, or flag from Document below]</li>
+      <li><strong>Operational Invariant:</strong> [Exact rule, constraint, or equation from Document below]</li>
     </ul>
   </div>
-</div>`,
+</div>
+IF the topic is physical, geometric, or quantum, you may alternatively use .three-container with data-model="neural-constellation-3d" or "quantum-bloch-sphere".`,
     },
     {
       archetypeId: "MOTION_PIPELINE",
-      title: "Real-World Physical Motion Pipeline (.motion-pipeline)",
-      mandate: `You MUST use a real-world .motion-pipeline with 4 physical sequential stages (Emerald -> Cyan -> Indigo -> Amber) and animated packet pulses:
+      title: "Sequential Execution & Process Pipeline (.motion-pipeline)",
+      mandate: `You MUST use a real-world .motion-pipeline with 4 sequential stages (Emerald -> Cyan -> Indigo -> Amber) and animated packet pulses:
 <div class="pipeline-controls">
-  <span class="pipeline-tag">⚡ PHYSICAL PROGRESSION &amp; CONDUIT FLOW</span>
+  <span class="pipeline-tag">⚡ SEQUENTIAL PROCESS FLOW</span>
   <button class="sim-play-btn" onclick="simulatePipelineFlow(this)">▶ Simulate Flow</button>
 </div>
 <div class="motion-pipeline">
   <div class="pipeline-stage stage-emerald">
     <span class="stage-num">STAGE 01</span>
-    <div class="stage-icon">📡</div>
-    <div class="stage-title">[Physical Sensing / Ingestion]</div>
-    <div class="stage-desc">[How signals/inputs are captured in the physical world]</div>
+    <div class="stage-icon">[Pick topic-relevant emoji: e.g. 🐧, 📦, 🔒, ⚡, 🧩, ⚙️, 🌐]</div>
+    <div class="stage-title">[Exact Step 1 Name from Document]</div>
+    <div class="stage-desc">[Specific action of Step 1 derived 100% from Document context]</div>
   </div>
   <div class="pipeline-connector"><div class="packet-pulse packet-emerald"></div></div>
   <div class="pipeline-stage stage-cyan">
     <span class="stage-num">STAGE 02</span>
-    <div class="stage-icon">⚡</div>
-    <div class="stage-title">[Conduit / Streaming Transport]</div>
-    <div class="stage-desc">[High-speed packetized streaming via gateway]</div>
+    <div class="stage-icon">[Topic emoji]</div>
+    <div class="stage-title">[Exact Step 2 Name from Document]</div>
+    <div class="stage-desc">[Specific action of Step 2 derived 100% from Document context]</div>
   </div>
   <div class="pipeline-connector"><div class="packet-pulse packet-cyan"></div></div>
   <div class="pipeline-stage stage-indigo">
     <span class="stage-num">STAGE 03</span>
-    <div class="stage-icon">🧠</div>
-    <div class="stage-title">[Inference &amp; State Logic]</div>
-    <div class="stage-desc">[Transformation, state evaluation, invariant checks]</div>
+    <div class="stage-icon">[Topic emoji]</div>
+    <div class="stage-title">[Exact Step 3 Name from Document]</div>
+    <div class="stage-desc">[Specific action of Step 3 derived 100% from Document context]</div>
   </div>
   <div class="pipeline-connector"><div class="packet-pulse packet-amber"></div></div>
   <div class="pipeline-stage stage-amber">
     <span class="stage-num">STAGE 04</span>
-    <div class="stage-icon">🚀</div>
-    <div class="stage-title">[Actuation &amp; Telemetry Output]</div>
-    <div class="stage-desc">[Physical execution, feedback, and telemetry guarantees]</div>
+    <div class="stage-icon">[Topic emoji]</div>
+    <div class="stage-title">[Exact Step 4 Name from Document]</div>
+    <div class="stage-desc">[Specific action of Step 4 derived 100% from Document context]</div>
   </div>
 </div>
-(CRITICAL: This is the ONLY slide in the entire presentation allowed to use .motion-pipeline!)`,
+(CRITICAL: Never output "Physical Sensing / Ingestion" or "Conduit Transport" unless the document explicitly discusses physical sensors! Extract real steps from document!)`,
     },
     {
       archetypeId: "INTERACTIVE_SIMULATOR",
       title: "Dynamic Interactive Parameter Simulator (.sim-container)",
-      mandate: `You MUST use a .grid-split featuring an interactive .sim-container with a live slider that calculates a concrete domain formula and updates dynamic gauges, paired with an evaluation .glass-card:
+      mandate: `You MUST use a .grid-split featuring an interactive .sim-container with a live slider that calculates a concrete formula or metric from the document dynamically, paired with an evaluation .glass-card:
 <div class="grid-split">
   <div class="sim-container card-cyan">
     <div class="glass-card-header">
-      <span class="card-title">Interactive Parameter Simulator</span>
-      <span class="badge badge-cyan">RUNTIME SIMULATOR</span>
+      <span class="card-title">[Name of Parameter Simulator from Document]</span>
+      <span class="badge badge-cyan">LIVE RUNTIME</span>
     </div>
     <div class="sim-controls">
       <div class="sim-row">
-        <span style="color: #cbd5e1; font-weight: 600;">System Parameter:</span>
-        <input type="range" class="sim-slider slider-cyan" min="1" max="100" value="45" oninput="updateSim${slideIndex}(this.value)" />
-        <span id="display-val-${slideIndex}" style="font-family: var(--font-mono); font-weight: bold; color: var(--accent-cyan);">45%</span>
+        <span style="color: #cbd5e1; font-weight: 600;">[Topic Metric Name, e.g. Allocated Quota, Subnet Mask, Queue Depth]:</span>
+        <input type="range" class="sim-slider slider-cyan" min="1" max="100" value="50" oninput="updateSim${slideIndex}(this.value)" />
+        <span id="display-val-${slideIndex}" style="font-family: var(--font-mono); font-weight: bold; color: var(--accent-cyan);">50</span>
       </div>
     </div>
     <div class="sim-gauge gauge-cyan">
-      <div class="sim-value" id="result-val-${slideIndex}">Optimal State</div>
+      <div class="sim-value" id="result-val-${slideIndex}">Verified State</div>
       <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">DYNAMIC SYSTEM TELEMETRY</div>
     </div>
   </div>
   <div class="glass-card card-indigo">
     <div class="glass-card-header">
-      <span class="card-title">Dynamic Invariants &amp; Thresholds</span>
+      <span class="card-title">[Operational Invariants &amp; Thresholds]</span>
       <span class="badge badge-indigo">VERIFIED</span>
     </div>
     <ul class="points-list">
-      <li><strong>Operating Boundary:</strong> Telemetry values remain within guaranteed invariant bounds.</li>
-      <li><strong>Formula:</strong> Response latency model \\( T_{\\text{resp}} = \\frac{1}{\\mu - \\lambda} \\).</li>
-      <li><strong>State Invariance:</strong> Closed-loop parameter adjustment preserves steady-state fidelity.</li>
+      <li><strong>Operating Range:</strong> [Concrete boundary condition from Document below]</li>
+      <li><strong>Governing Model:</strong> [Extract real formula, system call, or rule from Document - NEVER invent queueing formulas!]</li>
+      <li><strong>State Invariance:</strong> [Specific guarantee from Document below]</li>
     </ul>
   </div>
 </div>
 <script>
   function updateSim${slideIndex}(val) {
-    document.getElementById('display-val-${slideIndex}').textContent = val + '%';
-    document.getElementById('result-val-${slideIndex}').textContent = val > 80 ? 'Critical Load (' + val + '%)' : 'Optimal (' + val + '%)';
+    document.getElementById('display-val-${slideIndex}').textContent = val;
+    document.getElementById('result-val-${slideIndex}').textContent = val > 75 ? 'Boundary Exceeded (' + val + ')' : 'Verified State (' + val + ')';
   }
 </script>`,
     },
     {
       archetypeId: "FLOW_TOPOLOGY",
       title: "Connected Architecture Flow Topology (.flow-diagram)",
-      mandate: `You MUST use a connected flow diagram (.flow-diagram) with active step nodes, animated conduits, and state telemetry:
+      mandate: `You MUST use a connected flow diagram (.flow-diagram) with active step nodes, animated conduits, and operational specifications:
 <div class="flow-diagram">
-  <div class="flow-step">
-    <div class="flow-node">📡</div>
-    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Ingress Node]</div>
-    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Ingestion specs]</div>
+  <div class="flow-step card-emerald">
+    <div class="flow-node">[Emoji]</div>
+    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 1 from Document]</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 1 spec from text]</div>
   </div>
   <div class="flow-arrow">➔</div>
-  <div class="flow-step">
-    <div class="flow-node">⚡</div>
-    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Transport Conduit]</div>
-    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Streaming protocol]</div>
+  <div class="flow-step card-cyan">
+    <div class="flow-node">[Emoji]</div>
+    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 2 from Document]</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 2 spec from text]</div>
   </div>
   <div class="flow-arrow">➔</div>
-  <div class="flow-step">
-    <div class="flow-node">🧠</div>
-    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Inference Core]</div>
-    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Model execution]</div>
+  <div class="flow-step card-indigo">
+    <div class="flow-node">[Emoji]</div>
+    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 3 from Document]</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 3 spec from text]</div>
   </div>
   <div class="flow-arrow">➔</div>
-  <div class="flow-step">
-    <div class="flow-node">🚀</div>
-    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Actuation Gateway]</div>
-    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Verified output]</div>
+  <div class="flow-step card-amber">
+    <div class="flow-node">[Emoji]</div>
+    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 4 from Document]</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 4 spec from text]</div>
   </div>
 </div>`,
     },
@@ -216,13 +219,13 @@ export function buildSingleSlidePrompt(
 <div class="glass-card">
   <table class="matrix-table">
     <thead>
-      <tr><th>EVALUATION DIMENSION</th><th>STATUS</th><th>CONCRETE METRIC</th><th>ARCHITECTURAL IMPACT</th></tr>
+      <tr><th>[DIMENSION FROM DOCUMENT]</th><th>STATUS</th><th>CONCRETE METRIC / FLAG</th><th>SYSTEM IMPACT</th></tr>
     </thead>
     <tbody>
-      <tr><td>[Dimension 1]</td><td><span class="badge badge-emerald">OPTIMAL</span></td><td>[Concrete Metric 1]</td><td>[Operational impact 1]</td></tr>
-      <tr><td>[Dimension 2]</td><td><span class="badge badge-cyan">CONSTRAINED</span></td><td>[Concrete Metric 2]</td><td>[Operational impact 2]</td></tr>
-      <tr><td>[Dimension 3]</td><td><span class="badge badge-amber">THRESHOLD</span></td><td>[Concrete Metric 3]</td><td>[Operational impact 3]</td></tr>
-      <tr><td>[Dimension 4]</td><td><span class="badge badge-rose">LATENCY BOUND</span></td><td>[Concrete Metric 4]</td><td>[Operational impact 4]</td></tr>
+      <tr><td>[Feature 1 from Document]</td><td><span class="badge badge-emerald">OPTIMAL</span></td><td>[Actual metric/flag/size from text]</td><td>[Operational impact from text]</td></tr>
+      <tr><td>[Feature 2 from Document]</td><td><span class="badge badge-cyan">CONSTRAINED</span></td><td>[Actual metric/flag/size from text]</td><td>[Operational impact from text]</td></tr>
+      <tr><td>[Feature 3 from Document]</td><td><span class="badge badge-amber">THRESHOLD</span></td><td>[Actual metric/flag/size from text]</td><td>[Operational impact from text]</td></tr>
+      <tr><td>[Feature 4 from Document]</td><td><span class="badge badge-rose">LATENCY BOUND</span></td><td>[Actual metric/flag/size from text]</td><td>[Operational impact from text]</td></tr>
     </tbody>
   </table>
 </div>`,
@@ -230,16 +233,16 @@ export function buildSingleSlidePrompt(
     {
       archetypeId: "BAR_CHART_KPI",
       title: "Dynamic Visual Bar Chart (.chart-card)",
-      mandate: `You MUST use an animated visual bar chart (.chart-card) showing quantitative benchmarks and throughput scaling:
+      mandate: `You MUST use an animated visual bar chart (.chart-card) showing quantitative benchmarks and throughput scaling extracted from the document:
 <div class="chart-card">
   <div class="chart-header">
-    <span style="font-family: var(--font-display); font-size: 15px; font-weight: 700; color: #fff;">[Performance &amp; Throughput Benchmark]</span>
-    <span class="badge badge-emerald">BENCHMARK DATA</span>
+    <span style="font-family: var(--font-display); font-size: 15px; font-weight: 700; color: #fff;">[Quantitative Benchmark from Document]</span>
+    <span class="badge badge-emerald">EXTRACTED DATA</span>
   </div>
   <div class="chart-bars-group">
-    <div class="chart-bar-col"><div class="chart-val-label">[Val 1]</div><div class="chart-bar-fill" style="height: 45%;"></div><div class="chart-axis-label">[Config A]</div></div>
-    <div class="chart-bar-col"><div class="chart-val-label">[Val 2]</div><div class="chart-bar-fill accent-indigo" style="height: 75%;"></div><div class="chart-axis-label">[Config B]</div></div>
-    <div class="chart-bar-col"><div class="chart-val-label">[Val 3]</div><div class="chart-bar-fill accent-emerald" style="height: 95%;"></div><div class="chart-axis-label">[Optimized]</div></div>
+    <div class="chart-bar-col"><div class="chart-val-label">[Value 1 from text]</div><div class="chart-bar-fill" style="height: 40%;"></div><div class="chart-axis-label">[Entity 1 from text]</div></div>
+    <div class="chart-bar-col"><div class="chart-val-label">[Value 2 from text]</div><div class="chart-bar-fill accent-indigo" style="height: 70%;"></div><div class="chart-axis-label">[Entity 2 from text]</div></div>
+    <div class="chart-bar-col"><div class="chart-val-label">[Value 3 from text]</div><div class="chart-bar-fill accent-emerald" style="height: 95%;"></div><div class="chart-axis-label">[Entity 3 from text]</div></div>
   </div>
 </div>`,
     },
@@ -277,11 +280,11 @@ ${assigned.mandate}
 
 KaTeX mathematical formulas are supported: use \\[ formula \\] for block math, and \\( formula \\) for inline math.
 
-STRICT ANTI-ARTICLE RULES:
-1. Output ONLY the <section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}"> ... </section> tag.
-2. Always properly close the </section> tag at the end.
-3. NEVER generate plain text articles or bullet-point essay cards! Use the assigned visual archetype above.
-4. USE MULTI-COLORS: Assign different colors to stages and cards (.card-emerald, .card-cyan, .card-indigo, .card-amber, .card-rose).
+ABSOLUTE 100% TOPIC FIDELITY MANDATE (ZERO TOLERANCE FOR HARDCODED PLACEHOLDERS):
+1. ZERO HARDCODED / PLACEHOLDER CONTENT: NEVER output placeholder phrases like "Physical Sensing / Ingestion", "Conduit Transport", "Response latency model T = 1/(mu - lambda)", or "State_{t+1} = T(State_t, Input)" unless the document is literally about them!
+2. All titles, commands, metrics, formulas, and stage names MUST BE 100% EXTRACTED from the provided document context below!
+3. If the document is about Linux containers, your stages, cards, and terminals MUST discuss PID namespaces, UTS namespaces, veth pairs, sethostbyname(), Open vSwitch, Dockerfiles, and dhcpd!
+4. STRICT ANTI-ARTICLE RULES: Output ONLY the <section ...> ... </section> tag. Always properly close the </section> tag at the end. Use multi-colors (.card-emerald, .card-cyan, .card-indigo, .card-amber, .card-rose).
 5. DO NOT use .motion-pipeline unless this slide is explicitly assigned ARCHETYPE 2!
 6. Keep internal reasoning under 80 tokens. Output valid HTML directly.`;
 }
@@ -343,48 +346,97 @@ export function synthesizeFallbackSlide(
   const p3 = rawLines[2] || `Production scaling threshold and boundary protection`;
   const p4 = rawLines[3] || `Autonomous failover barrier and invariant preservation`;
 
+  function extractShortPhrase(text: string, fallback: string): string {
+    if (!text) return fallback;
+    const parts = text.split(/[:\-\—]/);
+    if (parts.length > 1 && parts[0].trim().length > 3 && parts[0].trim().length < 35) {
+      return parts[0].trim();
+    }
+    const words = text.replace(/^[#*\-0-9.\s]+/, "").split(/\s+/).slice(0, 4).join(" ");
+    return words.length > 3 ? words : fallback;
+  }
+
   if (slideType === 0) {
+    const s1Title = extractShortPhrase(p1, "Initialization");
+    const s2Title = extractShortPhrase(p2, "Execution Phase");
+    const s3Title = extractShortPhrase(p3, "State Transition");
+    const s4Title = extractShortPhrase(p4, "Output & Resolution");
+
     return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
   <div class="slide-title-group">
     <div class="slide-category">${category}</div>
     <h2 class="slide-title">${title}</h2>
-    <p class="slide-subtitle">Deterministic sequential execution pipeline and component transitions.</p>
+    <p class="slide-subtitle">Deterministic sequential execution progression and lifecycle stages.</p>
   </div>
   <div class="pipeline-controls">
-    <span class="pipeline-tag">⚡ PHYSICAL PROGRESSION &amp; CONDUIT FLOW</span>
+    <span class="pipeline-tag">⚡ SYSTEM EXECUTION PIPELINE</span>
     <button class="sim-play-btn" onclick="simulatePipelineFlow(this)">▶ Simulate Flow</button>
   </div>
   <div class="motion-pipeline">
     <div class="pipeline-stage stage-emerald">
       <span class="stage-num">STAGE 01</span>
-      <div class="stage-icon">📡</div>
-      <div class="stage-title">Ingestion &amp; Perception</div>
+      <div class="stage-icon">⚙️</div>
+      <div class="stage-title">${s1Title}</div>
       <div class="stage-desc">${p1}</div>
     </div>
     <div class="pipeline-connector"><div class="packet-pulse packet-emerald"></div></div>
     <div class="pipeline-stage stage-cyan">
       <span class="stage-num">STAGE 02</span>
       <div class="stage-icon">⚡</div>
-      <div class="stage-title">Conduit Transport</div>
+      <div class="stage-title">${s2Title}</div>
       <div class="stage-desc">${p2}</div>
     </div>
     <div class="pipeline-connector"><div class="packet-pulse packet-cyan"></div></div>
     <div class="pipeline-stage stage-indigo">
       <span class="stage-num">STAGE 03</span>
-      <div class="stage-icon">🧠</div>
-      <div class="stage-title">State Evaluation</div>
+      <div class="stage-icon">🔄</div>
+      <div class="stage-title">${s3Title}</div>
       <div class="stage-desc">${p3}</div>
     </div>
     <div class="pipeline-connector"><div class="packet-pulse packet-amber"></div></div>
     <div class="pipeline-stage stage-amber">
       <span class="stage-num">STAGE 04</span>
-      <div class="stage-icon">🚀</div>
-      <div class="stage-title">Commit &amp; Actuation</div>
+      <div class="stage-icon">✅</div>
+      <div class="stage-title">${s4Title}</div>
       <div class="stage-desc">${p4}</div>
     </div>
   </div>
 </section>`;
   } else if (slideType === 1) {
+    const isCodeOrCli = /sudo|docker|linux|bash|command|netns|namespace|config|shell|\$ |API|endpoint|curl|ps |mount/i.test(slideDirective + " " + p1 + " " + p2);
+
+    if (isCodeOrCli) {
+      return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Command-line execution, kernel parameters, and runtime environment.</p>
+  </div>
+  <div class="grid-split">
+    <div class="terminal-card">
+      <div class="terminal-header">
+        <div class="terminal-dots"><span class="t-dot dot-red"></span><span class="t-dot dot-yellow"></span><span class="t-dot dot-green"></span></div>
+        <span class="terminal-title">bash — runtime environment</span>
+      </div>
+      <pre class="terminal-body"><span class="terminal-prompt">$</span> <span class="terminal-cmd">${p1.replace(/["`]/g, '')}</span>
+<span class="terminal-out"># Invariant verification & state inspection:</span>
+<span class="terminal-prompt">$</span> <span class="terminal-cmd">${p2.replace(/["`]/g, '')}</span></pre>
+    </div>
+    <div class="glass-card card-indigo">
+      <div class="glass-card-header">
+        <span class="card-title">Operational Invariants</span>
+        <span class="badge badge-indigo">VERIFIED</span>
+      </div>
+      <ul class="points-list">
+        <li>${p1}</li>
+        <li>${p2}</li>
+        <li>${p3}</li>
+      </ul>
+    </div>
+  </div>
+</section>`;
+    }
+
     return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
   <div class="slide-title-group">
     <div class="slide-category">${category}</div>
@@ -471,7 +523,7 @@ export function synthesizeFallbackSlide(
       </thead>
       <tbody>
         <tr><td>Primary Foundation</td><td><span class="badge badge-emerald">ACTIVE</span></td><td>${p1}</td></tr>
-        <tr><td>Conduit Performance</td><td><span class="badge badge-cyan">VERIFIED</span></td><td>${p2}</td></tr>
+        <tr><td>Runtime Performance</td><td><span class="badge badge-cyan">VERIFIED</span></td><td>${p2}</td></tr>
         <tr><td>Fault Recovery</td><td><span class="badge badge-amber">PROTECTED</span></td><td>${p3}</td></tr>
         <tr><td>System Invariant</td><td><span class="badge badge-rose">MONITORED</span></td><td>${p4}</td></tr>
       </tbody>

@@ -662,6 +662,61 @@ body {
 .matrix-table td { padding: 12px 14px; border-bottom: 1px solid var(--border-subtle); color: #e2e8f0; }
 .matrix-table tr:hover td { background: rgba(56, 189, 248, 0.05); }
 
+/* Obsidian Terminal Window & Code Execution Card */
+.terminal-card {
+  background: #080c16;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 16px 36px -12px rgba(0, 0, 0, 0.8);
+  font-family: var(--font-mono);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.terminal-header {
+  height: 34px;
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  justify-content: space-between;
+}
+.terminal-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.terminal-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot-red { background: #ef4444; }
+.dot-yellow { background: #f59e0b; }
+.dot-green { background: #10b981; }
+.terminal-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.terminal-body {
+  padding: 16px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: #e2e8f0;
+  overflow-x: auto;
+  margin: 0;
+  white-space: pre;
+}
+.terminal-cmd { color: #38bdf8; font-weight: 700; }
+.terminal-flag { color: #f59e0b; }
+.terminal-out { color: #94a3b8; }
+.terminal-highlight { color: #10b981; font-weight: 700; }
+
 /* ==========================================================================
    2026 Creative Primitives: Interactive 3D WebGL Scenes & Particle Conduits
    ========================================================================== */
