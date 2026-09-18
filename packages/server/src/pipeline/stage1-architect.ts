@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { config } from "../config";
-import { extractCleanTopic } from "./topic-extractor";
+import { extractCleanTopic, sanitizeDocumentContent } from "./topic-extractor";
 
 export interface Stage1Result {
   outline: string;
@@ -18,6 +18,7 @@ export async function runStage1Architect(
   onChunk: (delta: string, isReasoning: boolean) => void
 ): Promise<Stage1Result> {
   const { title: cleanTopic } = extractCleanTopic(topic);
+  const cleanDocument = sanitizeDocumentContent(topic);
   let outlineText = "";
 
   const apiKey = config.nvidiaApiKeyUltra || config.nvidiaApiKey;
@@ -30,21 +31,26 @@ export async function runStage1Architect(
 
 SOURCE DOCUMENT & CONTEXT:
 """
-${topic}
+${cleanDocument}
 """
 
-TARGET SLIDE COUNT: ${targetCount} Slides (${isExplicit ? "Explicit user request" : reason})
+TARGET SLIDE COUNT: Exactly ${targetCount} Slides (${isExplicit ? "Explicit user request" : reason})
 
-CRITICAL VISUAL DESIGN MANDATE (ZERO TEXT-ONLY SLIDES):
-1. MANDATORY VISUAL DRAWINGS & SHAPES: Never output slides consisting merely of text bullet cards. Presentations must look like world-class interactive explainers with diagrams, Venn topologies, and charts.
-2. 100% FAITHFUL DOMAIN EXTRACTION: All concepts, formulas, statistics, and categories MUST be directly extracted from the provided text above.
-3. DOMAIN RELEVANCE: Every parameter, slider, and label must compute an authentic metric described in the document.
+CRITICAL VISUAL DESIGN MANDATE (ZERO GENERIC SLIDES, 100% DOMAIN ACCURACY):
+1. EXTRACT AUTHENTIC TECHNICAL ENTITIES: Look directly at the data structures, topologies, hierarchies, and commands in the document.
+2. ZERO PROMPT LEAKAGE: Never mention "TARGET SLIDE COUNT", "PREFERRED THEME", or prompt metadata in your slide titles or outlines!
+3. MANDATORY VISUAL MODEL FOR EVERY SLIDE: Every slide must specify an authentic visual entity derived directly from the document:
+   - Data Structures & Pointer Graphs (e.g. Inode Direct/Indirect pointers, Directory mount trees, Hash tables)
+   - Architectural Subsystem Stacks (e.g. VFS layer, Caches, Filesystem drivers, Kernel subsystems)
+   - Memory & Disk Block Stripes (e.g. Superblock, Descriptors, Inode/Block Bitmaps, Inode Tables, Data Blocks)
+   - Terminal CLI Executions (e.g. authentic shell commands with exact flags and realistic outputs from the document)
+   - Domain Calculations & Math (e.g. Inode addressing capacity calculations, bandwidth/latency formulas)
 
-Synthesize a bespoke ${targetCount}-slide visual explainer blueprint with numbered slides (SLIDE 1 through SLIDE ${targetCount}) specifying the exact visual drawing for each:
-- SLIDE 1 (Scale & Metrics): Executive overview paired with a dynamic visual bar chart (.chart-card) comparing key growth numbers or metrics from the text.
-- SLIDE 2 (Conceptual Architecture): Prominent visual drawing — an SVG Venn Diagram (.venn-container) showing overlapping conceptual visions/domains, OR a connected node pipeline (.flow-diagram).
-- SLIDE 3 (Deep Dive & Invariants): Layered architectural stack OR structured dimensional matrix (.matrix-table) with visual status badges and trade-offs.
-- SLIDE 4 (Interactive Living Simulation): Interactive simulation model (.sim-container) with a live visual graphic stage (.sim-visual-grid) that lights up and animates dynamically as parameters are adjusted.`;
+Synthesize a bespoke ${targetCount}-slide visual explainer blueprint (SLIDE 1 through SLIDE ${targetCount}) where every slide has:
+- SLIDE NUMBER & TITLE: Concrete technical headline naming the specific mechanism or data structure (e.g. "Inode Pointer Hierarchy: Direct & Indirect Addressing").
+- CATEGORY: Domain badge (e.g. "STORAGE ARCHITECTURE", "KERNEL SUBSYSTEMS", "HIERARCHICAL MOUNTING").
+- CORE VISUAL ENTITY: Explicit description of the authentic diagram, block stripe, pointer tree, or terminal execution to render.
+- KEY TECHNICAL FACTS: 3-4 concrete facts, numbers, inode sizes, commands, or invariants extracted 100% from the text.`;
 
   // Attempt 1: Nemotron 120B Super
   try {

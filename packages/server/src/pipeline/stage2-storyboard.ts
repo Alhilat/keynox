@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { config } from "../config";
+import { sanitizeDocumentContent } from "./topic-extractor";
 
 export interface Stage2StoryboardResult {
   storyboard: string;
@@ -25,6 +26,7 @@ export async function runStage2Storyboard(
   onChunk: (delta: string, isReasoning: boolean) => void
 ): Promise<Stage2StoryboardResult> {
   let storyboardText = "";
+  const cleanAnalysis = sanitizeDocumentContent(analysisText);
 
   const apiKey = config.nvidiaApiKeyUltra || config.nvidiaApiKey;
   const openai = new OpenAI({
@@ -37,27 +39,32 @@ You are given the deep domain analysis and technical extraction from Model 1 for
 
 DOMAIN KNOWLEDGE EXTRACTION FROM MODEL 1:
 """
-${analysisText}
+${cleanAnalysis}
 """
 
 TARGET SLIDE COUNT: Exactly ${targetCount} Slides
 
 YOUR OBJECTIVE:
-1. Direct the visual design & narrative TEXT for each of the ${targetCount} slides ("what we called slides").
-2. Specify REAL-WORLD PHYSICAL MOTION & STAGES: How does this technology/concept actually operate and move in the real physical or digital world? (e.g., sensor signal acquisition -> packetization -> gateway transmission -> cloud inference -> physical actuation).
-3. Assign MULTI-COLOR PALETTES across concepts (Emerald, Cyan, Indigo, Amber, Rose) instead of monotone layouts.
-4. Specify EXACT AI PHOTOS (NVIDIA FLUX) and LIVING DYNAMIC WIDGETS with real calculation formulas.
+1. Direct the visual architecture & narrative TEXT for each of the ${targetCount} slides.
+2. ZERO PROMPT NOISE: Never output prompt metadata like "TARGET SLIDE COUNT", "PREFERRED THEME", or generic filler in your slide titles or content!
+3. MANDATORY AUTHENTIC VISUAL MODEL: For each slide, define the exact technical visual entity from the document:
+   - Pointer / Tree Graph (e.g. Inode Direct/Indirect pointer tree, Mount hierarchy tree)
+   - Architectural Subsystem Stack (e.g. VFS layers, cache tiers, device drivers)
+   - Memory / Disk Block Striping (e.g. Superblock | Group Descriptors | Bitmaps | Inode Table | Data Blocks)
+   - Terminal Shell Execution (e.g. real commands, flags, and system outputs like $ mkfs.ext4)
+   - Domain Quantitative Calculators (e.g. Inode addressing capacity calculations)
+4. Assign MULTI-COLOR PALETTES across concepts (Emerald, Cyan, Indigo, Amber, Rose) instead of monotone layouts.
 
 REQUIREMENTS FOR EACH SLIDE (SLIDE 1 TO SLIDE ${targetCount}):
 For every single slide, you MUST provide:
-- SLIDE NUMBER & TITLE: Prominent, concrete technical headline.
-- SUBTITLE & CATEGORY: Domain badge (e.g., PHYSICAL TOPOLOGY, TELEMETRY, REAL-WORLD MOTION, DYNAMIC SIMULATION).
-- SLIDE NARRATIVE & CONTENT (ABSOLUTELY NO BORING 3-PARAGRAPH ARTICLE SLOP):
-  * Primary Takeaway / Thesis statement.
-  * Concrete quantitative metrics from the document (real numbers, data rates, benchmark figures).
-  * Any mathematical derivations (KaTeX formulas).
-- AUTONOMOUS VISUAL TEMPLATE SELECTION:
-  From the 20 visual templates below, specify the exact template (e.g., "TEMPLATE: TEMPLATE_02_TERMINAL_CODE_EXPLORER") that naturally communicates this slide's technical content:
+- SLIDE NUMBER & TITLE: Prominent, concrete technical headline (e.g. "Unix Inode Architecture: Direct & Indirect Disk Addressing").
+- SUBTITLE & CATEGORY: Domain badge (e.g., STORAGE ARCHITECTURE, KERNEL SUBSYSTEMS, HIERARCHICAL MOUNTING).
+- SLIDE NARRATIVE & CONTENT (ABSOLUTELY NO BORING ARTICLE SLOP):
+  * Primary Takeaway / Thesis statement extracted from document.
+  * Concrete quantitative metrics or data structures from the document (real block sizes, pointer counts, commands).
+  * Any mathematical derivations or calculations.
+- VISUAL MODEL & COMPONENT DIRECTIVE:
+  Specify the visual model (e.g. "VISUAL: Pointer Tree showing Inode with 12 direct blocks, 1 single indirect, 1 double indirect" or "VISUAL: Disk Block Stripe showing Superblock, Descriptors, Bitmaps, Inodes, Data") and recommend the optimal template:
   * TEMPLATE_01_HERO_SPLIT_OVERVIEW: Hero concept card + 3 invariant bullets (.grid-split)
   * TEMPLATE_02_TERMINAL_CODE_EXPLORER: Syntax-highlighted CLI terminal + explanation card (.terminal-card)
   * TEMPLATE_03_CODE_DIFF_EVOLUTION: Side-by-side terminal/code cards (.diff-container)

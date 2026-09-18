@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { config } from "../config";
+import { sanitizeDocumentContent } from "./topic-extractor";
 
 const MODEL_SUPER = "nvidia/nemotron-3-super-120b-a12b";
 const MODEL_LIGHTNING = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning";
@@ -14,11 +15,20 @@ export interface Stage3Callbacks {
  * Parses Model 2's storyboard output into distinct slide specifications.
  */
 export function parseStoryboardIntoSlides(storyboardText: string, targetCount: number): string[] {
+  const cleanStoryboard = sanitizeDocumentContent(storyboardText);
   const slideDelimiterRegex = /(?=(?:^|\n)(?:#{1,3}\s*)?(?:SLIDE|Slide)\s+\d+)/i;
-  const rawSections = storyboardText
+  const rawSections = cleanStoryboard
     .split(slideDelimiterRegex)
     .map((s) => s.trim())
-    .filter((s) => s.length > 30);
+    .filter((s) => {
+      if (s.length < 25) return false;
+      const u = s.toUpperCase();
+      return (
+        !u.startsWith("TARGET SLIDE COUNT") &&
+        !u.startsWith("PREFERRED THEME") &&
+        !u.startsWith("SOURCE DOCUMENT")
+      );
+    });
 
   if (rawSections.length >= targetCount) {
     return rawSections.slice(0, targetCount);
@@ -44,7 +54,19 @@ export function parseStoryboardIntoSlides(storyboardText: string, targetCount: n
   }
 
   // Fallback: If no explicit "SLIDE N" tags, split by double newlines into balanced chunks
-  const paragraphs = storyboardText.split(/\n\s*\n/).filter((p) => p.trim().length > 40);
+  const paragraphs = cleanStoryboard
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter((p) => {
+      if (p.length < 35) return false;
+      const u = p.toUpperCase();
+      return (
+        !u.startsWith("TARGET SLIDE COUNT") &&
+        !u.startsWith("PREFERRED THEME") &&
+        !u.startsWith("SOURCE DOCUMENT")
+      );
+    });
+
   if (paragraphs.length >= targetCount) {
     const chunkSize = Math.ceil(paragraphs.length / targetCount);
     const chunks: string[] = [];
@@ -56,7 +78,7 @@ export function parseStoryboardIntoSlides(storyboardText: string, targetCount: n
 
   const chunks: string[] = [];
   for (let i = 0; i < targetCount; i++) {
-    chunks.push(`SLIDE ${i + 1}: Core System Execution & Invariants\n${storyboardText}`);
+    chunks.push(`SLIDE ${i + 1}: Core System Architecture\n${cleanStoryboard}`);
   }
   return chunks;
 }
@@ -324,7 +346,9 @@ export function buildSingleSlidePrompt(
   analysisSummary: string
 ): string {
   const isActive = slideIndex === 0;
-  const assigned = resolveVisualTemplate(slideDirective, slideIndex);
+  const cleanDirective = sanitizeDocumentContent(slideDirective);
+  const cleanAnalysis = sanitizeDocumentContent(analysisSummary);
+  const assigned = resolveVisualTemplate(cleanDirective, slideIndex);
 
   return `You are an elite Keynote Presentation Visual Designer & Creative Frontend Technologist.
 Synthesize EXACTLY ONE slide section (<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}"> ... </section>) for:
@@ -333,12 +357,12 @@ Slide ${slideIndex + 1} of ${totalSlides}
 
 SLIDE STORYBOARD & VISUAL/PHOTO DIRECTIVE FROM MODEL 2:
 """
-${slideDirective}
+${cleanDirective}
 """
 
 DOMAIN CONTEXT FROM MODEL 1:
 """
-${analysisSummary.slice(0, 1500)}
+${cleanAnalysis.slice(0, 1500)}
 """
 
 MANDATORY HEADLINE REQUIREMENT:
@@ -348,23 +372,49 @@ You MUST start the slide content immediately inside <section ...> with:
   <h2 class="slide-title">[Specific Technical Headline for This Slide]</h2>
   <p class="slide-subtitle">[Concrete Explanation of Invariants & Mechanics]</p>
 </div>
-NEVER output raw <h2>Chapter...</h2> or "Slide X of Y" in the title text!
+NEVER output raw <h2>Chapter...</h2>, "Slide X of Y", or prompt metadata in the title!
 
-RECOMMENDED VISUAL TEMPLATE FOR SLIDE ${slideIndex + 1}:
->>> ${assigned.name} (${assigned.id}) <<<
-Description: ${assigned.description}
+RECOMMENDED COMPOSABLE VISUAL PRIMITIVES & TEMPLATE:
+Baseline: ${assigned.name} (${assigned.id})
 
-LAYOUT & COMPONENT SPECIFICATION:
-${assigned.guidelines}
+COMPOSABLE DESIGN SYSTEM PALETTE (Choose and compose the best primitives for this slide's domain):
+1. Disk & Memory Block Stripe:
+   <div class="disk-stripe">
+     <div class="stripe-block stripe-cyan"><span class="block-tag">BLOCK 0</span><span class="block-title">Superblock</span><span class="block-size">Fixed Parameters</span></div>
+     <div class="stripe-block stripe-emerald"><span class="block-tag">BLOCK 1</span><span class="block-title">Group Descriptors</span><span class="block-size">Block Counts</span></div>
+     <div class="stripe-block stripe-indigo"><span class="block-tag">BLOCK 2</span><span class="block-title">Block Bitmap</span><span class="block-size">Allocation Map</span></div>
+     <div class="stripe-block stripe-amber"><span class="block-tag">BLOCK 3</span><span class="block-title">Inode Bitmap</span><span class="block-size">Inode Usage</span></div>
+     <div class="stripe-block stripe-purple"><span class="block-tag">BLOCK 4–N</span><span class="block-title">Inode Table</span><span class="block-size">Metadata Array</span></div>
+     <div class="stripe-block stripe-rose"><span class="block-tag">DATA</span><span class="block-title">Data Blocks</span><span class="block-size">File Contents</span></div>
+   </div>
 
-You have full autonomy to adapt this template or select another from the 20-template catalog if it better communicates the document's facts.
+2. Pointer & Tree Hierarchy Topology:
+   <div class="pointer-topology">
+     <div class="pointer-row">
+       <div class="pointer-node" style="border-color:rgba(56,189,248,0.4);"><span class="pointer-node-title">Inode Metadata</span><span class="pointer-node-sub">Mode, Ownership, Timestamps, 15 Pointers</span></div>
+       <svg class="pointer-arrow-svg" width="36" height="20" viewBox="0 0 36 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="10" x2="30" y2="10"></line><polyline points="24 4 30 10 24 16"></polyline></svg>
+       <div class="pointer-node" style="border-color:rgba(16,185,129,0.4);"><span class="pointer-node-title">Direct Pointers (0–11)</span><span class="pointer-node-sub">4KB File Data Blocks</span></div>
+     </div>
+   </div>
 
-KaTeX mathematical formulas are supported: use \\[ formula \\] for block math, and \\( formula \\) for inline math.
+3. Multi-Tier Subsystem Stack:
+   <div class="arch-stack">
+     <div class="stack-tier" style="border-color:rgba(56,189,248,0.3);"><div class="tier-left"><span class="tier-badge badge-cyan">TIER 01</span><div><div class="tier-name">User Applications</div><div class="tier-sub">POSIX System Calls: open(), read(), stat()</div></div></div><div class="tier-chips"><span class="tier-chip">glibc</span><span class="tier-chip">VFS API</span></div></div>
+   </div>
+
+4. Terminal Shell with Real Commands:
+   <div class="terminal-card">
+     <div class="terminal-header"><div class="terminal-dots"><span class="terminal-dot dot-red"></span><span class="terminal-dot dot-yellow"></span><span class="terminal-dot dot-green"></span></div><span class="terminal-title">bash — storage runtime</span></div>
+     <pre class="terminal-body"><code><span class="terminal-cmd">$ mkfs.ext4 testfs</span>
+<span class="terminal-out">Creating filesystem with 65536 1k blocks and 16384 inodes...</span></code></pre>
+   </div>
+
+You have complete creative freedom to compose these primitives or generate clean inline SVGs to match the real technical data structures described in the document.
 
 ABSOLUTE 100% TOPIC FIDELITY & ZERO TEMPLATE COMPROMISE:
-1. ZERO HARDCODED / PLACEHOLDER CONTENT: All titles, commands, flags, metrics, and cards MUST BE 100% EXTRACTED from the provided document context below!
-2. If the document is about Linux containers, your slides must feature authentic commands ($ sudo ./container_demo -pu root/), namespaces (Mount, UTS, IPC, PID), Dockerfile directives (FROM, WORKDIR, ENTRYPOINT), and Open vSwitch bridge configs!
-3. ABSOLUTELY NO EMOJIS: Never output emojis (e.g. 📦, 🏷️, 🔒, 🔢, ⚙️, ⚡, 🔄, ✅) anywhere in titles, badges, cards, stages, or diagrams! Emojis look amateur. Use crisp inline SVG vector icons (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">...</svg>) or clean typography badges instead.
+1. ZERO HARDCODED / PLACEHOLDER CONTENT: All titles, commands, flags, metrics, and cards MUST BE 100% EXTRACTED from the provided document context!
+2. ZERO PROMPT METADATA: Never output "TARGET SLIDE COUNT", "PREFERRED THEME", or prompt directives in any slide!
+3. ABSOLUTELY NO EMOJIS: Never output emojis anywhere. Use crisp inline SVG vector icons (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">...</svg>) or clean typography badges instead.
 4. Output ONLY the <section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}"> ... </section> tag. Always close the </section> tag.
 5. Keep internal reasoning under 80 tokens. Output valid HTML directly.`;
 }
@@ -407,7 +457,7 @@ export function synthesizeFallbackSlide(
   slideDirective: string
 ): string {
   const isActive = slideIndex === 0;
-  const cleanDirective = slideDirective.replace(/\*\*/g, "").replace(/#{1,4}\s*/g, "");
+  const cleanDirective = sanitizeDocumentContent(slideDirective).replace(/\*\*/g, "").replace(/#{1,4}\s*/g, "");
 
   // Extract category
   let category = "SYSTEM ARCHITECTURE";
@@ -420,8 +470,16 @@ export function synthesizeFallbackSlide(
   let title = "";
   const titleMatches = Array.from(cleanDirective.matchAll(/(?:(?:^|\n)\s*(?:SLIDE\s+\d+|TITLE)\s*[:\-—]\s*)([^\n]+)/gi));
   for (const m of titleMatches) {
-    const candidate = m[1].replace(/^[#*\s-]+/, "").trim();
-    if (candidate.length >= 4 && !/^(?:category|subtitle|narrative|content|photo|primary takeaway)/i.test(candidate)) {
+    let candidate = m[1].replace(/^[#*\s-]+/, "").trim();
+    candidate = candidate.replace(/^(?:primary principle|operational focus|key parameters|invariants|visual spec)\s*[:\-—]\s*/i, "").trim();
+    if (
+      candidate.length >= 4 &&
+      !/^(?:category|subtitle|narrative|content|photo|primary takeaway)/i.test(candidate) &&
+      !/target\s+slide\s+count/i.test(candidate) &&
+      !/preferred\s+theme/i.test(candidate) &&
+      !/source\s+document/i.test(candidate) &&
+      !/derived\s+directly/i.test(candidate)
+    ) {
       title = candidate;
       break;
     }
@@ -430,8 +488,16 @@ export function synthesizeFallbackSlide(
     const candidateLines = cleanDirective
       .split("\n")
       .map((l) => l.replace(/^[#*-\s0-9.:]+/, "").trim())
-      .filter((l) => l.length >= 6 && !/^(?:slide|category|subtitle|narrative|content|photo|primary takeaway)/i.test(l));
-    title = candidateLines[0] || `${cleanTopic}: System Architecture`;
+      .map((l) => l.replace(/^(?:primary principle|operational focus|key parameters|invariants|visual spec)\s*[:\-—]\s*/i, "").trim())
+      .filter((l) =>
+        l.length >= 6 &&
+        !/^(?:slide|category|subtitle|narrative|content|photo|primary takeaway)/i.test(l) &&
+        !/target\s+slide\s+count/i.test(l) &&
+        !/preferred\s+theme/i.test(l) &&
+        !/source\s+document/i.test(l) &&
+        !/derived\s+directly/i.test(l)
+      );
+    title = candidateLines[0] || `${cleanTopic}: Technical Architecture`;
   }
 
   // Extract real content bullet points (filtering out all meta-attribute lines)
@@ -450,7 +516,13 @@ export function synthesizeFallbackSlide(
         !u.startsWith("PHOTO") &&
         !u.startsWith("ARCHETYPE") &&
         !u.startsWith("CREATIVE") &&
-        !u.startsWith("TEMPLATE")
+        !u.startsWith("TEMPLATE") &&
+        !u.startsWith("TARGET") &&
+        !u.includes("SLIDE COUNT") &&
+        !u.includes("PREFERRED THEME") &&
+        !u.includes("SOURCE DOCUMENT") &&
+        !u.includes("INVARIANTS: DERIVED") &&
+        !u.includes("VISUAL_SPEC:")
       );
     })
     .map((l) => l.replace(/^(?:primary takeaway|takeaway|metric|formula|point|focus)\s*[:\-—]\s*/i, "").trim());
@@ -470,8 +542,10 @@ export function synthesizeFallbackSlide(
     return words.length > 3 ? words : fallback;
   }
 
-  const assigned = resolveVisualTemplate(slideDirective, slideIndex);
+  const cleanLower = cleanDirective.toLowerCase();
+  const assigned = resolveVisualTemplate(cleanDirective, slideIndex);
 
+  // Explicit Terminal Explorer always takes precedence
   if (assigned.id === "TEMPLATE_02_TERMINAL_CODE_EXPLORER") {
     return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
   <div class="slide-title-group">
@@ -500,6 +574,74 @@ export function synthesizeFallbackSlide(
         <li>${p3}</li>
       </ul>
     </div>
+  </div>
+</section>`;
+  }
+
+  // Composable Primitive: Disk Block Stripe (ext4 block groups, superblocks, disk layouts)
+  if (cleanLower.includes("block group") || cleanLower.includes("superblock") || cleanLower.includes("disk stripe") || cleanLower.includes("group descriptor")) {
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Structured on-disk layout and physical partition geometry.</p>
+  </div>
+  <div class="disk-stripe">
+    <div class="stripe-block stripe-cyan"><span class="block-tag">BLOCK 0</span><span class="block-title">Superblock</span><span class="block-size">${extractShortPhrase(p1, "Fixed Parameters")}</span></div>
+    <div class="stripe-block stripe-emerald"><span class="block-tag">BLOCK 1</span><span class="block-title">Group Descriptors</span><span class="block-size">${extractShortPhrase(p2, "Block Counts")}</span></div>
+    <div class="stripe-block stripe-indigo"><span class="block-tag">BLOCK 2</span><span class="block-title">Block Bitmap</span><span class="block-size">Allocation Map</span></div>
+    <div class="stripe-block stripe-amber"><span class="block-tag">BLOCK 3</span><span class="block-title">Inode Bitmap</span><span class="block-size">Inode Status</span></div>
+    <div class="stripe-block stripe-purple"><span class="block-tag">BLOCK 4–N</span><span class="block-title">Inode Table</span><span class="block-size">${extractShortPhrase(p3, "Metadata Array")}</span></div>
+    <div class="stripe-block stripe-rose"><span class="block-tag">DATA BLOCKS</span><span class="block-title">Data Storage</span><span class="block-size">${extractShortPhrase(p4, "File Contents")}</span></div>
+  </div>
+  <div class="glass-card card-cyan" style="margin-top:14px;">
+    <div class="glass-card-header"><span class="card-title">Partition Invariants</span><span class="badge badge-cyan">VERIFIED</span></div>
+    <ul class="points-list"><li>${p1}</li><li>${p2}</li><li>${p3}</li></ul>
+  </div>
+</section>`;
+  }
+
+  // Composable Primitive: Pointer & Tree Hierarchy (Inodes, Directory trees, Pointers)
+  if (cleanLower.includes("pointer") || cleanLower.includes("indirect") || cleanLower.includes("direct blocks") || cleanLower.includes("inode hierarchy") || cleanLower.includes("inode structure") || cleanLower.includes("inodes")) {
+    const n1 = extractShortPhrase(p1, "Inode (Index Node)");
+    const n2 = extractShortPhrase(p2, "Direct Pointers (0–11)");
+    const n3 = extractShortPhrase(p3, "Single Indirect");
+    const n4 = extractShortPhrase(p4, "Double Indirect");
+
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Hierarchical pointer resolution and direct/indirect block indexing.</p>
+  </div>
+  <div class="pointer-topology">
+    <div class="pointer-row">
+      <div class="pointer-node" style="border-color: rgba(56,189,248,0.4);"><span class="pointer-node-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:6px;"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>${n1}</span><span class="pointer-node-sub">${p1}</span></div>
+      <svg class="pointer-arrow-svg" width="36" height="20" viewBox="0 0 36 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="10" x2="30" y2="10"></line><polyline points="24 4 30 10 24 16"></polyline></svg>
+      <div class="pointer-node" style="border-color: rgba(16,185,129,0.4);"><span class="pointer-node-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:6px;"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>${n2}</span><span class="pointer-node-sub">${p2}</span></div>
+    </div>
+    <div class="pointer-row">
+      <div class="pointer-node" style="border-color: rgba(129,140,248,0.4);"><span class="pointer-node-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>${n3}</span><span class="pointer-node-sub">${p3}</span></div>
+      <svg class="pointer-arrow-svg" width="36" height="20" viewBox="0 0 36 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="10" x2="30" y2="10"></line><polyline points="24 4 30 10 24 16"></polyline></svg>
+      <div class="pointer-node" style="border-color: rgba(245,158,11,0.4);"><span class="pointer-node-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:6px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>${n4}</span><span class="pointer-node-sub">${p4}</span></div>
+    </div>
+  </div>
+</section>`;
+  }
+
+  // Composable Primitive: Subsystem Architecture Stack (VFS, virtual filesystem, mount hierarchy)
+  if (cleanLower.includes("vfs") || cleanLower.includes("virtual filesystem") || cleanLower.includes("mount hierarchy") || cleanLower.includes("mount point") || cleanLower.includes("filesystem mount")) {
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Multi-tier subsystem abstraction and unified filesystem interface.</p>
+  </div>
+  <div class="arch-stack">
+    <div class="stack-tier" style="border-color:rgba(56,189,248,0.3);"><div class="tier-left"><span class="tier-badge badge-cyan">TIER 01</span><div><div class="tier-name">User Applications</div><div class="tier-sub">POSIX System Calls: open(), read(), write(), stat()</div></div></div><div class="tier-chips"><span class="tier-chip">glibc</span><span class="tier-chip">API Interface</span></div></div>
+    <div class="stack-tier" style="border-color:rgba(16,185,129,0.3);"><div class="tier-left"><span class="tier-badge badge-emerald">TIER 02</span><div><div class="tier-name">Virtual Filesystem Switch (VFS) &amp; Caches</div><div class="tier-sub">Uniform abstraction layer over all concrete filesystem drivers</div></div></div><div class="tier-chips"><span class="tier-chip">Page Cache</span><span class="tier-chip">Dentry Cache</span><span class="tier-chip">Inode Cache</span></div></div>
+    <div class="stack-tier" style="border-color:rgba(129,140,248,0.3);"><div class="tier-left"><span class="tier-badge badge-indigo">TIER 03</span><div><div class="tier-name">Concrete Filesystem Drivers</div><div class="tier-sub">${p1}</div></div></div><div class="tier-chips"><span class="tier-chip">ext4</span><span class="tier-chip">Reiser4</span><span class="tier-chip">procfs</span><span class="tier-chip">tmpfs</span></div></div>
+    <div class="stack-tier" style="border-color:rgba(245,158,11,0.3);"><div class="tier-left"><span class="tier-badge badge-amber">TIER 04</span><div><div class="tier-name">Block Layer &amp; Storage Hardware</div><div class="tier-sub">${p2}</div></div></div><div class="tier-chips"><span class="tier-chip">Buffer Cache</span><span class="tier-chip">Device Drivers</span></div></div>
   </div>
 </section>`;
   }

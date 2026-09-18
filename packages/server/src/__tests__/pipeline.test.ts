@@ -4,7 +4,7 @@ import { parseStoryboardIntoSlides, synthesizeFallbackSlide, resolveVisualTempla
 import { detectTargetSlideCount } from "../services/slideCountDetector";
 import { presentationCache } from "../pipeline/cache";
 import { convertHtmlToPresentationAst } from "../pipeline/html-to-ast";
-import { extractCleanTopic } from "../pipeline/topic-extractor";
+import { extractCleanTopic, sanitizeDocumentContent } from "../pipeline/topic-extractor";
 import { PresentationSchema } from "@presentation/schema";
 
 describe("HyperDeck Pipeline & Engine Test Suite", () => {
@@ -114,6 +114,24 @@ describe("HyperDeck Pipeline & Engine Test Suite", () => {
       expect(slides[2]).not.toBe(slides[3]);
       expect(slides[1]).toContain("SLIDE 2:");
       expect(slides[2]).toContain("SLIDE 3:");
+    });
+
+    it("should never include prompt metadata like TARGET SLIDE COUNT in generated slide sections", () => {
+      const polluted = `
+TARGET SLIDE COUNT: 4 Slides
+PREFERRED THEME: EMERALD
+SOURCE DOCUMENT CONTENT:
+SLIDE 1: Inode Hierarchy
+- Category: STORAGE
+SLIDE 2: VFS Subsystem
+- Category: KERNEL
+      `;
+      const slides = parseStoryboardIntoSlides(polluted, 2);
+      expect(slides).toHaveLength(2);
+      expect(slides[0]).not.toContain("TARGET SLIDE COUNT");
+      expect(slides[0]).not.toContain("PREFERRED THEME");
+      expect(slides[0]).not.toContain("SOURCE DOCUMENT CONTENT");
+      expect(slides[0]).toContain("Inode Hierarchy");
     });
   });
 
@@ -247,6 +265,94 @@ ls /proc confirms new PID space
       expect(html).not.toContain('📦');
       expect(html).not.toContain('🔧');
       expect(html).not.toContain('💻');
+    });
+
+    it("should never let prompt metadata like TARGET SLIDE COUNT or PREFERRED THEME become slide titles", () => {
+      const pollutedDirective = `
+TARGET SLIDE COUNT: 4 Slides
+PREFERRED THEME: EMERALD
+SOURCE DOCUMENT CONTENT:
+TITLE: Inode Pointer Resolution
+Direct pointers link to 4KB blocks
+Single indirect pointer addresses 1024 blocks
+      `;
+      const html = synthesizeFallbackSlide("The Filesystem", 0, 4, pollutedDirective);
+      expect(html).not.toContain("TARGET SLIDE COUNT");
+      expect(html).not.toContain("PREFERRED THEME");
+      expect(html).not.toContain("SOURCE DOCUMENT");
+      expect(html).toContain("Inode Pointer Resolution");
+    });
+
+    it("should synthesize pointer-topology for Inode data structures", () => {
+      const inodeDirective = `
+TITLE: Inode Pointer Hierarchy
+Inodes contain 15 disk block pointers
+Direct pointers 0-11 link to 4KB blocks
+Single indirect pointer addresses 4MB of data
+Double indirect pointer addresses 4GB
+      `;
+      const html = synthesizeFallbackSlide("The Filesystem", 2, 4, inodeDirective);
+      expect(html).toContain('class="pointer-topology"');
+      expect(html).toContain("pointer-node");
+      expect(html).toContain("pointer-arrow-svg");
+    });
+
+    it("should synthesize disk-stripe for block group and superblock layouts", () => {
+      const stripeDirective = `
+TITLE: Ext4 Disk Block Group Layout
+Superblock stores fixed filesystem creation parameters
+Group Descriptors store block allocations
+Block Bitmap and Inode Bitmap track usage
+Inode Table contains file metadata
+Data Blocks contain file contents
+      `;
+      const html = synthesizeFallbackSlide("The Filesystem", 3, 4, stripeDirective);
+      expect(html).toContain('class="disk-stripe"');
+      expect(html).toContain('stripe-block stripe-cyan');
+      expect(html).toContain('Superblock');
+      expect(html).toContain('Group Descriptors');
+    });
+
+    it("should synthesize arch-stack for Virtual Filesystem (VFS) architecture", () => {
+      const vfsDirective = `
+TITLE: Virtual Filesystem (VFS) Abstraction
+User applications use POSIX open and read calls
+VFS provides a uniform switch layer over 50+ filesystems
+Concrete drivers like ext4, procfs, and tmpfs manage disk structures
+Device drivers and buffer cache handle physical storage
+      `;
+      const html = synthesizeFallbackSlide("The Filesystem", 1, 4, vfsDirective);
+      expect(html).toContain('class="arch-stack"');
+      expect(html).toContain('stack-tier');
+      expect(html).toContain('Virtual Filesystem Switch');
+    });
+  });
+
+  describe("sanitizeDocumentContent", () => {
+    it("should strip OCR and PDF banners and prompt directives", () => {
+      const raw = `
+==Start of PDF==
+page 1==Screenshot for page 1==
+==Start of OCR for page 1==
+4.4 The Filesystem
+The GNU/Linux file space comprises one or more filesystems.
+==End of OCR for page 1==
+TARGET SLIDE COUNT: 4 Slides
+PREFERRED THEME: EMERALD
+SOURCE DOCUMENT CONTENT:
+GNU/Linux supports over 50 types of filesystem.
+==End of PDF==
+      `;
+      const sanitized = sanitizeDocumentContent(raw);
+      expect(sanitized).not.toContain("==Start of PDF==");
+      expect(sanitized).not.toContain("==End of PDF==");
+      expect(sanitized).not.toContain("==Start of OCR for page 1==");
+      expect(sanitized).not.toContain("TARGET SLIDE COUNT");
+      expect(sanitized).not.toContain("PREFERRED THEME");
+      expect(sanitized).not.toContain("SOURCE DOCUMENT CONTENT");
+      expect(sanitized).toContain("4.4 The Filesystem");
+      expect(sanitized).toContain("The GNU/Linux file space comprises one or more filesystems.");
+      expect(sanitized).toContain("GNU/Linux supports over 50 types of filesystem.");
     });
   });
 });
