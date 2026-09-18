@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { extractSlidesFromContent, extractCustomScripts } from "../pipeline/html-assembler";
+import { extractSlidesFromContent, extractCustomScripts, assembleHyperDeckPresentation } from "../pipeline/html-assembler";
+import { parseStoryboardIntoSlides } from "../pipeline/stage3-creative-generator";
 import { detectTargetSlideCount } from "../services/slideCountDetector";
 import { presentationCache } from "../pipeline/cache";
 import { convertHtmlToPresentationAst } from "../pipeline/html-to-ast";
@@ -27,11 +28,40 @@ describe("HyperDeck Pipeline & Engine Test Suite", () => {
       expect(slides[1]).toContain('id="slide1"');
     });
 
-    it("should auto-close unclosed section tags", () => {
-      const unclosedHtml = `<section class="slide" id="slide0"><h2 class="slide-title">Unclosed Slide</h2>`;
-      const slides = extractSlidesFromContent(unclosedHtml);
+    it("should auto-close unclosed section tags and strip dangling incomplete tags", () => {
+      const truncatedHtml = `<section class="slide" id="slide0"><div class="motion-pipeline"><div class="pipeline-stage"><span class="`;
+      const slides = extractSlidesFromContent(truncatedHtml);
       expect(slides).toHaveLength(1);
-      expect(slides[0]).toContain("</section>");
+      expect(slides[0]).not.toContain('<span class="');
+      expect(slides[0]).toContain("</div></div></section>");
+    });
+  });
+
+  describe("assembleHyperDeckPresentation", () => {
+    it("should include KaTeX CSS and auto-render JS in presentation head", () => {
+      const html = assembleHyperDeckPresentation({
+        topic: "Quantum Superposition",
+        slidesHtml: '<section class="slide" id="slide0"><h2>Quantum</h2></section>',
+        targetCount: 1,
+      });
+
+      expect(html).toContain("katex.min.css");
+      expect(html).toContain("katex.min.js");
+      expect(html).toContain("renderMathInElement");
+    });
+  });
+
+  describe("parseStoryboardIntoSlides", () => {
+    it("should generate distinct diverse slide blueprints when targetCount exceeds storyboard length", () => {
+      const shortStoryboard = `SLIDE 1: Introduction to IoT\n- Focus: Sensor acquisition`;
+      const slides = parseStoryboardIntoSlides(shortStoryboard, 4);
+      expect(slides).toHaveLength(4);
+
+      // Verify that slides 2, 3, 4 are not duplicate copies of each other
+      expect(slides[1]).not.toBe(slides[2]);
+      expect(slides[2]).not.toBe(slides[3]);
+      expect(slides[1]).toContain("SLIDE 2:");
+      expect(slides[2]).toContain("SLIDE 3:");
     });
   });
 

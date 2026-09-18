@@ -24,11 +24,21 @@ export function parseStoryboardIntoSlides(storyboardText: string, targetCount: n
     return rawSections.slice(0, targetCount);
   }
 
+  const diverseThemes = [
+    { category: "PHYSICAL ARCHITECTURE", title: "Physical Architecture & Sensing Mechanism", desc: "Heterogeneous signal acquisition, edge physical boundaries, and raw telemetry ingestion." },
+    { category: "CONDUIT TRANSPORT", title: "Low-Latency Conduit & Protocol Pipeline", desc: "Packetized serialization, deterministic transport latency, and gateway streaming invariants." },
+    { category: "DYNAMIC SIMULATION", title: "Runtime Invariant Simulator & Telemetry Evaluation", desc: "Interactive sensitivity analysis, load parameter modulation, and dynamic system state feedback." },
+    { category: "ARCHITECTURE FLOW", title: "Decoupled Execution Flow & Node Topology", desc: "Connected component state progression, event bus distribution, and failure isolation boundaries." },
+    { category: "SYSTEM BENCHMARKS", title: "Multi-Dimensional Trade-off Matrix & SLA Boundaries", desc: "Comparative evaluation of latency, reliability, throughput bounds, and operational invariants." },
+    { category: "OPERATIONAL INTEGRATION", title: "Autonomous Failover & Production Telemetry", desc: "Closed-loop feedback control, telemetry assurance, and mission-critical SLA monitoring." },
+  ];
+
   if (rawSections.length > 0 && rawSections.length < targetCount) {
     const result = [...rawSections];
     while (result.length < targetCount) {
       const idx = result.length + 1;
-      result.push(`SLIDE ${idx}: Advanced Architecture & Component Invariants\n- Category: SYSTEM INVARIANTS\n- Real-world operations, dynamic invariants, and telemetry guarantees.`);
+      const theme = diverseThemes[(idx - 1) % diverseThemes.length];
+      result.push(`SLIDE ${idx}: ${theme.title}\n- Category: ${theme.category}\n- Focus: ${theme.desc}`);
     }
     return result;
   }
@@ -62,6 +72,181 @@ export function buildSingleSlidePrompt(
   analysisSummary: string
 ): string {
   const isActive = slideIndex === 0;
+
+  const archetypes = [
+    {
+      archetypeId: "3D_WORLD_OR_HERO_SPLIT",
+      title: "Interactive 3D WebGL World or Split Hero Topology",
+      mandate: `You MUST use a .grid-split featuring an interactive 3D WebGL World (.three-container with data-model="hardware-die-3d" or "quantum-bloch-sphere" or "neural-constellation-3d") on the left, and a multi-color .glass-card.card-emerald on the right with a KaTeX mathematical equation:
+<div class="grid-split">
+  <div class="three-container" data-model="hardware-die-3d">
+    <div class="three-overlay">
+      <span class="three-badge">⚡ 3D INTERACTIVE WEBGL</span>
+      <span style="font-family: var(--font-display); font-size: 14px; font-weight: bold; color: #fff;">Physical Topology</span>
+    </div>
+    <div class="three-hint">🖱️ Click &amp; Drag to Rotate 3D Model</div>
+  </div>
+  <div class="glass-card card-emerald">
+    <div class="glass-card-header">
+      <span class="card-title">Physical Topology &amp; Invariants</span>
+      <span class="badge badge-emerald">PHYSICAL TOPOLOGY</span>
+    </div>
+    <ul class="points-list">
+      <li><strong>Primary Takeaway:</strong> Core foundational architecture and operational mechanisms.</li>
+      <li><strong>Quantitative Metric:</strong> Validated throughput and low-latency boundary parameters.</li>
+      <li><strong>Mathematical Derivation (KaTeX):</strong><br>\\[ \\text{State}_{t+1} = \\mathcal{T}(\\text{State}_t, \\text{Input}) \\]</li>
+    </ul>
+  </div>
+</div>`,
+    },
+    {
+      archetypeId: "MOTION_PIPELINE",
+      title: "Real-World Physical Motion Pipeline (.motion-pipeline)",
+      mandate: `You MUST use a real-world .motion-pipeline with 4 physical sequential stages (Emerald -> Cyan -> Indigo -> Amber) and animated packet pulses:
+<div class="pipeline-controls">
+  <span class="pipeline-tag">⚡ PHYSICAL PROGRESSION &amp; CONDUIT FLOW</span>
+  <button class="sim-play-btn" onclick="simulatePipelineFlow(this)">▶ Simulate Flow</button>
+</div>
+<div class="motion-pipeline">
+  <div class="pipeline-stage stage-emerald">
+    <span class="stage-num">STAGE 01</span>
+    <div class="stage-icon">📡</div>
+    <div class="stage-title">[Physical Sensing / Ingestion]</div>
+    <div class="stage-desc">[How signals/inputs are captured in the physical world]</div>
+  </div>
+  <div class="pipeline-connector"><div class="packet-pulse packet-emerald"></div></div>
+  <div class="pipeline-stage stage-cyan">
+    <span class="stage-num">STAGE 02</span>
+    <div class="stage-icon">⚡</div>
+    <div class="stage-title">[Conduit / Streaming Transport]</div>
+    <div class="stage-desc">[High-speed packetized streaming via gateway]</div>
+  </div>
+  <div class="pipeline-connector"><div class="packet-pulse packet-cyan"></div></div>
+  <div class="pipeline-stage stage-indigo">
+    <span class="stage-num">STAGE 03</span>
+    <div class="stage-icon">🧠</div>
+    <div class="stage-title">[Inference &amp; State Logic]</div>
+    <div class="stage-desc">[Transformation, state evaluation, invariant checks]</div>
+  </div>
+  <div class="pipeline-connector"><div class="packet-pulse packet-amber"></div></div>
+  <div class="pipeline-stage stage-amber">
+    <span class="stage-num">STAGE 04</span>
+    <div class="stage-icon">🚀</div>
+    <div class="stage-title">[Actuation &amp; Telemetry Output]</div>
+    <div class="stage-desc">[Physical execution, feedback, and telemetry guarantees]</div>
+  </div>
+</div>
+(CRITICAL: This is the ONLY slide in the entire presentation allowed to use .motion-pipeline!)`,
+    },
+    {
+      archetypeId: "INTERACTIVE_SIMULATOR",
+      title: "Dynamic Interactive Parameter Simulator (.sim-container)",
+      mandate: `You MUST use a .grid-split featuring an interactive .sim-container with a live slider that calculates a concrete domain formula and updates dynamic gauges, paired with an evaluation .glass-card:
+<div class="grid-split">
+  <div class="sim-container card-cyan">
+    <div class="glass-card-header">
+      <span class="card-title">Interactive Parameter Simulator</span>
+      <span class="badge badge-cyan">RUNTIME SIMULATOR</span>
+    </div>
+    <div class="sim-controls">
+      <div class="sim-row">
+        <span style="color: #cbd5e1; font-weight: 600;">System Parameter:</span>
+        <input type="range" class="sim-slider slider-cyan" min="1" max="100" value="45" oninput="updateSim${slideIndex}(this.value)" />
+        <span id="display-val-${slideIndex}" style="font-family: var(--font-mono); font-weight: bold; color: var(--accent-cyan);">45%</span>
+      </div>
+    </div>
+    <div class="sim-gauge gauge-cyan">
+      <div class="sim-value" id="result-val-${slideIndex}">Optimal State</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">DYNAMIC SYSTEM TELEMETRY</div>
+    </div>
+  </div>
+  <div class="glass-card card-indigo">
+    <div class="glass-card-header">
+      <span class="card-title">Dynamic Invariants &amp; Thresholds</span>
+      <span class="badge badge-indigo">VERIFIED</span>
+    </div>
+    <ul class="points-list">
+      <li><strong>Operating Boundary:</strong> Telemetry values remain within guaranteed invariant bounds.</li>
+      <li><strong>Formula:</strong> Response latency model \\( T_{\\text{resp}} = \\frac{1}{\\mu - \\lambda} \\).</li>
+      <li><strong>State Invariance:</strong> Closed-loop parameter adjustment preserves steady-state fidelity.</li>
+    </ul>
+  </div>
+</div>
+<script>
+  function updateSim${slideIndex}(val) {
+    document.getElementById('display-val-${slideIndex}').textContent = val + '%';
+    document.getElementById('result-val-${slideIndex}').textContent = val > 80 ? 'Critical Load (' + val + '%)' : 'Optimal (' + val + '%)';
+  }
+</script>`,
+    },
+    {
+      archetypeId: "FLOW_TOPOLOGY",
+      title: "Connected Architecture Flow Topology (.flow-diagram)",
+      mandate: `You MUST use a connected flow diagram (.flow-diagram) with active step nodes, animated conduits, and state telemetry:
+<div class="flow-diagram">
+  <div class="flow-step">
+    <div class="flow-node">📡</div>
+    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Ingress Node]</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Ingestion specs]</div>
+  </div>
+  <div class="flow-arrow">➔</div>
+  <div class="flow-step">
+    <div class="flow-node">⚡</div>
+    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Transport Conduit]</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Streaming protocol]</div>
+  </div>
+  <div class="flow-arrow">➔</div>
+  <div class="flow-step">
+    <div class="flow-node">🧠</div>
+    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Inference Core]</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Model execution]</div>
+  </div>
+  <div class="flow-arrow">➔</div>
+  <div class="flow-step">
+    <div class="flow-node">🚀</div>
+    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Actuation Gateway]</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Verified output]</div>
+  </div>
+</div>`,
+    },
+    {
+      archetypeId: "COMPARISON_MATRIX",
+      title: "Multi-Dimensional Comparison Matrix (.matrix-table)",
+      mandate: `You MUST use a multi-color comparison matrix (.matrix-table) inside a .glass-card with status badges:
+<div class="glass-card">
+  <table class="matrix-table">
+    <thead>
+      <tr><th>EVALUATION DIMENSION</th><th>STATUS</th><th>CONCRETE METRIC</th><th>ARCHITECTURAL IMPACT</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>[Dimension 1]</td><td><span class="badge badge-emerald">OPTIMAL</span></td><td>[Concrete Metric 1]</td><td>[Operational impact 1]</td></tr>
+      <tr><td>[Dimension 2]</td><td><span class="badge badge-cyan">CONSTRAINED</span></td><td>[Concrete Metric 2]</td><td>[Operational impact 2]</td></tr>
+      <tr><td>[Dimension 3]</td><td><span class="badge badge-amber">THRESHOLD</span></td><td>[Concrete Metric 3]</td><td>[Operational impact 3]</td></tr>
+      <tr><td>[Dimension 4]</td><td><span class="badge badge-rose">LATENCY BOUND</span></td><td>[Concrete Metric 4]</td><td>[Operational impact 4]</td></tr>
+    </tbody>
+  </table>
+</div>`,
+    },
+    {
+      archetypeId: "BAR_CHART_KPI",
+      title: "Dynamic Visual Bar Chart (.chart-card)",
+      mandate: `You MUST use an animated visual bar chart (.chart-card) showing quantitative benchmarks and throughput scaling:
+<div class="chart-card">
+  <div class="chart-header">
+    <span style="font-family: var(--font-display); font-size: 15px; font-weight: 700; color: #fff;">[Performance &amp; Throughput Benchmark]</span>
+    <span class="badge badge-emerald">BENCHMARK DATA</span>
+  </div>
+  <div class="chart-bars-group">
+    <div class="chart-bar-col"><div class="chart-val-label">[Val 1]</div><div class="chart-bar-fill" style="height: 45%;"></div><div class="chart-axis-label">[Config A]</div></div>
+    <div class="chart-bar-col"><div class="chart-val-label">[Val 2]</div><div class="chart-bar-fill accent-indigo" style="height: 75%;"></div><div class="chart-axis-label">[Config B]</div></div>
+    <div class="chart-bar-col"><div class="chart-val-label">[Val 3]</div><div class="chart-bar-fill accent-emerald" style="height: 95%;"></div><div class="chart-axis-label">[Optimized]</div></div>
+  </div>
+</div>`,
+    },
+  ];
+
+  const assigned = archetypes[slideIndex % archetypes.length];
+
   return `You are an elite Keynote Presentation Visual Designer & Creative Frontend Technologist.
 Synthesize EXACTLY ONE slide section (<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}"> ... </section>) for:
 Topic: "${cleanTopic}"
@@ -77,151 +262,54 @@ DOMAIN CONTEXT FROM MODEL 1:
 ${analysisSummary.slice(0, 1500)}
 """
 
-DESIGN SYSTEM UTILITIES AVAILABLE (DO NOT REDEFINE CSS):
-- Multi-Color Themed Obsidian Glass Cards (USE MULTI-COLORS, NEVER MONOTONE CYAN):
-  * .glass-card.card-emerald (Perception / Sensing / Success / Optimal)
-  * .glass-card.card-cyan (Network / Transport / Conduit / Streaming Protocol)
-  * .glass-card.card-indigo (Cognitive / Logic / AI Model / Cloud Processing)
-  * .glass-card.card-amber (Actuation / Power Invariants / Alert Threshold)
-  * .glass-card.card-rose (Bottleneck / Latency / Trade-off / Fault)
-  (Every card features radiant gradient top borders and glowing bullets in its respective color!)
+MANDATORY HEADLINE REQUIREMENT:
+You MUST start the slide content immediately inside <section ...> with:
+<div class="slide-title-group">
+  <div class="slide-category">[UPPERCASE DOMAIN CATEGORY]</div>
+  <h2 class="slide-title">[Specific Technical Headline for This Slide]</h2>
+  <p class="slide-subtitle">[Concrete Explanation of Invariants & Mechanics]</p>
+</div>
+NEVER output raw <h2>Chapter...</h2> or "Slide X of Y" in the title text!
 
-- Interactive 3D WebGL World (.three-container) — ROTATABLE WITH MOUSE (USE FOR QUANTUM, HARDWARE, NEURAL, PHYSICS):
-  <div class="grid-split">
-    <div class="three-container" data-model="quantum-bloch-sphere">
-      <div class="three-overlay">
-        <span class="three-badge">⚡ 3D INTERACTIVE WEBGL</span>
-        <span style="font-family: var(--font-display); font-size: 14px; font-weight: bold; color: #fff;">[3D Model Title]</span>
-      </div>
-      <div class="three-hint">🖱️ Click &amp; Drag to Rotate 3D Model</div>
-    </div>
-    <div class="glass-card card-cyan">
-      <div class="glass-card-header">
-        <span class="card-title">[Physical Dimension &amp; Invariants]</span>
-        <span class="badge badge-cyan">MODEL STATE</span>
-      </div>
-      <ul class="points-list">
-        <li>[Invariant 1: Real-world metric or mathematical derivation]</li>
-        <li>[Invariant 2: Operational boundary or state fidelity]</li>
-      </ul>
-    </div>
-  </div>
-  (Available models: "quantum-bloch-sphere", "hardware-die-3d", "neural-constellation-3d")
+ASSIGNED VISUAL ARCHETYPE FOR SLIDE ${slideIndex + 1} (MANDATORY):
+>>> ${assigned.title} <<<
+${assigned.mandate}
 
-- Dynamic Particle Conduit (.particle-container) — 60FPS CONTINUOUS PARTICLE FLOW:
-  <div class="particle-container">
-    <canvas class="particle-canvas"></canvas>
-  </div>
-
-- Real-World Motion Pipeline (.motion-pipeline) — USE FOR PHYSICAL PROCESSES & ARCHITECTURE:
-  Shows physical progression stages with animated glowing packets and a live simulation runner:
-  <div class="pipeline-controls">
-    <span class="pipeline-tag">⚡ PHYSICAL PROGRESSION &amp; CONDUIT FLOW</span>
-    <button class="sim-play-btn" onclick="simulatePipelineFlow(this)">▶ Simulate Flow</button>
-  </div>
-  <div class="motion-pipeline">
-    <div class="pipeline-stage stage-emerald">
-      <span class="stage-num">STAGE 01</span>
-      <div class="stage-icon">📡</div>
-      <div class="stage-title">[Input / Physical Sensing]</div>
-      <div class="stage-desc">[How signals/inputs are captured in the real world]</div>
-    </div>
-    <div class="pipeline-connector"><div class="packet-pulse packet-emerald"></div></div>
-    <div class="pipeline-stage stage-cyan">
-      <span class="stage-num">STAGE 02</span>
-      <div class="stage-icon">⚡</div>
-      <div class="stage-title">[Conduit / Transport]</div>
-      <div class="stage-desc">[High-speed packetized streaming]</div>
-    </div>
-    <div class="pipeline-connector"><div class="packet-pulse packet-cyan"></div></div>
-    <div class="pipeline-stage stage-indigo">
-      <span class="stage-num">STAGE 03</span>
-      <div class="stage-icon">🧠</div>
-      <div class="stage-title">[Inference / Logic]</div>
-      <div class="stage-desc">[Transformation & state evaluation]</div>
-    </div>
-    <div class="pipeline-connector"><div class="packet-pulse packet-amber"></div></div>
-    <div class="pipeline-stage stage-amber">
-      <span class="stage-num">STAGE 04</span>
-      <div class="stage-icon">🚀</div>
-      <div class="stage-title">[Actuation / Output]</div>
-      <div class="stage-desc">[Physical execution & telemetry]</div>
-    </div>
-  </div>
-
-- Dynamic Interactive Simulators (.sim-container):
-  Must feature an interactive slider that calculates a real formula and dynamically animates gauges or indicators:
-  <div class="sim-container card-indigo">
-    <div class="glass-card-header">
-      <span class="card-title">Dynamic Interactive Simulator</span>
-      <span class="badge badge-indigo">LIVE RUNTIME</span>
-    </div>
-    <div class="sim-controls">
-      <div class="sim-row">
-        <span style="color: #cbd5e1; font-weight: 600;">System Parameter:</span>
-        <input type="range" class="sim-slider slider-indigo" min="1" max="100" value="35" oninput="updateSim${slideIndex}(this.value)" />
-        <span id="display-val-${slideIndex}" style="font-family: var(--font-mono); font-weight: bold; color: var(--accent-indigo);">35</span>
-      </div>
-    </div>
-    <div class="sim-gauge gauge-indigo">
-      <div class="sim-value" id="result-val-${slideIndex}">49.7 ms</div>
-      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">REAL-TIME DYNAMIC TELEMETRY</div>
-    </div>
-  </div>
-  <script>
-    function updateSim${slideIndex}(val) {
-      document.getElementById('display-val-${slideIndex}').textContent = val;
-      document.getElementById('result-val-${slideIndex}').textContent = (val * 1.42).toFixed(1) + ' ms';
-    }
-  </script>
-
-- Multi-Color Comparison Matrix (.matrix-table):
-  <div class="glass-card">
-    <table class="matrix-table">
-      <thead>
-        <tr><th>DIMENSION</th><th>STATUS</th><th>INVARIANT VALUE</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>[Dimension 1]</td><td><span class="badge badge-emerald">OPTIMAL</span></td><td>[Concrete Metric]</td></tr>
-        <tr><td>[Dimension 2]</td><td><span class="badge badge-amber">MODERATE</span></td><td>[Concrete Metric]</td></tr>
-        <tr><td>[Dimension 3]</td><td><span class="badge badge-rose">LATENCY BOUND</span></td><td>[Concrete Metric]</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-- NVIDIA FLUX Photo Card:
-  <div class="photo-card">
-    <div class="photo-badge">NVIDIA FLUX</div>
-    <img class="photo-img" data-ai-photo="true" data-photo-prompt="[Insert photorealistic prompt from Model 2]" alt="[Photo Title]" />
-    <div class="photo-body">
-      <div class="photo-title">[Photo Title]</div>
-      <div class="photo-caption">[Photo Caption]</div>
-    </div>
-  </div>
+KaTeX mathematical formulas are supported: use \\[ formula \\] for block math, and \\( formula \\) for inline math.
 
 STRICT ANTI-ARTICLE RULES:
 1. Output ONLY the <section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}"> ... </section> tag.
 2. Always properly close the </section> tag at the end.
-3. NEVER generate plain text articles or bullet-point essay cards!
-   - Every slide MUST feature a rich visual shape: .motion-pipeline, .sim-container, .flow-diagram, or .matrix-table!
-   - If using text cards, pair them in a .grid-split alongside a visual shape or simulator—NEVER generate a slide with only text cards!
-4. USE MULTI-COLORS: Assign different colors to stages and cards (.card-emerald, .card-cyan, .card-indigo, .card-amber, .card-rose). Never make the slide monotone cyan!
-5. Keep internal reasoning under 80 tokens. Output valid HTML directly.`;
+3. NEVER generate plain text articles or bullet-point essay cards! Use the assigned visual archetype above.
+4. USE MULTI-COLORS: Assign different colors to stages and cards (.card-emerald, .card-cyan, .card-indigo, .card-amber, .card-rose).
+5. DO NOT use .motion-pipeline unless this slide is explicitly assigned ARCHETYPE 2!
+6. Keep internal reasoning under 80 tokens. Output valid HTML directly.`;
 }
 
 /**
- * Validates that a slide is non-empty, contains HTML structure, and meets the minimum length.
+ * Validates that a slide is non-empty, contains complete HTML structure, and is NOT truncated.
  */
 function isValidSlideHtml(html: string): boolean {
   const trimmed = (html || "").trim();
   if (trimmed.length < 250) return false;
+  // If it ends abruptly in an unclosed tag like `<span class="` or `<div`
+  if (/<[a-z0-9_-]+(?:\s+[^>]*)?$/i.test(trimmed)) return false;
+  // If it does not contain a closing </section> tag, it was truncated!
+  if (!trimmed.includes("</section>")) return false;
+  // Check that open divs are not left completely unclosed (indicates cutoff)
+  const openDivs = (trimmed.match(/<div\b/gi) || []).length;
+  const closeDivs = (trimmed.match(/<\/div>/gi) || []).length;
+  if (openDivs > 0 && closeDivs === 0) return false;
+
   return (
     trimmed.includes("<section") ||
     trimmed.includes("class=\"slide") ||
     trimmed.includes("slide-title") ||
     trimmed.includes("motion-pipeline") ||
     trimmed.includes("sim-container") ||
-    trimmed.includes("glass-card")
+    trimmed.includes("glass-card") ||
+    trimmed.includes("matrix-table") ||
+    trimmed.includes("flow-diagram")
   );
 }
 
@@ -443,7 +531,7 @@ export async function runStage3CreativeGenerator(
             ],
             temperature: 0.35,
             top_p: 0.9,
-            max_tokens: 2500,
+            max_tokens: 4000,
             stream: true,
           } as any,
           { signal: controller.signal }
@@ -518,6 +606,12 @@ export async function runStage3CreativeGenerator(
       if (lastClose > 0) {
         cleanSlide = cleanSlide.slice(0, lastClose + 10);
       } else {
+        cleanSlide = cleanSlide.replace(/<[a-z0-9_-]+(?:\s+[^>]*)?$/i, "");
+        const openDivs = (cleanSlide.match(/<div\b/gi) || []).length;
+        const closeDivs = (cleanSlide.match(/<\/div>/gi) || []).length;
+        for (let d = 0; d < openDivs - closeDivs; d++) {
+          cleanSlide += "</div>";
+        }
         cleanSlide += "\n</section>";
       }
     }

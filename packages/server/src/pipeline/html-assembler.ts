@@ -40,6 +40,13 @@ export function extractSlidesFromContent(raw: string): string[] {
         if (lastClose > 0) {
           slide = slide.slice(0, lastClose + 10);
         } else {
+          // Slide truncated without </section>: strip dangling incomplete tag
+          slide = slide.replace(/<[a-z0-9_-]+(?:\s+[^>]*)?$/i, "");
+          const openDivs = (slide.match(/<div\b/gi) || []).length;
+          const closeDivs = (slide.match(/<\/div>/gi) || []).length;
+          for (let d = 0; d < openDivs - closeDivs; d++) {
+            slide += "</div>";
+          }
           slide += "</section>";
         }
       } else if (slide.startsWith("<div")) {
@@ -47,8 +54,25 @@ export function extractSlidesFromContent(raw: string): string[] {
         if (lastClose > 0) {
           slide = slide.slice(0, lastClose + 6);
         } else {
+          slide = slide.replace(/<[a-z0-9_-]+(?:\s+[^>]*)?$/i, "");
           slide += "</div>";
         }
+      }
+
+      // Normalize raw unformatted <h2>Slide X</h2> headings into standard .slide-title-group
+      if (/<h2\b[^>]*>.*?<\/h2>/i.test(slide) && !slide.includes("slide-title-group")) {
+        slide = slide.replace(
+          /<h2\b[^>]*>(?:.*?Slide\s+\d+[^<]*[–-]\s*)?([^<]+)<\/h2>(?:\s*<h3\b[^>]*>([^<]+)<\/h3>)?(?:\s*<p class="subtitle"[^>]*>([^<]+)<\/p>)?/i,
+          (_, h2Text, h3Text, subText) => {
+            const cleanTitle = (h3Text || h2Text || "Component Architecture").trim();
+            const subtitle = (subText || (h3Text ? h2Text : "") || "System Invariants and Runtime Telemetry").trim();
+            return `<div class="slide-title-group">
+    <div class="slide-category">SYSTEM ARCHITECTURE</div>
+    <h2 class="slide-title">${cleanTitle}</h2>
+    <p class="slide-subtitle">${subtitle}</p>
+  </div>`;
+          }
+        );
       }
 
       slides.push(slide.trim());
@@ -146,6 +170,10 @@ export function assembleHyperDeckPresentation(options: AssembleOptions): string 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <!-- Three.js 3D WebGL Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- KaTeX Mathematical Typography Engine -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
   
   <style>
 ${MASTER_DESIGN_SYSTEM_CSS}
@@ -260,6 +288,23 @@ ${renderedSlidesHtml}
           // Initialize 2026 Creative 3D WebGL & Particle engines on active slide
           initThreeScenes(s);
           initParticleConduits(s);
+
+          // Render KaTeX mathematical equations on active slide
+          if (window.renderMathInElement) {
+            try {
+              renderMathInElement(s, {
+                delimiters: [
+                  { left: "$$", right: "$$", display: true },
+                  { left: "\\[", right: "\\]", display: true },
+                  { left: "$", right: "$", display: false },
+                  { left: "\\(", right: "\\)", display: false },
+                ],
+                throwOnError: false,
+              });
+            } catch (e) {
+              console.warn("KaTeX render error:", e);
+            }
+          }
         } else {
           s.classList.remove('active');
         }
@@ -672,6 +717,21 @@ ${renderedSlidesHtml}
     // Initialize
     initMotionPipelines();
     updatePresentationState();
+    if (window.renderMathInElement) {
+      try {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+          ],
+          throwOnError: false,
+        });
+      } catch (e) {
+        console.warn("Global KaTeX error:", e);
+      }
+    }
   </script>
 
   ${customScript ? `<script id="custom-hyperdeck-widgets">\n${customScript}\n</script>` : ""}

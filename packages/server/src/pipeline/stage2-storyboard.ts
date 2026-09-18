@@ -69,6 +69,7 @@ For every single slide, you MUST provide:
 
 CRITICAL MANDATE:
 - ZERO TEXT-ONLY ARTICLE SLOP: Avoid plain text cards. Every slide must feature a distinct visual 3D archetype, particle flow, connected motion stage, or interactive widget.
+- EVERY SLIDE MUST USE A DIFFERENT ARCHETYPE: Slide 1 MUST be 3D/Hero Split, Slide 2 MUST be Motion Pipeline, Slide 3 MUST be Dynamic Simulator, Slide 4 MUST be Flow Topology, Slide 5 MUST be Benchmark Matrix, Slide 6 MUST be Bar Chart KPI. NEVER repeat .motion-pipeline on multiple slides!
 - Use multi-color coding (Emerald for Edge/Perception, Cyan for Network/Data, Indigo for Logic, Amber for Power/Action, Rose for Bottlenecks).
 - 100% domain fidelity derived from Model 1's extracted facts.`;
 
@@ -142,7 +143,14 @@ CRITICAL MANDATE:
   // Fallback: Synthesize structured storyboard from analysis if API fails
   if (!storyboardText || storyboardText.trim().length < 80) {
     console.warn("[Stage2Storyboard] Generating structured storyboard from analysis...");
-    storyboardText = `SLIDE 1: Executive Foundation & Real-World Flow of ${cleanTopic}
+    const baseSlides = [
+      `SLIDE 1: Executive Foundation & Sensing Topology of ${cleanTopic}
+- CATEGORY: PHYSICAL TOPOLOGY
+- NARRATIVE: Foundational architectural paradigms, raw signal acquisition, and boundary invariants.
+- INVARIANTS: Sub-millisecond boundary validation, physical sensing floor.
+- VISUAL_SPEC: Interactive 3D WebGL World (.three-container with data-model="hardware-die-3d") paired with a multi-color .glass-card.card-emerald featuring a KaTeX mathematical derivation.`,
+
+      `SLIDE 2: Real-World Physical Motion Pipeline & Conduit Flow
 - CATEGORY: PHYSICAL PROGRESSION
 - NARRATIVE: End-to-end operational stages from physical sensing to deterministic actuation.
 - MOTION_PIPELINE:
@@ -150,34 +158,49 @@ CRITICAL MANDATE:
   * Stage 2 [Cyan]: High-Speed Conduit Transport & Streaming
   * Stage 3 [Indigo]: Neural Inference & State Transformation
   * Stage 4 [Amber]: Physical Actuation & Result Telemetry
-- PHOTO_SPEC: None (Motion Pipeline Focus)
-- VISUAL_SPEC: 4-Stage Motion Pipeline (.motion-pipeline) with animated packet pulses and multi-color themes.
+- VISUAL_SPEC: 4-Stage Motion Pipeline (.motion-pipeline) with animated packet pulses and multi-color themes.`,
 
-SLIDE 2: In-Depth Component Mechanisms & Conduit Topology
-- CATEGORY: TOPOLOGY & HARDWARE
-- NARRATIVE: Sequential execution phases and decoupled component interfaces.
-- INVARIANTS: Sub-millisecond boundary validation, lossless queue serialization.
-- PHOTO_SPEC:
-  * PHOTO_PROMPT: High-tech industrial microchip wafer and optical telemetry sensors illustrating ${cleanTopic}, cinematic volumetric lighting, 8k photorealistic.
-  * CAPTION: Real-time operational hardware monitoring and telemetry.
-- VISUAL_SPEC: Connected Flow Topology (.flow-diagram) with active status nodes and conduit flows.
-
-SLIDE 3: Interactive System Simulator & Invariant Dynamics
+      `SLIDE 3: Interactive System Simulator & Invariant Dynamics
 - CATEGORY: DYNAMIC SIMULATION
 - NARRATIVE: Live parameter exploration evaluating real-time operational thresholds and latency.
 - SIMULATOR_SPEC:
   * Parameter: System Throughput / Concurrency Load (1 to 100)
   * Dynamic Formula: Response Latency (ms) = (Load * 1.42).toFixed(1)
   * Visual: Interactive slider updating live telemetry gauge and glowing node indicators.
-- PHOTO_SPEC: None (Interactive Widget Focus)
-- VISUAL_SPEC: Dynamic Interactive Simulator (.sim-container) with live calculation script.
+- VISUAL_SPEC: Dynamic Interactive Simulator (.sim-container) with live calculation script.`,
 
-SLIDE 4: Empirical Trade-offs & Strategic Takeaways
+      `SLIDE 4: Connected Architecture Flow Topology & Decoupled Nodes
+- CATEGORY: TOPOLOGY & HARDWARE
+- NARRATIVE: Sequential execution phases and decoupled component interfaces.
+- INVARIANTS: Sub-millisecond boundary validation, lossless queue serialization.
+- VISUAL_SPEC: Connected Flow Topology (.flow-diagram) with active status nodes and conduit flows.`,
+
+      `SLIDE 5: Multi-Dimensional Benchmark & Trade-off Matrix
 - CATEGORY: TRADE-OFF ANALYSIS
 - NARRATIVE: Critical performance characteristics, dimensional comparisons, and benchmarks.
 - INVARIANTS: Latency vs. Throughput trade-off, energy efficiency boundaries.
-- PHOTO_SPEC: None (Comparison Matrix Focus)
-- VISUAL_SPEC: Dimensional Comparison Matrix (.matrix-table) with emerald/amber/rose status badges.`;
+- VISUAL_SPEC: Dimensional Comparison Matrix (.matrix-table) with emerald/amber/rose status badges.`,
+
+      `SLIDE 6: Performance Scaling & Telemetry Benchmarks
+- CATEGORY: SYSTEM TELEMETRY
+- NARRATIVE: Empirical scaling bounds, throughput benchmarks, and resource utilization.
+- INVARIANTS: Bounded memory footprint, 99.99th percentile response SLA.
+- VISUAL_SPEC: Dynamic Visual Bar Chart (.chart-card) with animated value columns and validation badges.`,
+
+      `SLIDE 7: Fault Isolation Boundaries & Autonomous Failover
+- CATEGORY: FAULT RESILIENCE
+- NARRATIVE: Failure domain containment, graceful degradation, and self-healing mechanisms.
+- INVARIANTS: Zero cascaded partition loss, automated heartbeat recovery.
+- VISUAL_SPEC: Multi-Dimensional Comparison Matrix (.matrix-table) with threshold indicators.`,
+
+      `SLIDE 8: Production Verification & Mission-Critical SLAs
+- CATEGORY: PRODUCTION SLA
+- NARRATIVE: End-to-end telemetry guarantees, formal boundary verification, and operational compliance.
+- INVARIANTS: Continuous automated assertion checking, zero unhandled invariants.
+- VISUAL_SPEC: Connected Architecture Flow Topology (.flow-diagram) with verified status badges.`,
+    ];
+
+    storyboardText = baseSlides.slice(0, targetCount).join("\n\n");
 
     onChunk("\n\n" + storyboardText, false);
   }
