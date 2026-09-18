@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { extractSlidesFromContent, extractCustomScripts, assembleHyperDeckPresentation } from "../pipeline/html-assembler";
-import { parseStoryboardIntoSlides, synthesizeFallbackSlide } from "../pipeline/stage3-creative-generator";
+import { parseStoryboardIntoSlides, synthesizeFallbackSlide, resolveVisualTemplate, VISUAL_TEMPLATES } from "../pipeline/stage3-creative-generator";
 import { detectTargetSlideCount } from "../services/slideCountDetector";
 import { presentationCache } from "../pipeline/cache";
 import { convertHtmlToPresentationAst } from "../pipeline/html-to-ast";
@@ -35,6 +35,57 @@ describe("HyperDeck Pipeline & Engine Test Suite", () => {
       expect(slides).toHaveLength(1);
       expect(slides[0]).not.toContain('<span class="');
       expect(slides[0]).toContain("</div></div></section>");
+    });
+  });
+
+  describe("20-Template Visual Catalog & Autonomous Selection", () => {
+    it("should contain exactly 20 rich production visual templates", () => {
+      const keys = Object.keys(VISUAL_TEMPLATES);
+      expect(keys.length).toBe(20);
+      expect(keys).toContain("TEMPLATE_01_HERO_SPLIT_OVERVIEW");
+      expect(keys).toContain("TEMPLATE_02_TERMINAL_CODE_EXPLORER");
+      expect(keys).toContain("TEMPLATE_03_CODE_DIFF_EVOLUTION");
+      expect(keys).toContain("TEMPLATE_04_SEQUENTIAL_PIPELINE_4");
+      expect(keys).toContain("TEMPLATE_05_STREAMLINED_PIPELINE_3");
+      expect(keys).toContain("TEMPLATE_06_CONNECTED_TOPOLOGY_FLOW");
+      expect(keys).toContain("TEMPLATE_07_DUAL_STREAM_CONVERGENCE");
+      expect(keys).toContain("TEMPLATE_08_INTERACTIVE_SLIDER_SIMULATOR");
+      expect(keys).toContain("TEMPLATE_09_COMPARISON_MATRIX_TABLE");
+      expect(keys).toContain("TEMPLATE_10_DYNAMIC_BAR_CHART_BENCHMARK");
+      expect(keys).toContain("TEMPLATE_11_TRI_CARD_CONCEPT_GRID");
+      expect(keys).toContain("TEMPLATE_12_QUAD_METRIC_DASHBOARD");
+      expect(keys).toContain("TEMPLATE_13_MATHEMATICAL_DERIVATION_STEP");
+      expect(keys).toContain("TEMPLATE_14_STATE_MACHINE_TRANSITION");
+      expect(keys).toContain("TEMPLATE_15_HIERARCHICAL_LAYER_STACK");
+      expect(keys).toContain("TEMPLATE_16_INTERACTIVE_SVG_VENN");
+      expect(keys).toContain("TEMPLATE_17_THREE_JS_SPATIAL_WORLD");
+      expect(keys).toContain("TEMPLATE_18_CHRONOLOGICAL_TIMELINE");
+      expect(keys).toContain("TEMPLATE_19_PRO_CON_TRADE_OFF_STUDY");
+      expect(keys).toContain("TEMPLATE_20_EXECUTIVE_CHECKLIST_SUMMARY");
+    });
+
+    it("should prioritize explicit Model 2 TEMPLATE directives", () => {
+      const directive = `SLIDE 3: Execution Runtime\nTEMPLATE: TEMPLATE_02_TERMINAL_CODE_EXPLORER\nRun container demo with -pu flags`;
+      const template = resolveVisualTemplate(directive, 2);
+      expect(template.id).toBe("TEMPLATE_02_TERMINAL_CODE_EXPLORER");
+    });
+
+    it("should autonomously infer templates from semantic keywords", () => {
+      // CLI / Docker commands -> Terminal
+      const cliTemplate = resolveVisualTemplate("Inspect PID namespaces with sudo unshare -p -f --mount-proc", 1);
+      expect(cliTemplate.id).toBe("TEMPLATE_02_TERMINAL_CODE_EXPLORER");
+
+      // Layer stack / hierarchy -> Hierarchical Layer Stack
+      const layerTemplate = resolveVisualTemplate("Hierarchical abstraction layers from hardware to user space", 3);
+      expect(layerTemplate.id).toBe("TEMPLATE_15_HIERARCHICAL_LAYER_STACK");
+
+      // Metrics / KPIs -> Quad Metric Dashboard
+      const metricTemplate = resolveVisualTemplate("Throughput benchmarks and latency KPI dashboard metrics", 4);
+      expect(metricTemplate.id).toBe("TEMPLATE_12_QUAD_METRIC_DASHBOARD");
+
+      // Checklist / takeaways -> Executive Checklist Summary
+      const summaryTemplate = resolveVisualTemplate("Executive summary and key architectural takeaways checklist", 5);
+      expect(summaryTemplate.id).toBe("TEMPLATE_20_EXECUTIVE_CHECKLIST_SUMMARY");
     });
   });
 
@@ -181,6 +232,21 @@ Primary Takeaway:** Containers achieve OS-level virtualisation by creating restr
       expect(html).toContain('<svg');
       expect(html).not.toContain('⚙️');
       expect(html).not.toContain('⚡');
+    });
+
+    it("should synthesize terminal explorer template without emojis and with clean code spans", () => {
+      const directive = `
+TITLE: Container Isolation CLI
+TEMPLATE: TEMPLATE_02_TERMINAL_CODE_EXPLORER
+sudo unshare --fork --pid --mount-proc /bin/bash
+ls /proc confirms new PID space
+      `;
+      const html = synthesizeFallbackSlide("Linux Containers", 1, 5, directive);
+      expect(html).toContain('class="terminal-card"');
+      expect(html).toContain('terminal-prompt');
+      expect(html).not.toContain('📦');
+      expect(html).not.toContain('🔧');
+      expect(html).not.toContain('💻');
     });
   });
 });

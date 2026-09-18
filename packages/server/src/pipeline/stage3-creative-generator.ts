@@ -61,6 +61,258 @@ export function parseStoryboardIntoSlides(storyboardText: string, targetCount: n
   return chunks;
 }
 
+export interface VisualTemplate {
+  id: string;
+  name: string;
+  description: string;
+  guidelines: string;
+}
+
+export const VISUAL_TEMPLATES: Record<string, VisualTemplate> = {
+  TEMPLATE_01_HERO_SPLIT_OVERVIEW: {
+    id: "TEMPLATE_01_HERO_SPLIT_OVERVIEW",
+    name: "Hero Concept Split Overview",
+    description: "High-impact thesis card on left + 3 invariant bullets in glass-card on right (.grid-split)",
+    guidelines: `Use .grid-split:
+<div class="grid-split">
+  <div class="glass-card card-emerald">
+    <div class="glass-card-header"><span class="card-title">[Primary Domain Thesis]</span><span class="badge badge-emerald">PRIMARY</span></div>
+    <p class="card-desc">[Core foundational mechanism extracted from document]</p>
+    <ul class="points-list"><li>[Key Mechanism 1]</li><li>[Key Mechanism 2]</li></ul>
+  </div>
+  <div class="glass-card card-cyan">
+    <div class="glass-card-header"><span class="card-title">System Invariants</span><span class="badge badge-cyan">VERIFIED</span></div>
+    <ul class="points-list"><li>[Operational Invariant 1]</li><li>[Operational Invariant 2]</li><li>[Operational Invariant 3]</li></ul>
+  </div>
+</div>`,
+  },
+  TEMPLATE_02_TERMINAL_CODE_EXPLORER: {
+    id: "TEMPLATE_02_TERMINAL_CODE_EXPLORER",
+    name: "CLI Shell & Code Execution Explorer",
+    description: "Syntax-highlighted terminal window on left + parameter breakdown card on right (.grid-split)",
+    guidelines: `Use .grid-split:
+<div class="grid-split">
+  <div class="terminal-card">
+    <div class="terminal-header"><div class="terminal-dots"><span class="terminal-dot dot-red"></span><span class="terminal-dot dot-yellow"></span><span class="terminal-dot dot-green"></span></div><span class="terminal-title">[Subsystem / Shell Context]</span></div>
+    <pre class="terminal-body"><code><span class="terminal-cmd">$ [Exact Command / System Call from Document]</span>
+<span class="terminal-out">[Exact output, flag, or PID from Document]</span></code></pre>
+  </div>
+  <div class="glass-card card-indigo">
+    <div class="glass-card-header"><span class="card-title">[Flag / Execution Breakdown]</span><span class="badge badge-indigo">RUNTIME</span></div>
+    <ul class="points-list"><li><strong>[Flag/Param 1]:</strong> [Description from text]</li><li><strong>[Flag/Param 2]:</strong> [Description from text]</li></ul>
+  </div>
+</div>`,
+  },
+  TEMPLATE_03_CODE_DIFF_EVOLUTION: {
+    id: "TEMPLATE_03_CODE_DIFF_EVOLUTION",
+    name: "Side-by-Side Code Diff Evolution",
+    description: "Two code/terminal panes side-by-side (.diff-container) comparing host vs container, or before vs after",
+    guidelines: `Use .diff-container:
+<div class="diff-container">
+  <div class="diff-pane">
+    <div class="diff-header"><span style="color:#f43f5e;font-weight:700;">[Baseline / Host View]</span><span class="badge badge-rose">UNISOLATED</span></div>
+    <pre class="terminal-body"><code><span class="terminal-cmd">$ [Baseline Host Command]</span>
+<span class="terminal-out">[Baseline Output from text]</span></code></pre>
+  </div>
+  <div class="diff-pane" style="border-color:rgba(16,185,129,0.4);">
+    <div class="diff-header"><span style="color:#10b981;font-weight:700;">[Contained / Isolated View]</span><span class="badge badge-emerald">ISOLATED</span></div>
+    <pre class="terminal-body"><code><span class="terminal-cmd">$ [Contained Command with Isolation Flags]</span>
+<span class="terminal-highlight">[Isolated Output showing separation]</span></code></pre>
+  </div>
+</div>`,
+  },
+  TEMPLATE_04_SEQUENTIAL_PIPELINE_4: {
+    id: "TEMPLATE_04_SEQUENTIAL_PIPELINE_4",
+    name: "4-Stage Sequential Process Pipeline",
+    description: "4-stage pipeline with packet pulses and vector SVG icons (.motion-pipeline)",
+    guidelines: `Use .motion-pipeline:
+<div class="pipeline-controls"><span class="pipeline-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline></svg>SEQUENTIAL PROGRESSION</span><button class="sim-play-btn" onclick="simulatePipelineFlow(this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Simulate Flow</button></div>
+<div class="motion-pipeline">
+  <div class="pipeline-stage stage-emerald"><span class="stage-num">STAGE 01</span><div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line></svg></div><div class="stage-title">[Step 1 Name]</div><div class="stage-desc">[Step 1 Action from text]</div></div>
+  <div class="pipeline-connector"><div class="packet-pulse packet-emerald"></div></div>
+  <div class="pipeline-stage stage-cyan"><span class="stage-num">STAGE 02</span><div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div><div class="stage-title">[Step 2 Name]</div><div class="stage-desc">[Step 2 Action from text]</div></div>
+  <div class="pipeline-connector"><div class="packet-pulse packet-cyan"></div></div>
+  <div class="pipeline-stage stage-indigo"><span class="stage-num">STAGE 03</span><div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline></svg></div><div class="stage-title">[Step 3 Name]</div><div class="stage-desc">[Step 3 Action from text]</div></div>
+  <div class="pipeline-connector"><div class="packet-pulse packet-amber"></div></div>
+  <div class="pipeline-stage stage-amber"><span class="stage-num">STAGE 04</span><div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div><div class="stage-title">[Step 4 Name]</div><div class="stage-desc">[Step 4 Action from text]</div></div>
+</div>`,
+  },
+  TEMPLATE_05_STREAMLINED_PIPELINE_3: {
+    id: "TEMPLATE_05_STREAMLINED_PIPELINE_3",
+    name: "3-Stage Streamlined Workflow",
+    description: "3-stage focused pipeline for setup -> execution -> latching",
+    guidelines: `Use .motion-pipeline with 3 stages (Emerald -> Cyan -> Indigo).`,
+  },
+  TEMPLATE_06_CONNECTED_TOPOLOGY_FLOW: {
+    id: "TEMPLATE_06_CONNECTED_TOPOLOGY_FLOW",
+    name: "Connected Architecture Flow Topology",
+    description: "Horizontal node graph with 4 interconnected entity nodes (.flow-diagram)",
+    guidelines: `Use .flow-diagram:
+<div class="flow-diagram">
+  <div class="flow-step card-emerald"><div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div><div style="font-size:13px;font-weight:700;color:#fff;">[Entity 1]</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">[Spec 1]</div></div>
+  <div class="flow-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
+  <div class="flow-step card-cyan"><div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="6" height="6" rx="1"></rect><rect x="16" y="2" width="6" height="6" rx="1"></rect><rect x="9" y="16" width="6" height="6" rx="1"></rect><path d="M5 8v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"></path><line x1="12" y1="13" x2="12" y2="16"></line></svg></div><div style="font-size:13px;font-weight:700;color:#fff;">[Entity 2]</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">[Spec 2]</div></div>
+  <div class="flow-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
+  <div class="flow-step card-indigo"><div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div><div style="font-size:13px;font-weight:700;color:#fff;">[Entity 3]</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">[Spec 3]</div></div>
+  <div class="flow-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
+  <div class="flow-step card-amber"><div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line></svg></div><div style="font-size:13px;font-weight:700;color:#fff;">[Entity 4]</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px;">[Spec 4]</div></div>
+</div>`,
+  },
+  TEMPLATE_07_DUAL_STREAM_CONVERGENCE: {
+    id: "TEMPLATE_07_DUAL_STREAM_CONVERGENCE",
+    name: "Dual Stream Convergence",
+    description: "Two parallel inputs merging into a central processing engine (.grid-split)",
+    guidelines: `Use .grid-split with two stacked sub-cards on left merging into main engine card on right.`,
+  },
+  TEMPLATE_08_INTERACTIVE_SLIDER_SIMULATOR: {
+    id: "TEMPLATE_08_INTERACTIVE_SLIDER_SIMULATOR",
+    name: "Interactive Parameter Simulator",
+    description: "Live range slider with reactive calculation gauge (.sim-container) + invariant card (.grid-split)",
+    guidelines: `Use .grid-split with .sim-container on left and .glass-card on right. Include inline <script> to update DOM.`,
+  },
+  TEMPLATE_09_COMPARISON_MATRIX_TABLE: {
+    id: "TEMPLATE_09_COMPARISON_MATRIX_TABLE",
+    name: "Multi-Dimensional Comparison Matrix",
+    description: "Full-width table with colored status badges (.matrix-table)",
+    guidelines: `Use .glass-card containing <table class="matrix-table"> with 4 evaluation rows and multi-colored status badges.`,
+  },
+  TEMPLATE_10_DYNAMIC_BAR_CHART_BENCHMARK: {
+    id: "TEMPLATE_10_DYNAMIC_BAR_CHART_BENCHMARK",
+    name: "Dynamic Visual Bar Chart Benchmark",
+    description: "Quantitative bar chart with animated fills and value labels (.chart-card)",
+    guidelines: `Use .chart-card with .chart-bars-group and .chart-bar-fill columns.`,
+  },
+  TEMPLATE_11_TRI_CARD_CONCEPT_GRID: {
+    id: "TEMPLATE_11_TRI_CARD_CONCEPT_GRID",
+    name: "Tri-Card Thematic Concept Grid",
+    description: "3 side-by-side thematic glass cards (.grid-3)",
+    guidelines: `Use .grid-3 with 3 cards: .card-emerald, .card-cyan, .card-indigo.`,
+  },
+  TEMPLATE_12_QUAD_METRIC_DASHBOARD: {
+    id: "TEMPLATE_12_QUAD_METRIC_DASHBOARD",
+    name: "Quad Metric KPI Dashboard",
+    description: "2x2 grid of glowing KPI metric cards (.stat-grid)",
+    guidelines: `Use <div class="stat-grid"> with 4 .stat-card elements containing .stat-val and .stat-lbl.`,
+  },
+  TEMPLATE_13_MATHEMATICAL_DERIVATION_STEP: {
+    id: "TEMPLATE_13_MATHEMATICAL_DERIVATION_STEP",
+    name: "Mathematical Derivation Step",
+    description: "Prominent KaTeX formula block + term transformation list (.grid-split)",
+    guidelines: `Use .grid-split with KaTeX block equation \\[ ... \\] on left and transformation steps on right.`,
+  },
+  TEMPLATE_14_STATE_MACHINE_TRANSITION: {
+    id: "TEMPLATE_14_STATE_MACHINE_TRANSITION",
+    name: "State Machine Transition Diagram",
+    description: "3 state blocks with transition criteria (.state-diagram)",
+    guidelines: `Use <div class="state-diagram"> with 3 .state-node elements separated by .state-arrow.`,
+  },
+  TEMPLATE_15_HIERARCHICAL_LAYER_STACK: {
+    id: "TEMPLATE_15_HIERARCHICAL_LAYER_STACK",
+    name: "Hierarchical Architecture Layer Stack",
+    description: "Vertical architectural tier stack (.layer-stack)",
+    guidelines: `Use <div class="layer-stack"> with 4 .layer-item elements from User/App level down to Kernel/Hardware level.`,
+  },
+  TEMPLATE_16_INTERACTIVE_SVG_VENN: {
+    id: "TEMPLATE_16_INTERACTIVE_SVG_VENN",
+    name: "Interactive SVG Venn Diagram",
+    description: "Overlapping SVG circles with hover glow (.venn-container)",
+    guidelines: `Use .venn-container with .venn-svg and .venn-circle-shape elements.`,
+  },
+  TEMPLATE_17_THREE_JS_SPATIAL_WORLD: {
+    id: "TEMPLATE_17_THREE_JS_SPATIAL_WORLD",
+    name: "Interactive 3D WebGL World",
+    description: "Interactive Three.js orbit viewport (.three-container)",
+    guidelines: `Use .grid-split with .three-container on left (data-model="topology-cluster-3d") and spec card on right.`,
+  },
+  TEMPLATE_18_CHRONOLOGICAL_TIMELINE: {
+    id: "TEMPLATE_18_CHRONOLOGICAL_TIMELINE",
+    name: "Chronological Milestone Track",
+    description: "Horizontal progression track with milestone deliverable points",
+    guidelines: `Use .motion-pipeline with phase milestones and status badges.`,
+  },
+  TEMPLATE_19_PRO_CON_TRADE_OFF_STUDY: {
+    id: "TEMPLATE_19_PRO_CON_TRADE_OFF_STUDY",
+    name: "Pro-Con Architecture Trade-Off Study",
+    description: "Side-by-side benefits vs constraints (.grid-2)",
+    guidelines: `Use .grid-2 with .card-emerald (Architectural Advantages) on left and .card-rose (Constraints & Trade-offs) on right.`,
+  },
+  TEMPLATE_20_EXECUTIVE_CHECKLIST_SUMMARY: {
+    id: "TEMPLATE_20_EXECUTIVE_CHECKLIST_SUMMARY",
+    name: "Executive Summary & Verification Checklist",
+    description: "Full-width checklist group (.checklist-group) with vector SVG check icons",
+    guidelines: `Use <div class="checklist-group"> with 4 .check-item elements containing .check-icon (SVG) and .check-content.`,
+  },
+};
+
+/**
+ * Autonomously selects the best visual template from the 20-template catalog based on directive and text semantics.
+ */
+export function resolveVisualTemplate(slideDirective: string, slideIndex: number): VisualTemplate {
+  // 1. Check if Model 2 explicitly recommended a template
+  const explicitMatch = slideDirective.match(/TEMPLATE:\s*(TEMPLATE_\w+)/i);
+  if (explicitMatch && VISUAL_TEMPLATES[explicitMatch[1].toUpperCase()]) {
+    return VISUAL_TEMPLATES[explicitMatch[1].toUpperCase()];
+  }
+
+  // 2. Semantic detection based on content
+  const lower = slideDirective.toLowerCase();
+  if (lower.includes("terminal") || lower.includes("sudo") || lower.includes("docker") || lower.includes("command") || lower.includes("shell") || lower.includes("cgroup") || lower.includes("unshare") || lower.includes("mkdir")) {
+    return VISUAL_TEMPLATES.TEMPLATE_02_TERMINAL_CODE_EXPLORER;
+  }
+  if (lower.includes("diff") || lower.includes("before vs after") || lower.includes("host vs container")) {
+    return VISUAL_TEMPLATES.TEMPLATE_03_CODE_DIFF_EVOLUTION;
+  }
+  if (lower.includes("layer") || lower.includes("stack") || lower.includes("hierarchy") || lower.includes("levels")) {
+    return VISUAL_TEMPLATES.TEMPLATE_15_HIERARCHICAL_LAYER_STACK;
+  }
+  if (lower.includes("table") || lower.includes("matrix") || lower.includes("comparison grid") || lower.includes("benchmark table")) {
+    return VISUAL_TEMPLATES.TEMPLATE_09_COMPARISON_MATRIX_TABLE;
+  }
+  if (lower.includes("trade-off") || lower.includes("pros and cons") || lower.includes("advantages vs")) {
+    return VISUAL_TEMPLATES.TEMPLATE_19_PRO_CON_TRADE_OFF_STUDY;
+  }
+  if (lower.includes("metric") || lower.includes("kpi") || lower.includes("throughput") || lower.includes("dashboard")) {
+    return VISUAL_TEMPLATES.TEMPLATE_12_QUAD_METRIC_DASHBOARD;
+  }
+  if (lower.includes("bar chart") || lower.includes("chart") || lower.includes("scaling")) {
+    return VISUAL_TEMPLATES.TEMPLATE_10_DYNAMIC_BAR_CHART_BENCHMARK;
+  }
+  if (lower.includes("state machine") || lower.includes("transition") || lower.includes("lifecycle")) {
+    return VISUAL_TEMPLATES.TEMPLATE_14_STATE_MACHINE_TRANSITION;
+  }
+  if (lower.includes("venn") || lower.includes("overlap") || lower.includes("intersection")) {
+    return VISUAL_TEMPLATES.TEMPLATE_16_INTERACTIVE_SVG_VENN;
+  }
+  if (lower.includes("formula") || lower.includes("equation") || lower.includes("math") || lower.includes("derivation")) {
+    return VISUAL_TEMPLATES.TEMPLATE_13_MATHEMATICAL_DERIVATION_STEP;
+  }
+  if (lower.includes("simulation") || lower.includes("slider") || lower.includes("interactive")) {
+    return VISUAL_TEMPLATES.TEMPLATE_08_INTERACTIVE_SLIDER_SIMULATOR;
+  }
+  if (lower.includes("checklist") || lower.includes("summary") || lower.includes("conclusion") || lower.includes("takeaways")) {
+    return VISUAL_TEMPLATES.TEMPLATE_20_EXECUTIVE_CHECKLIST_SUMMARY;
+  }
+  if (lower.includes("flow") || lower.includes("topology") || lower.includes("network") || lower.includes("bus")) {
+    return VISUAL_TEMPLATES.TEMPLATE_06_CONNECTED_TOPOLOGY_FLOW;
+  }
+  if (lower.includes("pipeline") || lower.includes("stages") || lower.includes("step 1")) {
+    return VISUAL_TEMPLATES.TEMPLATE_04_SEQUENTIAL_PIPELINE_4;
+  }
+
+  // 3. Fallback: Diverse rotational defaults across 20-template catalog
+  const diverseDefaults = [
+    "TEMPLATE_01_HERO_SPLIT_OVERVIEW",
+    "TEMPLATE_02_TERMINAL_CODE_EXPLORER",
+    "TEMPLATE_04_SEQUENTIAL_PIPELINE_4",
+    "TEMPLATE_09_COMPARISON_MATRIX_TABLE",
+    "TEMPLATE_11_TRI_CARD_CONCEPT_GRID",
+    "TEMPLATE_12_QUAD_METRIC_DASHBOARD",
+    "TEMPLATE_15_HIERARCHICAL_LAYER_STACK",
+    "TEMPLATE_19_PRO_CON_TRADE_OFF_STUDY",
+  ];
+  return VISUAL_TEMPLATES[diverseDefaults[slideIndex % diverseDefaults.length]];
+}
+
 /**
  * Builds the prompt for a single slide section in the slide-by-slide pipeline.
  */
@@ -72,183 +324,7 @@ export function buildSingleSlidePrompt(
   analysisSummary: string
 ): string {
   const isActive = slideIndex === 0;
-
-  const archetypes = [
-    {
-      archetypeId: "HERO_SPLIT_OR_TERMINAL",
-      title: "Architectural Split Hero or Terminal Execution View",
-      mandate: `You MUST use a .grid-split layout.
-IF the document covers CLI commands, Linux/system calls, Dockerfiles, or code, use a .terminal-card on the left and a .glass-card.card-emerald on the right:
-<div class="grid-split">
-  <div class="terminal-card">
-    <div class="terminal-header">
-      <div class="terminal-dots"><span class="terminal-dot dot-red"></span><span class="terminal-dot dot-yellow"></span><span class="terminal-dot dot-green"></span></div>
-      <span class="terminal-title">[Exact Subsystem / Shell Context from Document]</span>
-    </div>
-    <pre class="terminal-body"><code><span class="terminal-cmd">$ [Exact command, system call, or directive from Document]</span>
-<span class="terminal-out">[Exact output, flag, or PID from Document]</span></code></pre>
-  </div>
-  <div class="glass-card card-emerald">
-    <div class="glass-card-header">
-      <span class="card-title">[Primary Mechanism / Subsystem Title]</span>
-      <span class="badge badge-emerald">[RELEVANT BADGE]</span>
-    </div>
-    <ul class="points-list">
-      <li><strong>Core Mechanism:</strong> [Concrete fact extracted directly from Document below]</li>
-      <li><strong>Concrete Metric / Parameter:</strong> [Exact number, PID, memory size, or flag from Document below]</li>
-      <li><strong>Operational Invariant:</strong> [Exact rule, constraint, or equation from Document below]</li>
-    </ul>
-  </div>
-</div>
-IF the topic is physical, geometric, or quantum, you may alternatively use .three-container with data-model="neural-constellation-3d" or "quantum-bloch-sphere".`,
-    },
-    {
-      archetypeId: "MOTION_PIPELINE",
-      title: "Sequential Execution & Process Pipeline (.motion-pipeline)",
-      mandate: `You MUST use a real-world .motion-pipeline with 4 sequential stages (Emerald -> Cyan -> Indigo -> Amber) and animated packet pulses:
-<div class="pipeline-controls">
-  <span class="pipeline-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:-1px;margin-right:4px;"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline></svg>SEQUENTIAL PROCESS FLOW</span>
-  <button class="sim-play-btn" onclick="simulatePipelineFlow(this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="display:inline;vertical-align:-1px;margin-right:4px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Simulate Flow</button>
-</div>
-<div class="motion-pipeline">
-  <div class="pipeline-stage stage-emerald">
-    <span class="stage-num">STAGE 01</span>
-    <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div>
-    <div class="stage-title">[Exact Step 1 Name from Document]</div>
-    <div class="stage-desc">[Specific action of Step 1 derived 100% from Document context]</div>
-  </div>
-  <div class="pipeline-connector"><div class="packet-pulse packet-emerald"></div></div>
-  <div class="pipeline-stage stage-cyan">
-    <span class="stage-num">STAGE 02</span>
-    <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
-    <div class="stage-title">[Exact Step 2 Name from Document]</div>
-    <div class="stage-desc">[Specific action of Step 2 derived 100% from Document context]</div>
-  </div>
-  <div class="pipeline-connector"><div class="packet-pulse packet-cyan"></div></div>
-  <div class="pipeline-stage stage-indigo">
-    <span class="stage-num">STAGE 03</span>
-    <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></div>
-    <div class="stage-title">[Exact Step 3 Name from Document]</div>
-    <div class="stage-desc">[Specific action of Step 3 derived 100% from Document context]</div>
-  </div>
-  <div class="pipeline-connector"><div class="packet-pulse packet-amber"></div></div>
-  <div class="pipeline-stage stage-amber">
-    <span class="stage-num">STAGE 04</span>
-    <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
-    <div class="stage-title">[Exact Step 4 Name from Document]</div>
-    <div class="stage-desc">[Specific action of Step 4 derived 100% from Document context]</div>
-  </div>
-</div>
-(CRITICAL: Never output "Physical Sensing / Ingestion" or "Conduit Transport" unless the document explicitly discusses physical sensors! Extract real steps from document!)`,
-    },
-    {
-      archetypeId: "INTERACTIVE_SIMULATOR",
-      title: "Dynamic Interactive Parameter Simulator (.sim-container)",
-      mandate: `You MUST use a .grid-split featuring an interactive .sim-container with a live slider that calculates a concrete formula or metric from the document dynamically, paired with an evaluation .glass-card:
-<div class="grid-split">
-  <div class="sim-container card-cyan">
-    <div class="glass-card-header">
-      <span class="card-title">[Name of Parameter Simulator from Document]</span>
-      <span class="badge badge-cyan">LIVE RUNTIME</span>
-    </div>
-    <div class="sim-controls">
-      <div class="sim-row">
-        <span style="color: #cbd5e1; font-weight: 600;">[Topic Metric Name, e.g. Allocated Quota, Subnet Mask, Queue Depth]:</span>
-        <input type="range" class="sim-slider slider-cyan" min="1" max="100" value="50" oninput="updateSim${slideIndex}(this.value)" />
-        <span id="display-val-${slideIndex}" style="font-family: var(--font-mono); font-weight: bold; color: var(--accent-cyan);">50</span>
-      </div>
-    </div>
-    <div class="sim-gauge gauge-cyan">
-      <div class="sim-value" id="result-val-${slideIndex}">Verified State</div>
-      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">DYNAMIC SYSTEM TELEMETRY</div>
-    </div>
-  </div>
-  <div class="glass-card card-indigo">
-    <div class="glass-card-header">
-      <span class="card-title">[Operational Invariants &amp; Thresholds]</span>
-      <span class="badge badge-indigo">VERIFIED</span>
-    </div>
-    <ul class="points-list">
-      <li><strong>Operating Range:</strong> [Concrete boundary condition from Document below]</li>
-      <li><strong>Governing Model:</strong> [Extract real formula, system call, or rule from Document - NEVER invent queueing formulas!]</li>
-      <li><strong>State Invariance:</strong> [Specific guarantee from Document below]</li>
-    </ul>
-  </div>
-</div>
-<script>
-  function updateSim${slideIndex}(val) {
-    document.getElementById('display-val-${slideIndex}').textContent = val;
-    document.getElementById('result-val-${slideIndex}').textContent = val > 75 ? 'Boundary Exceeded (' + val + ')' : 'Verified State (' + val + ')';
-  }
-</script>`,
-    },
-    {
-      archetypeId: "FLOW_TOPOLOGY",
-      title: "Connected Architecture Flow Topology (.flow-diagram)",
-      mandate: `You MUST use a connected flow diagram (.flow-diagram) with active step nodes, animated conduits, and operational specifications:
-<div class="flow-diagram">
-  <div class="flow-step card-emerald">
-    <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div>
-    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 1 from Document]</div>
-    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 1 spec from text]</div>
-  </div>
-  <div class="flow-arrow">➔</div>
-  <div class="flow-step card-cyan">
-    <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="6" height="6" rx="1"></rect><rect x="16" y="2" width="6" height="6" rx="1"></rect><rect x="9" y="16" width="6" height="6" rx="1"></rect><path d="M5 8v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"></path><line x1="12" y1="13" x2="12" y2="16"></line></svg></div>
-    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 2 from Document]</div>
-    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 2 spec from text]</div>
-  </div>
-  <div class="flow-arrow">➔</div>
-  <div class="flow-step card-indigo">
-    <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
-    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 3 from Document]</div>
-    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 3 spec from text]</div>
-  </div>
-  <div class="flow-arrow">➔</div>
-  <div class="flow-step card-amber">
-    <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div>
-    <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 4 from Document]</div>
-    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 4 spec from text]</div>
-  </div>
-</div>`,
-    },
-    {
-      archetypeId: "COMPARISON_MATRIX",
-      title: "Multi-Dimensional Comparison Matrix (.matrix-table)",
-      mandate: `You MUST use a multi-color comparison matrix (.matrix-table) inside a .glass-card with status badges:
-<div class="glass-card">
-  <table class="matrix-table">
-    <thead>
-      <tr><th>[DIMENSION FROM DOCUMENT]</th><th>STATUS</th><th>CONCRETE METRIC / FLAG</th><th>SYSTEM IMPACT</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>[Feature 1 from Document]</td><td><span class="badge badge-emerald">OPTIMAL</span></td><td>[Actual metric/flag/size from text]</td><td>[Operational impact from text]</td></tr>
-      <tr><td>[Feature 2 from Document]</td><td><span class="badge badge-cyan">CONSTRAINED</span></td><td>[Actual metric/flag/size from text]</td><td>[Operational impact from text]</td></tr>
-      <tr><td>[Feature 3 from Document]</td><td><span class="badge badge-amber">THRESHOLD</span></td><td>[Actual metric/flag/size from text]</td><td>[Operational impact from text]</td></tr>
-      <tr><td>[Feature 4 from Document]</td><td><span class="badge badge-rose">LATENCY BOUND</span></td><td>[Actual metric/flag/size from text]</td><td>[Operational impact from text]</td></tr>
-    </tbody>
-  </table>
-</div>`,
-    },
-    {
-      archetypeId: "BAR_CHART_KPI",
-      title: "Dynamic Visual Bar Chart (.chart-card)",
-      mandate: `You MUST use an animated visual bar chart (.chart-card) showing quantitative benchmarks and throughput scaling extracted from the document:
-<div class="chart-card">
-  <div class="chart-header">
-    <span style="font-family: var(--font-display); font-size: 15px; font-weight: 700; color: #fff;">[Quantitative Benchmark from Document]</span>
-    <span class="badge badge-emerald">EXTRACTED DATA</span>
-  </div>
-  <div class="chart-bars-group">
-    <div class="chart-bar-col"><div class="chart-val-label">[Value 1 from text]</div><div class="chart-bar-fill" style="height: 40%;"></div><div class="chart-axis-label">[Entity 1 from text]</div></div>
-    <div class="chart-bar-col"><div class="chart-val-label">[Value 2 from text]</div><div class="chart-bar-fill accent-indigo" style="height: 70%;"></div><div class="chart-axis-label">[Entity 2 from text]</div></div>
-    <div class="chart-bar-col"><div class="chart-val-label">[Value 3 from text]</div><div class="chart-bar-fill accent-emerald" style="height: 95%;"></div><div class="chart-axis-label">[Entity 3 from text]</div></div>
-  </div>
-</div>`,
-    },
-  ];
-
-  const assigned = archetypes[slideIndex % archetypes.length];
+  const assigned = resolveVisualTemplate(slideDirective, slideIndex);
 
   return `You are an elite Keynote Presentation Visual Designer & Creative Frontend Technologist.
 Synthesize EXACTLY ONE slide section (<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}"> ... </section>) for:
@@ -274,20 +350,23 @@ You MUST start the slide content immediately inside <section ...> with:
 </div>
 NEVER output raw <h2>Chapter...</h2> or "Slide X of Y" in the title text!
 
-ASSIGNED VISUAL ARCHETYPE FOR SLIDE ${slideIndex + 1} (MANDATORY):
->>> ${assigned.title} <<<
-${assigned.mandate}
+RECOMMENDED VISUAL TEMPLATE FOR SLIDE ${slideIndex + 1}:
+>>> ${assigned.name} (${assigned.id}) <<<
+Description: ${assigned.description}
+
+LAYOUT & COMPONENT SPECIFICATION:
+${assigned.guidelines}
+
+You have full autonomy to adapt this template or select another from the 20-template catalog if it better communicates the document's facts.
 
 KaTeX mathematical formulas are supported: use \\[ formula \\] for block math, and \\( formula \\) for inline math.
 
-ABSOLUTE 100% TOPIC FIDELITY MANDATE (ZERO TOLERANCE FOR HARDCODED PLACEHOLDERS):
-1. ZERO HARDCODED / PLACEHOLDER CONTENT: NEVER output placeholder phrases like "Physical Sensing / Ingestion", "Conduit Transport", "Response latency model T = 1/(mu - lambda)", or "State_{t+1} = T(State_t, Input)" unless the document is literally about them!
-2. All titles, commands, metrics, formulas, and stage names MUST BE 100% EXTRACTED from the provided document context below!
-3. If the document is about Linux containers, your stages, cards, and terminals MUST discuss PID namespaces, UTS namespaces, veth pairs, sethostbyname(), Open vSwitch, Dockerfiles, and dhcpd!
-4. STRICT ANTI-ARTICLE RULES: Output ONLY the <section ...> ... </section> tag. Always properly close the </section> tag at the end. Use multi-colors (.card-emerald, .card-cyan, .card-indigo, .card-amber, .card-rose).
-5. DO NOT use .motion-pipeline unless this slide is explicitly assigned ARCHETYPE 2!
-6. ABSOLUTELY NO EMOJIS: Never output emojis (e.g. 📦, 🏷️, 🔒, 🔢, ⚙️, ⚡, 🔄, ✅) anywhere in titles, badges, cards, stages, or diagrams! Emojis look amateur and break across operating systems. Use crisp inline SVG vector icons (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">...</svg>) or clean typography badges instead.
-7. Keep internal reasoning under 80 tokens. Output valid HTML directly.`;
+ABSOLUTE 100% TOPIC FIDELITY & ZERO TEMPLATE COMPROMISE:
+1. ZERO HARDCODED / PLACEHOLDER CONTENT: All titles, commands, flags, metrics, and cards MUST BE 100% EXTRACTED from the provided document context below!
+2. If the document is about Linux containers, your slides must feature authentic commands ($ sudo ./container_demo -pu root/), namespaces (Mount, UTS, IPC, PID), Dockerfile directives (FROM, WORKDIR, ENTRYPOINT), and Open vSwitch bridge configs!
+3. ABSOLUTELY NO EMOJIS: Never output emojis (e.g. 📦, 🏷️, 🔒, 🔢, ⚙️, ⚡, 🔄, ✅) anywhere in titles, badges, cards, stages, or diagrams! Emojis look amateur. Use crisp inline SVG vector icons (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">...</svg>) or clean typography badges instead.
+4. Output ONLY the <section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}"> ... </section> tag. Always close the </section> tag.
+5. Keep internal reasoning under 80 tokens. Output valid HTML directly.`;
 }
 
 /**
@@ -328,7 +407,6 @@ export function synthesizeFallbackSlide(
   slideDirective: string
 ): string {
   const isActive = slideIndex === 0;
-  const slideType = slideIndex % 4;
   const cleanDirective = slideDirective.replace(/\*\*/g, "").replace(/#{1,4}\s*/g, "");
 
   // Extract category
@@ -359,7 +437,7 @@ export function synthesizeFallbackSlide(
   // Extract real content bullet points (filtering out all meta-attribute lines)
   const contentLines = cleanDirective
     .split("\n")
-    .map((l) => l.trim())
+    .map((l) => l.replace(/^[\s*#\-–—0-9.:]+/, "").trim())
     .filter((l) => {
       if (l.length < 15) return false;
       const u = l.toUpperCase();
@@ -371,7 +449,8 @@ export function synthesizeFallbackSlide(
         !u.startsWith("NARRATIVE") &&
         !u.startsWith("PHOTO") &&
         !u.startsWith("ARCHETYPE") &&
-        !u.startsWith("CREATIVE")
+        !u.startsWith("CREATIVE") &&
+        !u.startsWith("TEMPLATE")
       );
     })
     .map((l) => l.replace(/^(?:primary takeaway|takeaway|metric|formula|point|focus)\s*[:\-—]\s*/i, "").trim());
@@ -391,7 +470,155 @@ export function synthesizeFallbackSlide(
     return words.length > 3 ? words : fallback;
   }
 
-  if (slideType === 0) {
+  const assigned = resolveVisualTemplate(slideDirective, slideIndex);
+
+  if (assigned.id === "TEMPLATE_02_TERMINAL_CODE_EXPLORER") {
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Command-line execution, kernel parameters, and runtime environment.</p>
+  </div>
+  <div class="grid-split">
+    <div class="terminal-card">
+      <div class="terminal-header">
+        <div class="terminal-dots"><span class="t-dot dot-red"></span><span class="t-dot dot-yellow"></span><span class="t-dot dot-green"></span></div>
+        <span class="terminal-title">bash — runtime environment</span>
+      </div>
+      <pre class="terminal-body"><span class="terminal-prompt">$</span> <span class="terminal-cmd">${p1.replace(/["`]/g, "")}</span>
+<span class="terminal-out"># Invariant verification & state inspection:</span>
+<span class="terminal-prompt">$</span> <span class="terminal-cmd">${p2.replace(/["`]/g, "")}</span></pre>
+    </div>
+    <div class="glass-card card-indigo">
+      <div class="glass-card-header">
+        <span class="card-title">Operational Invariants</span>
+        <span class="badge badge-indigo">VERIFIED</span>
+      </div>
+      <ul class="points-list">
+        <li>${p1}</li>
+        <li>${p2}</li>
+        <li>${p3}</li>
+      </ul>
+    </div>
+  </div>
+</section>`;
+  }
+
+  if (assigned.id === "TEMPLATE_03_CODE_DIFF_EVOLUTION") {
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Comparative environment execution and boundary enforcement.</p>
+  </div>
+  <div class="diff-container">
+    <div class="diff-pane">
+      <div class="diff-header"><span style="color:#f43f5e;font-weight:700;">Baseline / Host View</span><span class="badge badge-rose">UNISOLATED</span></div>
+      <pre class="terminal-body"><span class="terminal-prompt">$</span> <span class="terminal-cmd">${p1.replace(/["`]/g, "")}</span>
+<span class="terminal-out"># Shared host environment state</span></pre>
+    </div>
+    <div class="diff-pane" style="border-color:rgba(16,185,129,0.4);">
+      <div class="diff-header"><span style="color:#10b981;font-weight:700;">Isolated Namespace View</span><span class="badge badge-emerald">ISOLATED</span></div>
+      <pre class="terminal-body"><span class="terminal-prompt">$</span> <span class="terminal-cmd">${p2.replace(/["`]/g, "")}</span>
+<span class="terminal-highlight"># Encapsulated state partition</span></pre>
+    </div>
+  </div>
+</section>`;
+  }
+
+  if (assigned.id === "TEMPLATE_15_HIERARCHICAL_LAYER_STACK") {
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Hierarchical abstraction layers and encapsulation boundaries.</p>
+  </div>
+  <div class="layer-stack">
+    <div class="layer-item card-cyan"><div class="layer-left"><span class="layer-num">TIER 01</span><div><div class="layer-title">Application Layer</div><div class="layer-desc">${p1}</div></div></div><span class="badge badge-cyan">USERSPACE</span></div>
+    <div class="layer-item card-emerald"><div class="layer-left"><span class="layer-num">TIER 02</span><div><div class="layer-title">Runtime & Isolation Boundary</div><div class="layer-desc">${p2}</div></div></div><span class="badge badge-emerald">CONTAINER</span></div>
+    <div class="layer-item card-indigo"><div class="layer-left"><span class="layer-num">TIER 03</span><div><div class="layer-title">Kernel Subsystems (Namespaces & cgroups)</div><div class="layer-desc">${p3}</div></div></div><span class="badge badge-indigo">KERNEL</span></div>
+    <div class="layer-item card-amber"><div class="layer-left"><span class="layer-num">TIER 04</span><div><div class="layer-title">Physical Hardware & Network Fabric</div><div class="layer-desc">${p4}</div></div></div><span class="badge badge-amber">HOST</span></div>
+  </div>
+</section>`;
+  }
+
+  if (assigned.id === "TEMPLATE_12_QUAD_METRIC_DASHBOARD") {
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Quantitative operational parameters and benchmark metrics.</p>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-card card-emerald"><span class="stat-lbl">Primary Mechanism</span><span class="stat-val val-emerald">01</span><span class="stat-sub">${p1}</span></div>
+    <div class="stat-card card-cyan"><span class="stat-lbl">Execution Performance</span><span class="stat-val val-cyan">100%</span><span class="stat-sub">${p2}</span></div>
+    <div class="stat-card card-indigo"><span class="stat-lbl">Isolation Invariant</span><span class="stat-val val-indigo">SECURE</span><span class="stat-sub">${p3}</span></div>
+    <div class="stat-card card-amber"><span class="stat-lbl">Reliability Threshold</span><span class="stat-val val-amber">VERIFIED</span><span class="stat-sub">${p4}</span></div>
+  </div>
+</section>`;
+  }
+
+  if (assigned.id === "TEMPLATE_11_TRI_CARD_CONCEPT_GRID") {
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Tri-pillar conceptual breakdown and structural properties.</p>
+  </div>
+  <div class="grid-3">
+    <div class="glass-card card-emerald">
+      <div class="glass-card-header"><span class="card-title">Foundational Tier</span><span class="badge badge-emerald">ACTIVE</span></div>
+      <p class="card-desc">${p1}</p>
+    </div>
+    <div class="glass-card card-cyan">
+      <div class="glass-card-header"><span class="card-title">Runtime Mechanics</span><span class="badge badge-cyan">VERIFIED</span></div>
+      <p class="card-desc">${p2}</p>
+    </div>
+    <div class="glass-card card-indigo">
+      <div class="glass-card-header"><span class="card-title">System Invariant</span><span class="badge badge-indigo">ENFORCED</span></div>
+      <p class="card-desc">${p3}</p>
+    </div>
+  </div>
+</section>`;
+  }
+
+  if (assigned.id === "TEMPLATE_19_PRO_CON_TRADE_OFF_STUDY") {
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Architectural advantages balanced against operational constraints.</p>
+  </div>
+  <div class="grid-2">
+    <div class="glass-card card-emerald">
+      <div class="glass-card-header"><span class="card-title">Architectural Advantages</span><span class="badge badge-emerald">BENEFITS</span></div>
+      <ul class="points-list"><li>${p1}</li><li>${p2}</li></ul>
+    </div>
+    <div class="glass-card card-rose">
+      <div class="glass-card-header"><span class="card-title">Operational Constraints</span><span class="badge badge-rose">TRADE-OFFS</span></div>
+      <ul class="points-list"><li>${p3}</li><li>${p4}</li></ul>
+    </div>
+  </div>
+</section>`;
+  }
+
+  if (assigned.id === "TEMPLATE_20_EXECUTIVE_CHECKLIST_SUMMARY") {
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Key architectural takeaways, verified guarantees, and deployment invariants.</p>
+  </div>
+  <div class="checklist-group">
+    <div class="check-item"><div class="check-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="check-content"><div class="check-title">Foundational Principle</div><div class="check-desc">${p1}</div></div></div>
+    <div class="check-item"><div class="check-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="check-content"><div class="check-title">Runtime Isolation</div><div class="check-desc">${p2}</div></div></div>
+    <div class="check-item"><div class="check-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="check-content"><div class="check-title">Boundary Verification</div><div class="check-desc">${p3}</div></div></div>
+    <div class="check-item"><div class="check-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="check-content"><div class="check-title">Operational Invariant</div><div class="check-desc">${p4}</div></div></div>
+  </div>
+</section>`;
+  }
+
+  if (assigned.id === "TEMPLATE_04_SEQUENTIAL_PIPELINE_4" || assigned.id === "TEMPLATE_05_STREAMLINED_PIPELINE_3") {
     const s1Title = extractShortPhrase(p1, "Initialization");
     const s2Title = extractShortPhrase(p2, "Execution Phase");
     const s3Title = extractShortPhrase(p3, "State Transition");
@@ -437,114 +664,9 @@ export function synthesizeFallbackSlide(
     </div>
   </div>
 </section>`;
-  } else if (slideType === 1) {
-    const isCodeOrCli = /sudo|docker|linux|bash|command|netns|namespace|config|shell|\$ |API|endpoint|curl|ps |mount/i.test(slideDirective + " " + p1 + " " + p2);
+  }
 
-    if (isCodeOrCli) {
-      return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
-  <div class="slide-title-group">
-    <div class="slide-category">${category}</div>
-    <h2 class="slide-title">${title}</h2>
-    <p class="slide-subtitle">Command-line execution, kernel parameters, and runtime environment.</p>
-  </div>
-  <div class="grid-split">
-    <div class="terminal-card">
-      <div class="terminal-header">
-        <div class="terminal-dots"><span class="t-dot dot-red"></span><span class="t-dot dot-yellow"></span><span class="t-dot dot-green"></span></div>
-        <span class="terminal-title">bash — runtime environment</span>
-      </div>
-      <pre class="terminal-body"><span class="terminal-prompt">$</span> <span class="terminal-cmd">${p1.replace(/["`]/g, '')}</span>
-<span class="terminal-out"># Invariant verification & state inspection:</span>
-<span class="terminal-prompt">$</span> <span class="terminal-cmd">${p2.replace(/["`]/g, '')}</span></pre>
-    </div>
-    <div class="glass-card card-indigo">
-      <div class="glass-card-header">
-        <span class="card-title">Operational Invariants</span>
-        <span class="badge badge-indigo">VERIFIED</span>
-      </div>
-      <ul class="points-list">
-        <li>${p1}</li>
-        <li>${p2}</li>
-        <li>${p3}</li>
-      </ul>
-    </div>
-  </div>
-</section>`;
-    }
-
-    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
-  <div class="slide-title-group">
-    <div class="slide-category">${category}</div>
-    <h2 class="slide-title">${title}</h2>
-    <p class="slide-subtitle">Interactive 3D spatial layout and validated state invariants.</p>
-  </div>
-  <div class="grid-split">
-    <div class="three-container" data-model="topology-cluster-3d">
-      <div class="three-overlay">
-        <span class="three-badge">3D SYSTEM TOPOLOGY</span>
-        <span style="font-family: var(--font-display); font-size: 14px; font-weight: bold; color: #fff;">${title}</span>
-      </div>
-      <div class="three-hint"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-1px;margin-right:4px;"><path d="M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z"></path><line x1="12" y1="6" x2="12" y2="8"></line></svg>Click &amp; Drag to Rotate 3D Model</div>
-    </div>
-    <div class="glass-card card-indigo">
-      <div class="glass-card-header">
-        <span class="card-title">Operational Invariants</span>
-        <span class="badge badge-indigo">VERIFIED</span>
-      </div>
-      <ul class="points-list">
-        <li>${p1}</li>
-        <li>${p2}</li>
-        <li>${p3}</li>
-      </ul>
-    </div>
-  </div>
-</section>`;
-  } else if (slideType === 2) {
-    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
-  <div class="slide-title-group">
-    <div class="slide-category">${category}</div>
-    <h2 class="slide-title">${title}</h2>
-    <p class="slide-subtitle">Interactive parameter simulation and live dynamic feedback.</p>
-  </div>
-  <div class="grid-split">
-    <div class="sim-container card-cyan">
-      <div class="glass-card-header">
-        <span class="card-title">${title} Dynamics</span>
-        <span class="badge badge-cyan">RUNTIME SIMULATOR</span>
-      </div>
-      <div class="sim-controls">
-        <div class="sim-row">
-          <span style="color: #cbd5e1; font-weight: 600;">Modulation Scale:</span>
-          <input type="range" class="sim-slider slider-cyan" min="1" max="100" value="45" oninput="updateSim${slideIndex}(this.value)" />
-          <span id="display-val-${slideIndex}" style="font-family: var(--font-mono); font-weight: bold; color: var(--accent-cyan);">45%</span>
-        </div>
-      </div>
-      <div class="sim-gauge gauge-cyan">
-        <div class="sim-value" id="result-val-${slideIndex}">Normal Response</div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">SYSTEM DYNAMIC STATE</div>
-      </div>
-    </div>
-    <div class="glass-card card-emerald">
-      <div class="glass-card-header">
-        <span class="card-title">Evaluation Metrics</span>
-        <span class="badge badge-emerald">OPTIMAL</span>
-      </div>
-      <ul class="points-list">
-        <li>${p1}</li>
-        <li>${p2}</li>
-        <li>${p4}</li>
-      </ul>
-    </div>
-  </div>
-  <script>
-    function updateSim${slideIndex}(val) {
-      document.getElementById('display-val-${slideIndex}').textContent = val + '%';
-      var status = val > 75 ? 'Peak Load Invariant' : val > 30 ? 'Normal Response' : 'Sub-Optimal Inactive';
-      document.getElementById('result-val-${slideIndex}').textContent = status;
-    }
-  </script>
-</section>`;
-  } else {
+  if (assigned.id === "TEMPLATE_09_COMPARISON_MATRIX_TABLE") {
     return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
   <div class="slide-title-group">
     <div class="slide-category">${category}</div>
@@ -566,6 +688,72 @@ export function synthesizeFallbackSlide(
   </div>
 </section>`;
   }
+
+  if (assigned.id === "TEMPLATE_06_CONNECTED_TOPOLOGY_FLOW") {
+    const e1 = extractShortPhrase(p1, "Client / Input Node");
+    const e2 = extractShortPhrase(p2, "Gateway / Ingress");
+    const e3 = extractShortPhrase(p3, "Execution Engine");
+    const e4 = extractShortPhrase(p4, "Storage / Invariant");
+
+    return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Connected architectural flow topology and subsystem interfaces.</p>
+  </div>
+  <div class="flow-diagram">
+    <div class="flow-step card-emerald">
+      <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div>
+      <div style="font-size:13px;font-weight:700;color:#fff;">${e1}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${p1}</div>
+    </div>
+    <div class="flow-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
+    <div class="flow-step card-cyan">
+      <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="6" height="6" rx="1"></rect><rect x="16" y="2" width="6" height="6" rx="1"></rect><rect x="9" y="16" width="6" height="6" rx="1"></rect><path d="M5 8v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"></path><line x1="12" y1="13" x2="12" y2="16"></line></svg></div>
+      <div style="font-size:13px;font-weight:700;color:#fff;">${e2}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${p2}</div>
+    </div>
+    <div class="flow-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
+    <div class="flow-step card-indigo">
+      <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+      <div style="font-size:13px;font-weight:700;color:#fff;">${e3}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${p3}</div>
+    </div>
+    <div class="flow-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
+    <div class="flow-step card-amber">
+      <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line></svg></div>
+      <div style="font-size:13px;font-weight:700;color:#fff;">${e4}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${p4}</div>
+    </div>
+  </div>
+</section>`;
+  }
+
+  // Default: TEMPLATE_01_HERO_SPLIT_OVERVIEW
+  return `<section class="slide${isActive ? " active" : ""}" id="slide${slideIndex}">
+  <div class="slide-title-group">
+    <div class="slide-category">${category}</div>
+    <h2 class="slide-title">${title}</h2>
+    <p class="slide-subtitle">Core architectural principles and operational mechanisms.</p>
+  </div>
+  <div class="grid-split">
+    <div class="glass-card card-emerald">
+      <div class="glass-card-header">
+        <span class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-3px;margin-right:6px;"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>${extractShortPhrase(p1, "Core Principle")}</span>
+        <span class="badge badge-emerald">PRIMARY</span>
+      </div>
+      <p class="card-desc">${p1}</p>
+      <ul class="points-list"><li>${p2}</li><li>${p3}</li></ul>
+    </div>
+    <div class="glass-card card-cyan">
+      <div class="glass-card-header">
+        <span class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-3px;margin-right:6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>Operational Invariants</span>
+        <span class="badge badge-cyan">VERIFIED</span>
+      </div>
+      <ul class="points-list"><li>${p3}</li><li>${p4}</li></ul>
+    </div>
+  </div>
+</section>`;
 }
 
 /**

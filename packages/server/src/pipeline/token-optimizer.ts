@@ -1220,6 +1220,169 @@ body {
 
 .progress-bar-wrap { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); }
 .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-indigo)); transition: width 0.35s ease; box-shadow: 0 0 10px var(--accent-cyan); }
+
+/* ==========================================================================
+   2026 Creative Primitives: Layer Stacks, Dashboards, Diffs, State Diagrams
+   ========================================================================== */
+
+/* 15. Hierarchical Architecture Layer Stack */
+.layer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+.layer-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  backdrop-filter: blur(14px);
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+.layer-item:hover {
+  transform: translateX(4px);
+  border-color: var(--border-active);
+}
+.layer-left { display: flex; align-items: center; gap: 14px; }
+.layer-num { font-family: var(--font-mono); font-size: 11px; font-weight: 800; color: var(--text-muted); }
+.layer-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: #fff; }
+.layer-desc { font-size: 12px; color: var(--text-muted); }
+
+/* 12. Quad Metric Dashboard */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-active);
+}
+.stat-val {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.stat-val.val-emerald { color: var(--accent-emerald); text-shadow: 0 0 16px rgba(16, 185, 129, 0.4); }
+.stat-val.val-cyan { color: var(--accent-cyan); text-shadow: 0 0 16px rgba(56, 189, 248, 0.4); }
+.stat-val.val-indigo { color: var(--accent-indigo); text-shadow: 0 0 16px rgba(129, 140, 248, 0.4); }
+.stat-val.val-amber { color: var(--accent-amber); text-shadow: 0 0 16px rgba(245, 158, 11, 0.4); }
+.stat-lbl {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.stat-sub { font-size: 12px; color: #94a3b8; line-height: 1.4; }
+
+/* 03. Code Diff Evolution */
+.diff-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  width: 100%;
+}
+.diff-pane {
+  display: flex;
+  flex-direction: column;
+  background: #080c16;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.diff-header {
+  height: 34px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+/* 14. State Machine Transition Diagram */
+.state-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+}
+.state-node {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+.state-name { font-family: var(--font-mono); font-size: 13px; font-weight: 800; color: #fff; }
+.state-desc { font-size: 11px; color: var(--text-muted); }
+.state-arrow { color: var(--accent-cyan); font-size: 20px; }
+
+/* 20. Executive Summary Checklist */
+.checklist-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  backdrop-filter: blur(14px);
+}
+.check-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: var(--accent-emerald);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.check-content { display: flex; flex-direction: column; gap: 4px; }
+.check-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: #fff; }
+.check-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
 `;
 
 /**

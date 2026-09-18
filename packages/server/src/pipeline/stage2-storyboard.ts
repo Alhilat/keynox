@@ -56,21 +56,38 @@ For every single slide, you MUST provide:
   * Primary Takeaway / Thesis statement.
   * Concrete quantitative metrics from the document (real numbers, data rates, benchmark figures).
   * Any mathematical derivations (KaTeX formulas).
-- 2026 CREATIVE VISUAL ARCHETYPE SPECIFICATION:
-  Assign the most visually stunning archetype tailored 100% to this slide's technical content:
-  * ARCHETYPE 1: Interactive 3D WebGL World (.three-container with data-model="quantum-bloch-sphere", "hardware-die-3d", or "neural-constellation-3d") allowing mouse rotation!
-  * ARCHETYPE 2: Real-World Motion Pipeline (.motion-pipeline) with 4 physical stages (Emerald -> Cyan -> Indigo -> Amber) and animated packet pulses!
-  * ARCHETYPE 3: Dynamic Particle Conduit (.particle-container) with living continuous particle flows along curved tracks!
-  * ARCHETYPE 4: Dynamic Interactive Simulator (.sim-container) with live slider evaluating authentic domain formulas!
-  * ARCHETYPE 5: Multi-Dimensional Benchmark Matrix (.matrix-table) with emerald/amber/rose status badges!
+- AUTONOMOUS VISUAL TEMPLATE SELECTION:
+  From the 20 visual templates below, specify the exact template (e.g., "TEMPLATE: TEMPLATE_02_TERMINAL_CODE_EXPLORER") that naturally communicates this slide's technical content:
+  * TEMPLATE_01_HERO_SPLIT_OVERVIEW: Hero concept card + 3 invariant bullets (.grid-split)
+  * TEMPLATE_02_TERMINAL_CODE_EXPLORER: Syntax-highlighted CLI terminal + explanation card (.terminal-card)
+  * TEMPLATE_03_CODE_DIFF_EVOLUTION: Side-by-side terminal/code cards (.diff-container)
+  * TEMPLATE_04_SEQUENTIAL_PIPELINE_4: 4-stage pipeline with packet pulses & SVG icons (.motion-pipeline)
+  * TEMPLATE_05_STREAMLINED_PIPELINE_3: 3-stage streamlined progression (.motion-pipeline)
+  * TEMPLATE_06_CONNECTED_TOPOLOGY_FLOW: Horizontal 4-node flow with arrows (.flow-diagram)
+  * TEMPLATE_07_DUAL_STREAM_CONVERGENCE: Parallel inputs merging into core engine (.flow-diagram)
+  * TEMPLATE_08_INTERACTIVE_SLIDER_SIMULATOR: Dynamic slider + telemetry gauge (.sim-container)
+  * TEMPLATE_09_COMPARISON_MATRIX_TABLE: Multi-dimension matrix table with status badges (.matrix-table)
+  * TEMPLATE_10_DYNAMIC_BAR_CHART_BENCHMARK: Quantitative bar chart with value labels (.chart-card)
+  * TEMPLATE_11_TRI_CARD_CONCEPT_GRID: 3 thematic cards side-by-side (.grid-3)
+  * TEMPLATE_12_QUAD_METRIC_DASHBOARD: 2x2 grid of glowing KPI figures (.stat-grid)
+  * TEMPLATE_13_MATHEMATICAL_DERIVATION_STEP: KaTeX equation block + term transformations
+  * TEMPLATE_14_STATE_MACHINE_TRANSITION: 3-state transition nodes with triggers (.state-diagram)
+  * TEMPLATE_15_HIERARCHICAL_LAYER_STACK: Vertical architectural layers (.layer-stack)
+  * TEMPLATE_16_INTERACTIVE_SVG_VENN: Overlapping SVG Venn diagram (.venn-container)
+  * TEMPLATE_17_THREE_JS_SPATIAL_WORLD: Interactive 3D WebGL orbit canvas (.three-container)
+  * TEMPLATE_18_CHRONOLOGICAL_TIMELINE: Milestone progression track (.timeline-track)
+  * TEMPLATE_19_PRO_CON_TRADE_OFF_STUDY: Emerald benefits vs rose constraints (.grid-2)
+  * TEMPLATE_20_EXECUTIVE_CHECKLIST_SUMMARY: Production checklist & invariant sign-offs (.checklist-group)
 - PHOTO SPECIFICATION:
-  * PHOTO_PROMPT: A vivid, photorealistic prompt for AI image generation (NVIDIA FLUX) describing real-world physical hardware, industrial cutaways, microchip dies, or lab environments with cinematic lighting and 8k detail.
-  * If a slide features a 3D WebGL scene, particle conduit, or simulator, state "PHOTO: None (Interactive 3D/Motion Focus)".
+  * PHOTO_PROMPT: A vivid prompt for AI image generation (NVIDIA FLUX) or "PHOTO: None (Interactive Focus)".
 
-CRITICAL MANDATE:
-- ZERO TEXT-ONLY ARTICLE SLOP: Avoid plain text cards. Every slide must feature a distinct visual 3D archetype, particle flow, connected motion stage, or interactive widget.
-- EVERY SLIDE MUST USE A DIFFERENT ARCHETYPE: Slide 1 MUST be 3D/Hero Split, Slide 2 MUST be Motion Pipeline, Slide 3 MUST be Dynamic Simulator, Slide 4 MUST be Flow Topology, Slide 5 MUST be Benchmark Matrix, Slide 6 MUST be Bar Chart KPI. NEVER repeat .motion-pipeline on multiple slides!
-- Use multi-color coding (Emerald for Edge/Perception, Cyan for Network/Data, Indigo for Logic, Amber for Power/Action, Rose for Bottlenecks).
+CRITICAL MANDATES:
+- AUTONOMOUS SELECTION: Pick the template that naturally fits the slide's content.
+  * If the slide covers shell commands, Docker, or code -> choose TEMPLATE_02_TERMINAL_CODE_EXPLORER or TEMPLATE_03_CODE_DIFF_EVOLUTION.
+  * If the slide covers orthogonal abstractions (e.g. Mount, UTS, PID) -> choose TEMPLATE_11_TRI_CARD_CONCEPT_GRID or TEMPLATE_09_COMPARISON_MATRIX_TABLE.
+  * If the slide covers system layers (App -> Runtime -> Kernel) -> choose TEMPLATE_15_HIERARCHICAL_LAYER_STACK.
+- DIVERSITY: Vary templates across slides (do not use the same template twice in a row).
+- ZERO TEXT-ONLY ARTICLE SLOP: Avoid plain text cards. Every slide must feature an engaging visual structure from the catalog.
 - ABSOLUTELY NO EMOJIS: Never output emojis anywhere in titles, categories, or bullet points. Maintain clean, professional, executive typography.
 - 100% domain fidelity derived from Model 1's extracted facts.`;
 
