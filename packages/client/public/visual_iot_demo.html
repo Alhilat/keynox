@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internet of Things (IoT) 2026 — Interactive Architectural Runtime</title>
+  
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  
+  <!-- GSAP & Three.js Libraries Pre-bundled -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <style>
+    :root {
+      --bg-space: #05070d;
+      --bg-stage: #080c16;
+      --bg-card: rgba(13, 19, 33, 0.78);
+      --bg-card-hover: rgba(20, 29, 51, 0.9);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(56, 189, 248, 0.35);
+      
+      --cyan: #38bdf8;
+      --cyan-glow: rgba(56, 189, 248, 0.25);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      --indigo: #818cf8;
+      --indigo-glow: rgba(129, 140, 248, 0.25);
+      --amber: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.25);
+      --rose: #f43f5e;
+      --purple: #c084fc;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-space);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Cinematic Ambilight Ambient Glow */
+    .ambilight-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+    .ambilight-glow {
+      position: absolute;
+      inset: -20px;
+      background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.1) 40%, transparent 70%);
+      filter: blur(50px);
+      pointer-events: none;
+      z-index: 0;
+      transition: background 0.8s ease;
+    }
+
+    /* Fixed 16:9 Viewport Stage */
+    .hyperdeck-stage {
+      position: relative;
+      z-index: 1;
+      width: 100vw;
+      height: 100vh;
+      max-width: calc(100vh * 16 / 9);
+      max-height: calc(100vw * 9 / 16);
+      aspect-ratio: 16 / 9;
+      background: var(--bg-stage);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.95), 0 0 50px rgba(56, 189, 248, 0.08);
+    }
+
+    /* Top Presentation Header */
+    .stage-header {
+      height: 58px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(8, 12, 22, 0.85);
+      backdrop-filter: blur(16px);
+      z-index: 20;
+      flex-shrink: 0;
+    }
+    .brand-wrap { display: flex; align-items: center; gap: 12px; }
+    .brand-pill {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--cyan), var(--indigo));
+      color: #000;
+    }
+    .deck-title { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
+    
+    .status-group { display: flex; align-items: center; gap: 12px; }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-cyan { background: rgba(56, 189, 248, 0.12); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-emerald { background: rgba(16, 185, 129, 0.12); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-indigo { background: rgba(129, 140, 248, 0.12); color: var(--indigo); border: 1px solid rgba(129, 140, 248, 0.3); }
+    .badge-amber { background: rgba(245, 158, 11, 0.12); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    /* Slide Viewport */
+    .slides-viewport {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: 28px 40px;
+      flex-direction: column;
+      opacity: 0;
+      transform: scale(0.985);
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+    }
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Slide Headings */
+    .slide-meta { margin-bottom: 20px; }
+    .slide-category { font-size: 11px; font-family: var(--font-mono); font-weight: 800; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .slide-title { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.02em; line-height: 1.2; }
+    .slide-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+
+    /* Layout Grids */
+    .grid-split { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; width: 100%; height: 100%; align-items: stretch; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; width: 100%; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+
+    /* 2026 Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: all 0.25s ease;
+    }
+    .card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    }
+    .card-cyan { border-top: 3px solid var(--cyan); }
+    .card-emerald { border-top: 3px solid var(--emerald); }
+    .card-indigo { border-top: 3px solid var(--indigo); }
+    .card-amber { border-top: 3px solid var(--amber); }
+
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .card-title { font-size: 15px; font-weight: 700; color: #fff; }
+    .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+    
+    .metric-hero { font-family: var(--font-mono); font-size: 32px; font-weight: 900; color: #fff; margin: 10px 0; display: flex; align-items: baseline; gap: 6px; }
+    .metric-sub { font-size: 12px; color: var(--text-muted); font-family: var(--font-sans); }
+
+    /* 3D WebGL Canvas Container */
+    .three-box {
+      background: #04060b;
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      min-height: 340px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+    }
+    .three-canvas { width: 100%; height: 100%; display: block; }
+    .three-badge-overlay {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .three-hint-overlay {
+      position: absolute;
+      bottom: 12px;
+      right: 16px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: rgba(255, 255, 255, 0.5);
+      background: rgba(0,0,0,0.5);
+      padding: 3px 8px;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    /* Living Motion Pipeline */
+    .motion-pipeline {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      margin: 16px 0;
+    }
+    .pipeline-stage {
+      flex: 1;
+      background: rgba(13, 19, 33, 0.85);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+    .pipeline-stage:hover, .pipeline-stage.active-stage {
+      transform: translateY(-4px) scale(1.02);
+      border-color: var(--cyan);
+      box-shadow: 0 10px 25px rgba(56, 189, 248, 0.2);
+    }
+    .stage-step-num { font-size: 10px; font-family: var(--font-mono); font-weight: 800; color: var(--cyan); margin-bottom: 6px; }
+    .stage-title { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .stage-desc { font-size: 12px; color: var(--text-muted); line-height: 1.35; }
+    
+    .pipeline-conduit {
+      width: 32px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      position: relative;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+    .pulse-packet {
+      position: absolute;
+      top: -3px;
+      left: 0;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      animation: packetTravel 2s infinite ease-in-out;
+    }
+    @keyframes packetTravel {
+      0% { left: 0; opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { left: 100%; opacity: 0; }
+    }
+
+    /* Working Simulator Stage */
+    .sim-panel {
+      background: rgba(10, 15, 26, 0.9);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sim-control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+    .sim-slider {
+      flex: 1;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #1e293b;
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+    }
+    .sim-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan);
+      cursor: pointer;
+    }
+    
+    .sim-gauges-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    .gauge-card {
+      background: rgba(5, 8, 15, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .gauge-val { font-size: 22px; font-weight: 900; font-family: var(--font-mono); color: var(--cyan); }
+    .gauge-label { font-size: 10px; font-family: var(--font-mono); color: var(--text-muted); margin-top: 4px; text-transform: uppercase; }
+
+    /* Canvas Particle Conduit & Mesh */
+    .canvas-mesh-box {
+      width: 100%;
+      height: 180px;
+      border-radius: 12px;
+      background: rgba(4, 7, 13, 0.95);
+      border: 1px solid var(--border-subtle);
+      position: relative;
+      overflow: hidden;
+    }
+    #nodeMeshCanvas { width: 100%; height: 100%; display: block; }
+
+    /* Persistent Footer Bar */
+    .stage-footer {
+      height: 60px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(8, 12, 22, 0.92);
+      backdrop-filter: blur(16px);
+      z-index: 20;
+      flex-shrink: 0;
+    }
+    .slide-pills { display: flex; align-items: center; gap: 8px; }
+    .slide-pill {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .slide-pill:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .slide-pill.active { background: var(--cyan); color: #000; border-color: #38bdf8; font-weight: 900; }
+
+    .nav-buttons { display: flex; align-items: center; gap: 10px; }
+    .nav-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { background: #334155; border-color: var(--cyan); }
+    .nav-btn.primary {
+      background: linear-gradient(135deg, var(--cyan), #2563eb);
+      border: none;
+      color: #000;
+      box-shadow: 0 4px 15px var(--cyan-glow);
+    }
+    .nav-btn.primary:hover { opacity: 0.92; transform: translateY(-1px); }
+
+    .progress-line { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); }
+    .progress-fill { height: 100%; width: 25%; background: linear-gradient(90deg, var(--cyan), var(--indigo)); transition: width 0.35s ease; }
+  </style>
+</head>
+<body>
+
+  <div class="ambilight-wrap">
+    <div class="ambilight-glow" id="ambilightGlow"></div>
+
+    <main class="hyperdeck-stage" id="stageMain">
+      <!-- Top Progress Line -->
+      <div class="progress-line"><div class="progress-fill" id="progressBar"></div></div>
+
+      <!-- Stage Top Header -->
+      <header class="stage-header">
+        <div class="brand-wrap">
+          <span class="brand-pill">HYPERDECK 2026</span>
+          <h1 class="deck-title">Internet of Things (IoT) &bull; Edge Perception &amp; Architecture</h1>
+        </div>
+        <div class="status-group">
+          <span class="badge badge-cyan" id="slideBadge">Slide 1 / 4</span>
+          <span class="badge badge-emerald">● Live WebGL 60FPS</span>
+        </div>
+      </header>
+
+      <!-- Slides Container -->
+      <section class="slides-viewport">
+        
+        <!-- SLIDE 1: Interactive 3D Silicon Substrate & Hardware Die -->
+        <section class="slide active" id="slide0" data-notes="Introduce the physical IoT edge. Emphasize that IoT starts at the hardware die level with microscopic sensors, not corporate buzzwords. Click and drag the 3D chip to show the audience the internal BGA interconnects and core die.">
+          <div class="slide-meta">
+            <div class="slide-category">Perception Layer &bull; Physical Micro-Architecture</div>
+            <h2 class="slide-title">Silicon Edge Perception &amp; Hardware Dynamics</h2>
+            <p class="slide-subtitle">Physical micro-controllers ingest analog sensor telemetry ($T, P, a$) and translate physical matter into digital telemetry.</p>
+          </div>
+
+          <div class="grid-split">
+            <!-- Left: Interactive 3D Three.js WebGL Die -->
+            <div class="three-box">
+              <div class="three-badge-overlay">
+                <span class="badge badge-cyan">3D WebGL Silicon Die</span>
+                <span style="font-size: 11px; font-weight: 700; color: #94a3b8;">Arm Cortex-M85 + NPU</span>
+              </div>
+              <div class="three-hint-overlay">🖱️ Click &amp; Drag to Orbit 3D Hardware</div>
+              <canvas class="three-canvas" id="canvas3dDie"></canvas>
+            </div>
+
+            <!-- Right: Technical Invariants & Telemetry -->
+            <div class="card card-cyan">
+              <div class="card-header">
+                <span class="card-title">Physical Edge Invariants</span>
+                <span class="badge badge-emerald">Active Telemetry</span>
+              </div>
+              <p class="card-desc">Modern IoT architectures eliminate cloud dependence via micro-watt on-device tensor processing units.</p>
+              
+              <div class="metric-hero">
+                <span>9.7B &rarr; 30.9B</span>
+                <span class="metric-sub">Active Autonomous Nodes (2025)</span>
+              </div>
+
+              <div class="grid-2" style="margin-top: auto;">
+                <div class="card card-emerald" style="padding: 12px;">
+                  <div style="font-size: 11px; font-weight: 800; color: var(--emerald);">ENERGY ENVELOPE</div>
+                  <div style="font-family: var(--font-mono); font-size: 16px; font-weight: 800; color: #fff;">&lt; 15 &mu;W / Cycle</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">Energy harvesting ready</div>
+                </div>
+                <div class="card card-indigo" style="padding: 12px;">
+                  <div style="font-size: 11px; font-weight: 800; color: var(--indigo);">EDGE LATENCY</div>
+                  <div style="font-family: var(--font-mono); font-size: 16px; font-weight: 800; color: #fff;">1.2 ms</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">Zero-cloud inference</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 2: Tripartite Architecture & Living Motion Pipeline -->
+        <section class="slide" id="slide1" data-notes="Walk through the 4 stages of the end-to-end IoT conduit. Click 'Simulate Flow' or tap any stage to demonstrate continuous data packet transmission across network conduits to the audience.">
+          <div class="slide-meta">
+            <div class="slide-category">End-to-End Conduit Flow &bull; Real-World Motion</div>
+            <h2 class="slide-title">Living Pipeline: Sensor Ingestion to Actuation</h2>
+            <p class="slide-subtitle">Physical phenomena pass through four deterministic stages across the distributed edge-cloud fabric.</p>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-size: 12px; font-family: var(--font-mono); font-weight: 700; color: var(--cyan);">⚡ CONTINUOUS PACKET CONDUIT</span>
+            <button class="nav-btn primary" style="font-size: 12px; padding: 6px 14px;" onclick="triggerPipelineBurst(this)">▶ Transmit Telemetry Burst</button>
+          </div>
+
+          <div class="motion-pipeline" id="mainPipeline">
+            <div class="pipeline-stage active-stage" onclick="activateStage(0)">
+              <span class="stage-step-num">STAGE 01 &bull; EMERALD</span>
+              <div class="stage-title">Perception Sensing</div>
+              <div class="stage-desc">Transducers sample raw analog vibrations and thermals.</div>
+            </div>
+            <div class="pipeline-conduit"><div class="pulse-packet"></div></div>
+
+            <div class="pipeline-stage" onclick="activateStage(1)">
+              <span class="stage-step-num">STAGE 02 &bull; CYAN</span>
+              <div class="stage-title">Mesh Ingestion</div>
+              <div class="stage-desc">Sub-GHz 6LoWPAN / BLE packetization with AES-GCM.</div>
+            </div>
+            <div class="pipeline-conduit"><div class="pulse-packet" style="animation-delay: 0.5s;"></div></div>
+
+            <div class="pipeline-stage" onclick="activateStage(2)">
+              <span class="stage-step-num">STAGE 03 &bull; INDIGO</span>
+              <div class="stage-title">Semantic Reasoning</div>
+              <div class="stage-desc">RDF ontology mapping &amp; real-time event correlation.</div>
+            </div>
+            <div class="pipeline-conduit"><div class="pulse-packet" style="animation-delay: 1s;"></div></div>
+
+            <div class="pipeline-stage" onclick="activateStage(3)">
+              <span class="stage-step-num">STAGE 04 &bull; AMBER</span>
+              <div class="stage-title">Physical Actuation</div>
+              <div class="stage-desc">Sub-millisecond feedback loop to motors &amp; servos.</div>
+            </div>
+          </div>
+
+          <div class="grid-3" style="margin-top: 14px;">
+            <div class="card card-emerald">
+              <div style="font-size: 11px; font-weight: 800; color: var(--emerald); margin-bottom: 4px;">INTERNET-ORIENTED</div>
+              <div style="font-size: 13px; color: #fff; font-weight: 700;">IPv6 &amp; CoAP Protocols</div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Every physical asset possesses a globally routable RFC-7252 endpoint address.</p>
+            </div>
+            <div class="card card-indigo">
+              <div style="font-size: 11px; font-weight: 800; color: var(--indigo); margin-bottom: 4px;">THINGS-ORIENTED</div>
+              <div style="font-size: 13px; color: #fff; font-weight: 700;">Hardware Sensor Arrays</div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Micro-electro-mechanical systems (MEMS) converting state variables to binary.</p>
+            </div>
+            <div class="card card-amber">
+              <div style="font-size: 11px; font-weight: 800; color: var(--amber); margin-bottom: 4px;">SEMANTIC-ORIENTED</div>
+              <div style="font-size: 13px; color: #fff; font-weight: 700;">JSON-LD &amp; Ontologies</div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Self-describing telemetry schema preventing multi-vendor protocol fragmentation.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 3: Live Working Simulator (Network Saturation & Swarm Dynamics) -->
+        <section class="slide" id="slide2" data-notes="Demonstrate the interactive simulator. Drag the Node Density slider to show how latency climbs when edge clusters saturate. Show the live reactive canvas updating 60 frames per second.">
+          <div class="slide-meta">
+            <div class="slide-category">Interactive Telemetry &bull; Real-Time Simulator</div>
+            <h2 class="slide-title">Cluster Density &amp; Saturation Simulator</h2>
+            <p class="slide-subtitle">Modulate device density and sampling rate to dynamically inspect packet contention, latency, and mesh throughput.</p>
+          </div>
+
+          <div class="grid-split">
+            <!-- Left: Dynamic Controls & Gauges -->
+            <div class="sim-panel">
+              <div class="sim-control-row">
+                <span>Cluster Node Density ($N$):</span>
+                <input type="range" class="sim-slider" id="sliderDensity" min="10" max="500" value="120" oninput="updateSimulation()">
+                <span id="labelDensity" style="font-family: var(--font-mono); color: var(--cyan); font-weight: 800; min-width: 45px;">120</span>
+              </div>
+
+              <div class="sim-control-row">
+                <span>Telemetry Ingestion Rate ($f$):</span>
+                <input type="range" class="sim-slider" id="sliderRate" min="1" max="100" value="45" oninput="updateSimulation()">
+                <span id="labelRate" style="font-family: var(--font-mono); color: var(--indigo); font-weight: 800; min-width: 45px;">45 Hz</span>
+              </div>
+
+              <div class="sim-gauges-grid">
+                <div class="gauge-card">
+                  <div class="gauge-val" id="gaugeThroughput">5.4 MB/s</div>
+                  <div class="gauge-label">Agg. Throughput</div>
+                </div>
+                <div class="gauge-card">
+                  <div class="gauge-val" id="gaugeLatency" style="color: var(--emerald);">3.2 ms</div>
+                  <div class="gauge-label">Edge Latency</div>
+                </div>
+                <div class="gauge-card">
+                  <div class="gauge-val" id="gaugeSaturation" style="color: var(--cyan);">24%</div>
+                  <div class="gauge-label">Mesh Saturation</div>
+                </div>
+              </div>
+
+              <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); line-height: 1.5; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 8px;">
+                Formula: $L(N, f) = \tau_0 + \alpha \cdot \frac{N \cdot f}{C_{\text{mesh}}} \implies$ Real-time queue modeling with Poisson distribution.
+              </div>
+            </div>
+
+            <!-- Right: Live Canvas2D Node Swarm Dynamics -->
+            <div class="card card-cyan" style="padding: 16px; display: flex; flex-direction: column;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 12px; font-weight: 800; color: #fff;">LIVE SWARM TOPOLOGY</span>
+                <span class="badge badge-cyan" id="liveNodeCountBadge">120 Active Nodes</span>
+              </div>
+              <div class="canvas-mesh-box" style="flex: 1;">
+                <canvas id="nodeMeshCanvas"></canvas>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                🟢 Nodes dynamically pulse and synchronize over simulated IEEE 802.15.4 mesh conduits.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 4: Architectural Matrix & 2030 Invariants -->
+        <section class="slide" id="slide3" data-notes="Summarize key architectural takeaways: why heterogeneous edge intelligence beats centralized server architectures. Open the floor for questions.">
+          <div class="slide-meta">
+            <div class="slide-category">Synthesis &amp; Benchmark Invariants &bull; 2026-2030 Outlook</div>
+            <h2 class="slide-title">System Invariants &amp; Paradigm Comparison</h2>
+            <p class="slide-subtitle">Quantifiable architectural trade-offs between legacy monolithic cloud versus decentralized autonomous IoT fabrics.</p>
+          </div>
+
+          <div class="grid-3" style="margin-bottom: 16px;">
+            <div class="card card-emerald">
+              <div class="card-header">
+                <span class="card-title">Scalability Horizon</span>
+                <span class="badge badge-emerald">Optimal</span>
+              </div>
+              <div class="metric-hero">
+                <span>&gt; 29.0B</span>
+                <span class="metric-sub">Devices</span>
+              </div>
+              <p class="card-desc">Sub-linear indexing with distributed DHT mesh topology eliminates cloud database bottleneck.</p>
+            </div>
+
+            <div class="card card-cyan">
+              <div class="card-header">
+                <span class="card-title">Latency Bound</span>
+                <span class="badge badge-cyan">Sub-5ms</span>
+              </div>
+              <div class="metric-hero">
+                <span>&lt; 3.8ms</span>
+                <span class="metric-sub">p99 Latency</span>
+              </div>
+              <p class="card-desc">Deterministic edge execution enables safety-critical medical and automotive actuation.</p>
+            </div>
+
+            <div class="card card-amber">
+              <div class="card-header">
+                <span class="card-title">Security Perimeter</span>
+                <span class="badge badge-amber">Zero-Trust</span>
+              </div>
+              <div class="metric-hero">
+                <span>100%</span>
+                <span class="metric-sub">Hardware Root</span>
+              </div>
+              <p class="card-desc">Cryptographic attestation via physical PUF keys baked directly into silicon die layers.</p>
+            </div>
+          </div>
+
+          <div class="card card-indigo" style="padding: 14px 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 14px; font-weight: 800; color: #fff;">🏁 PRESENTATION SYNTHESIS CONCLUSION</span>
+              <span class="badge badge-indigo">Architectural Consensus Reached</span>
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+              The Internet of Things has transitioned from passive cloud telemetry to autonomous spatial intelligence: distributed silicon hardware computing directly at the physical boundary.
+            </p>
+          </div>
+        </section>
+
+      </section>
+
+      <!-- Bottom Keynote Controller Footer -->
+      <footer class="stage-footer">
+        <div class="slide-pills" id="slidePills">
+          <button class="slide-pill active" onclick="goToSlide(0)">01. 3D Silicon Edge</button>
+          <button class="slide-pill" onclick="goToSlide(1)">02. Living Pipeline</button>
+          <button class="slide-pill" onclick="goToSlide(2)">03. Saturation Simulator</button>
+          <button class="slide-pill" onclick="goToSlide(3)">04. System Invariants</button>
+        </div>
+
+        <div class="nav-buttons">
+          <button class="nav-btn" onclick="prevSlide()" title="Previous Slide (Left Arrow / K)">&larr; Previous</button>
+          <button class="nav-btn primary" onclick="nextSlide()" title="Next Slide (Space / Right Arrow / J)">Next Slide &rarr;</button>
+          <button class="nav-btn" onclick="toggleFullscreen()" title="Fullscreen (F)">⛶</button>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Master State Management
+    let currentSlide = 0;
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const totalSlides = slides.length;
+    const progressBar = document.getElementById('progressBar');
+    const slideBadge = document.getElementById('slideBadge');
+    const pills = Array.from(document.querySelectorAll('.slide-pill'));
+    const ambilight = document.getElementById('ambilightGlow');
+
+    const ambilightThemes = [
+      'radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.22), rgba(129, 140, 248, 0.12) 40%, transparent 70%)',
+      'radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.22), rgba(56, 189, 248, 0.12) 40%, transparent 70%)',
+      'radial-gradient(circle at 50% 50%, rgba(129, 140, 248, 0.22), rgba(192, 132, 252, 0.12) 40%, transparent 70%)',
+      'radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.20), rgba(16, 185, 129, 0.12) 40%, transparent 70%)',
+    ];
+
+    function updatePresentationState() {
+      slides.forEach((s, idx) => {
+        if (idx === currentSlide) {
+          s.classList.add('active');
+          if (window.gsap) {
+            gsap.fromTo(s.querySelectorAll('.card, .three-box, .sim-panel, .motion-pipeline'),
+              { opacity: 0, y: 15 },
+              { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: "power2.out" }
+            );
+          }
+        } else {
+          s.classList.remove('active');
+        }
+      });
+
+      pills.forEach((p, idx) => p.classList.toggle('active', idx === currentSlide));
+      const progress = ((currentSlide + 1) / totalSlides) * 100;
+      progressBar.style.width = progress + '%';
+      slideBadge.textContent = 'Slide ' + (currentSlide + 1) + ' / ' + totalSlides;
+
+      if (ambilight && ambilightThemes[currentSlide]) {
+        ambilight.style.background = ambilightThemes[currentSlide];
+      }
+
+      // Sync with Presenter Console window if open
+      broadcastStateUpdate();
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updatePresentationState();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updatePresentationState();
+      }
+    }
+
+    function goToSlide(idx) {
+      if (idx >= 0 && idx < totalSlides) {
+        currentSlide = idx;
+        updatePresentationState();
+      }
+    }
+
+    function toggleFullscreen() {
+      const stage = document.getElementById('stageMain');
+      if (!document.fullscreenElement) {
+        if (stage.requestFullscreen) stage.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (['ArrowRight', 'Space', 'j', 'PageDown'].includes(e.key)) {
+        e.preventDefault();
+        nextSlide();
+      } else if (['ArrowLeft', 'k', 'PageUp'].includes(e.key)) {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (!isNaN(Number(e.key)) && Number(e.key) >= 1 && Number(e.key) <= totalSlides) {
+        goToSlide(Number(e.key) - 1);
+      }
+    });
+
+    // Remote Navigation Listener (from Presenter Console)
+    window.addEventListener('message', (e) => {
+      if (!e.data || typeof e.data !== 'object') return;
+      if (e.data.type === 'HYPERDECK_NAVIGATE') {
+        if (e.data.action === 'next') nextSlide();
+        else if (e.data.action === 'prev') prevSlide();
+        else if (e.data.action === 'goTo' && typeof e.data.index === 'number') goToSlide(e.data.index);
+      }
+    });
+
+    function broadcastStateUpdate() {
+      try {
+        const activeSlide = slides[currentSlide];
+        const title = activeSlide ? (activeSlide.querySelector('.slide-title')?.textContent?.trim() || ('Slide ' + (currentSlide + 1))) : '';
+        const notes = activeSlide?.getAttribute('data-notes') || '';
+        const msg = {
+          type: 'HYPERDECK_STATE_UPDATE',
+          currentSlide,
+          totalSlides,
+          title,
+          notes,
+        };
+        if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*');
+        if (window.opener && !window.opener.closed) window.opener.postMessage(msg, '*');
+      } catch (err) {}
+    }
+
+    // Interactive Motion Pipeline
+    function activateStage(idx) {
+      const stageEls = document.querySelectorAll('.pipeline-stage');
+      stageEls.forEach((stg, i) => stg.classList.toggle('active-stage', i === idx));
+    }
+
+    function triggerPipelineBurst(btn) {
+      const originalText = btn.textContent;
+      btn.textContent = '⚡ Transmitting Packet...';
+      btn.disabled = true;
+
+      const stageEls = Array.from(document.querySelectorAll('.pipeline-stage'));
+      stageEls.forEach(s => s.classList.remove('active-stage'));
+
+      stageEls.forEach((stg, i) => {
+        setTimeout(() => {
+          stageEls.forEach(s => s.classList.remove('active-stage'));
+          stg.classList.add('active-stage');
+          if (window.gsap) {
+            gsap.fromTo(stg, { scale: 0.95 }, { scale: 1.05, duration: 0.3, yoyo: true, repeat: 1 });
+          }
+          if (i === stageEls.length - 1) {
+            setTimeout(() => {
+              btn.textContent = '✓ Packet Delivered!';
+              setTimeout(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+              }, 1200);
+            }, 400);
+          }
+        }, i * 380);
+      });
+    }
+
+    // ==========================================
+    // 3D WebGL Silicon Die Initialization (Three.js)
+    // ==========================================
+    function init3DHardwareDie() {
+      const canvas = document.getElementById('canvas3dDie');
+      if (!canvas || !window.THREE) return;
+
+      const width = canvas.clientWidth || 460;
+      const height = canvas.clientHeight || 340;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 1000);
+      camera.position.set(0, 5, 8);
+
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      scene.add(ambientLight);
+
+      const cyanPoint = new THREE.PointLight(0x38bdf8, 3, 20);
+      cyanPoint.position.set(4, 6, 4);
+      scene.add(cyanPoint);
+
+      const emeraldPoint = new THREE.PointLight(0x10b981, 2, 20);
+      emeraldPoint.position.set(-4, -2, -4);
+      scene.add(emeraldPoint);
+
+      // Root Die Group
+      const chipGroup = new THREE.Group();
+      scene.add(chipGroup);
+
+      // 1. Silicon Substrate Base
+      const substrateGeo = new THREE.BoxGeometry(4.2, 0.25, 4.2);
+      const substrateMat = new THREE.MeshStandardMaterial({
+        color: 0x0a101f,
+        roughness: 0.4,
+        metalness: 0.85,
+      });
+      const substrate = new THREE.Mesh(substrateGeo, substrateMat);
+      chipGroup.add(substrate);
+
+      // 2. Central Core Processor Die
+      const dieGeo = new THREE.BoxGeometry(2.4, 0.18, 2.4);
+      const dieMat = new THREE.MeshStandardMaterial({
+        color: 0x111e38,
+        roughness: 0.2,
+        metalness: 0.95,
+      });
+      const die = new THREE.Mesh(dieGeo, dieMat);
+      die.position.y = 0.2;
+      chipGroup.add(die);
+
+      // 3. Glowing Micro-Bus Line Traces
+      const tracesGeo = new THREE.PlaneGeometry(2.35, 2.35);
+      const tracesMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.65,
+      });
+      const traces = new THREE.Mesh(tracesGeo, tracesMat);
+      traces.rotation.x = -Math.PI / 2;
+      traces.position.y = 0.3;
+      chipGroup.add(traces);
+
+      // 4. Perimeter Gold Ball-Grid-Array (BGA) Pins
+      const pinGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.2, 8);
+      const pinMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.2 });
+      for (let i = -1.8; i <= 1.8; i += 0.45) {
+        [-1.8, 1.8].forEach(z => {
+          const pin1 = new THREE.Mesh(pinGeo, pinMat);
+          pin1.position.set(i, 0.12, z);
+          chipGroup.add(pin1);
+
+          const pin2 = new THREE.Mesh(pinGeo, pinMat);
+          pin2.position.set(z, 0.12, i);
+          chipGroup.add(pin2);
+        });
+      }
+
+      // 5. Orbiting Quantum Energy Cloud
+      const partCount = 45;
+      const partGeo = new THREE.BufferGeometry();
+      const posArray = new Float32Array(partCount * 3);
+      for (let i = 0; i < partCount * 3; i += 3) {
+        const radius = 2.8 + Math.random() * 0.8;
+        const theta = Math.random() * Math.PI * 2;
+        posArray[i] = Math.cos(theta) * radius;
+        posArray[i + 1] = (Math.random() - 0.5) * 1.5;
+        posArray[i + 2] = Math.sin(theta) * radius;
+      }
+      partGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+      const partMat = new THREE.PointsMaterial({ size: 0.08, color: 0x38bdf8, transparent: true, opacity: 0.85 });
+      const particles = new THREE.Points(partGeo, partMat);
+      chipGroup.add(particles);
+
+      // Initial Angle
+      chipGroup.rotation.x = 0.55;
+      chipGroup.rotation.y = -0.65;
+      camera.lookAt(chipGroup.position);
+
+      // Interactive Mouse Orbiting
+      let isDragging = false;
+      let prevMouseX = 0;
+      let prevMouseY = 0;
+      let targetRotX = 0.55;
+      let targetRotY = -0.65;
+
+      canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        prevMouseX = e.clientX;
+        prevMouseY = e.clientY;
+      });
+      window.addEventListener('mouseup', () => isDragging = false);
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const deltaX = e.clientX - prevMouseX;
+        const deltaY = e.clientY - prevMouseY;
+        prevMouseX = e.clientX;
+        prevMouseY = e.clientY;
+        targetRotY += deltaX * 0.008;
+        targetRotX += deltaY * 0.008;
+      });
+
+      // Render Loop with Momentum
+      function animate() {
+        requestAnimationFrame(animate);
+        if (!isDragging) {
+          targetRotY += 0.0025; // Gentle auto-spin
+        }
+        chipGroup.rotation.y += (targetRotY - chipGroup.rotation.y) * 0.08;
+        chipGroup.rotation.x += (targetRotX - chipGroup.rotation.x) * 0.08;
+        particles.rotation.y -= 0.004;
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Handle Resize
+      window.addEventListener('resize', () => {
+        const newW = canvas.clientWidth || 460;
+        const newH = canvas.clientHeight || 340;
+        camera.aspect = newW / newH;
+        camera.updateProjectionMatrix();
+        renderer.setSize(newW, newH);
+      });
+    }
+
+    // ==========================================
+    // Dynamic Swarm Topology Simulation (Canvas2D)
+    // ==========================================
+    let nodes = [];
+    const canvasMesh = document.getElementById('nodeMeshCanvas');
+    const ctx = canvasMesh ? canvasMesh.getContext('2d') : null;
+
+    function initSwarmNodes(count) {
+      if (!canvasMesh) return;
+      const w = canvasMesh.clientWidth || 400;
+      const h = canvasMesh.clientHeight || 180;
+      canvasMesh.width = w;
+      canvasMesh.height = h;
+
+      nodes = [];
+      for (let i = 0; i < count; i++) {
+        nodes.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: (Math.random() - 0.5) * 0.8,
+          radius: 2.5 + Math.random() * 2,
+          pulse: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    function renderSwarm() {
+      if (!ctx || !canvasMesh) return;
+      const w = canvasMesh.width;
+      const h = canvasMesh.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Draw Conduits between proximate nodes
+      const maxDist = 65;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < maxDist) {
+            const alpha = (1 - dist / maxDist) * 0.35;
+            ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw Nodes with Pulse
+      const densityVal = Number(document.getElementById('sliderDensity')?.value || 120);
+      const isHighLoad = densityVal > 300;
+
+      nodes.forEach((n) => {
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0 || n.x > w) n.vx *= -1;
+        if (n.y < 0 || n.y > h) n.vy *= -1;
+
+        n.pulse += 0.05;
+        const glow = Math.sin(n.pulse) * 1.5;
+
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.radius + glow, 0, Math.PI * 2);
+        ctx.fillStyle = isHighLoad ? '#f59e0b' : '#38bdf8';
+        ctx.shadowColor = isHighLoad ? '#f59e0b' : '#38bdf8';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      requestAnimationFrame(renderSwarm);
+    }
+
+    function updateSimulation() {
+      const density = Number(document.getElementById('sliderDensity').value);
+      const rate = Number(document.getElementById('sliderRate').value);
+
+      document.getElementById('labelDensity').textContent = density;
+      document.getElementById('labelRate').textContent = rate + ' Hz';
+      document.getElementById('liveNodeCountBadge').textContent = density + ' Active Nodes';
+
+      // Live mathematical evaluation
+      const throughput = ((density * rate * 0.001) + 0.2).toFixed(1);
+      const latency = (1.5 + (density * rate * 0.00035)).toFixed(1);
+      const saturation = Math.min(100, Math.round((density * rate) / 220));
+
+      document.getElementById('gaugeThroughput').textContent = throughput + ' MB/s';
+      const latEl = document.getElementById('gaugeLatency');
+      latEl.textContent = latency + ' ms';
+      latEl.style.color = latency > 8 ? '#f43f5e' : latency > 4 ? '#f59e0b' : '#10b981';
+
+      const satEl = document.getElementById('gaugeSaturation');
+      satEl.textContent = saturation + '%';
+      satEl.style.color = saturation > 75 ? '#f43f5e' : saturation > 50 ? '#f59e0b' : '#38bdf8';
+
+      // Update node count in canvas
+      if (Math.abs(nodes.length - Math.round(density * 0.45)) > 5) {
+        initSwarmNodes(Math.round(density * 0.45));
+      }
+    }
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      init3DHardwareDie();
+      initSwarmNodes(54);
+      renderSwarm();
+      updatePresentationState();
+    });
+  </script>
+</body>
+</html>

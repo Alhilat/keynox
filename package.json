@@ -1,0 +1,18 @@
+{
+  "name": "interactive-presentation-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive, web-native presentation platform with DeepSeek AI integration",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "npm --workspace=@presentation/server run dev",
+    "dev:client": "npm --workspace=@presentation/client run dev",
+    "dev": "npm run dev:server & npm run dev:client",
+    "build": "npm --workspaces run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
