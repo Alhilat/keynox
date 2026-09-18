@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { extractSlidesFromContent, extractCustomScripts, assembleHyperDeckPresentation } from "../pipeline/html-assembler";
-import { parseStoryboardIntoSlides } from "../pipeline/stage3-creative-generator";
+import { parseStoryboardIntoSlides, synthesizeFallbackSlide } from "../pipeline/stage3-creative-generator";
 import { detectTargetSlideCount } from "../services/slideCountDetector";
 import { presentationCache } from "../pipeline/cache";
 import { convertHtmlToPresentationAst } from "../pipeline/html-to-ast";
@@ -154,6 +154,33 @@ describe("HyperDeck Pipeline & Engine Test Suite", () => {
       const res = extractCleanTopic(input);
       expect(res.title).toContain("Containers");
       expect(res.title).toContain("week 7");
+    });
+
+    it("should strip UI prompt noise words like Slides and PREFERRED THEME", () => {
+      const input = "Slides\nPREFERRED THEME (week 6)\n3 Containers\nContainers are a form of operating system virtualisation...";
+      const res = extractCleanTopic(input);
+      expect(res.title).toContain("Containers");
+      expect(res.title).not.toContain("PREFERRED THEME");
+      expect(res.title).not.toContain("Slides");
+    });
+  });
+
+  describe("synthesizeFallbackSlide", () => {
+    it("should strip markdown asterisks and never produce empty slide titles", () => {
+      const directive = `
+- SLIDE NUMBER & TITLE:**
+TITLE:** Linux Namespaces – Kernel-Level Isolation
+- SUBTITLE & CATEGORY:** PHYSICAL TOPOLOGY
+- NARRATIVE & CONTENT**
+Primary Takeaway:** Containers achieve OS-level virtualisation by creating restricted views of system resources.
+      `;
+      const html = synthesizeFallbackSlide("Containers", 0, 5, directive);
+      expect(html).toContain('<h2 class="slide-title">Linux Namespaces – Kernel-Level Isolation</h2>');
+      expect(html).toContain('<div class="slide-category">PHYSICAL TOPOLOGY</div>');
+      expect(html).not.toContain('**');
+      expect(html).toContain('<svg');
+      expect(html).not.toContain('⚙️');
+      expect(html).not.toContain('⚡');
     });
   });
 });

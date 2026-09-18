@@ -194,11 +194,11 @@ ${MASTER_DESIGN_SYSTEM_CSS}
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
         <div class="theme-switcher">
-          <button type="button" onclick="setTheme('cyber')" class="theme-btn" title="Neon Cyber">🔮 Cyber</button>
-          <button type="button" onclick="setTheme('ocean')" class="theme-btn" title="Ocean Azure">🌊 Ocean</button>
-          <button type="button" onclick="setTheme('sunset')" class="theme-btn" title="Solar Sunset">🌅 Sunset</button>
-          <button type="button" onclick="setTheme('emerald')" class="theme-btn" title="Emerald Matrix">🍃 Emerald</button>
-          <button type="button" onclick="setTheme('cosmic')" class="theme-btn" title="Cosmic Amethyst">🌌 Cosmic</button>
+          <button type="button" onclick="setTheme('cyber')" class="theme-btn" title="Neon Cyber"><span class="theme-dot" style="background:#f43f5e;box-shadow:0 0 6px #f43f5e;"></span>Cyber</button>
+          <button type="button" onclick="setTheme('ocean')" class="theme-btn" title="Ocean Azure"><span class="theme-dot" style="background:#38bdf8;box-shadow:0 0 6px #38bdf8;"></span>Ocean</button>
+          <button type="button" onclick="setTheme('sunset')" class="theme-btn" title="Solar Sunset"><span class="theme-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b;"></span>Sunset</button>
+          <button type="button" onclick="setTheme('emerald')" class="theme-btn" title="Emerald Matrix"><span class="theme-dot" style="background:#10b981;box-shadow:0 0 6px #10b981;"></span>Emerald</button>
+          <button type="button" onclick="setTheme('cosmic')" class="theme-btn" title="Cosmic Amethyst"><span class="theme-dot" style="background:#c084fc;box-shadow:0 0 6px #c084fc;"></span>Cosmic</button>
         </div>
         <div class="badge badge-emerald" id="slideCounter">1 / ${effectiveCount}</div>
       </div>
@@ -437,7 +437,7 @@ ${renderedSlidesHtml}
 
       btn.disabled = true;
       const originalText = btn.innerHTML;
-      btn.innerHTML = '⚡ Transmitting...';
+      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:-1px;margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>Transmitting...';
 
       let step = 0;
       stages.forEach(s => s.classList.remove('active-stage'));
@@ -454,7 +454,7 @@ ${renderedSlidesHtml}
         } else {
           clearInterval(interval);
           btn.disabled = false;
-          btn.innerHTML = '✓ Complete';
+          btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:-1px;margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>Complete';
           setTimeout(() => { btn.innerHTML = originalText; }, 2000);
         }
       }, 550);

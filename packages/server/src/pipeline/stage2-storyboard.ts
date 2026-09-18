@@ -71,6 +71,7 @@ CRITICAL MANDATE:
 - ZERO TEXT-ONLY ARTICLE SLOP: Avoid plain text cards. Every slide must feature a distinct visual 3D archetype, particle flow, connected motion stage, or interactive widget.
 - EVERY SLIDE MUST USE A DIFFERENT ARCHETYPE: Slide 1 MUST be 3D/Hero Split, Slide 2 MUST be Motion Pipeline, Slide 3 MUST be Dynamic Simulator, Slide 4 MUST be Flow Topology, Slide 5 MUST be Benchmark Matrix, Slide 6 MUST be Bar Chart KPI. NEVER repeat .motion-pipeline on multiple slides!
 - Use multi-color coding (Emerald for Edge/Perception, Cyan for Network/Data, Indigo for Logic, Amber for Power/Action, Rose for Bottlenecks).
+- ABSOLUTELY NO EMOJIS: Never output emojis anywhere in titles, categories, or bullet points. Maintain clean, professional, executive typography.
 - 100% domain fidelity derived from Model 1's extracted facts.`;
 
   // Attempt 1: Nemotron 120B Super

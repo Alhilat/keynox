@@ -130,6 +130,14 @@ body.theme-cosmic {
   background: rgba(255, 255, 255, 0.18);
   color: #fff;
 }
+.theme-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: 1px;
+}
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -515,10 +523,24 @@ body {
   margin-bottom: 8px;
 }
 .stage-icon {
-  font-size: 26px;
-  margin-bottom: 6px;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
 }
+.stage-emerald .stage-icon, .card-emerald .stage-icon { color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.12); }
+.stage-cyan .stage-icon, .card-cyan .stage-icon { color: var(--accent-cyan); border-color: rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.12); }
+.stage-indigo .stage-icon, .card-indigo .stage-icon { color: var(--accent-indigo); border-color: rgba(129, 140, 248, 0.35); background: rgba(129, 140, 248, 0.12); }
+.stage-amber .stage-icon, .card-amber .stage-icon { color: var(--accent-amber); border-color: rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.12); }
+.stage-rose .stage-icon, .card-rose .stage-icon { color: var(--accent-rose); border-color: rgba(244, 63, 94, 0.35); background: rgba(244, 63, 94, 0.12); }
+.stage-icon svg { width: 22px; height: 22px; stroke: currentColor; filter: drop-shadow(0 0 6px currentColor); }
 .stage-title {
   font-family: var(--font-display);
   font-size: 14px;
@@ -847,6 +869,7 @@ body {
   transform: scale(1.1);
   box-shadow: 0 0 35px rgba(56, 189, 248, 0.45);
 }
+.flow-node svg { width: 24px; height: 24px; stroke: currentColor; filter: drop-shadow(0 0 6px currentColor); }
 .flow-arrow {
   color: var(--accent-cyan);
   font-size: 22px;

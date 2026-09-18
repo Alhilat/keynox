@@ -107,34 +107,34 @@ IF the topic is physical, geometric, or quantum, you may alternatively use .thre
       title: "Sequential Execution & Process Pipeline (.motion-pipeline)",
       mandate: `You MUST use a real-world .motion-pipeline with 4 sequential stages (Emerald -> Cyan -> Indigo -> Amber) and animated packet pulses:
 <div class="pipeline-controls">
-  <span class="pipeline-tag">⚡ SEQUENTIAL PROCESS FLOW</span>
-  <button class="sim-play-btn" onclick="simulatePipelineFlow(this)">▶ Simulate Flow</button>
+  <span class="pipeline-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:-1px;margin-right:4px;"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline></svg>SEQUENTIAL PROCESS FLOW</span>
+  <button class="sim-play-btn" onclick="simulatePipelineFlow(this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="display:inline;vertical-align:-1px;margin-right:4px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Simulate Flow</button>
 </div>
 <div class="motion-pipeline">
   <div class="pipeline-stage stage-emerald">
     <span class="stage-num">STAGE 01</span>
-    <div class="stage-icon">[Pick topic-relevant emoji: e.g. 🐧, 📦, 🔒, ⚡, 🧩, ⚙️, 🌐]</div>
+    <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div>
     <div class="stage-title">[Exact Step 1 Name from Document]</div>
     <div class="stage-desc">[Specific action of Step 1 derived 100% from Document context]</div>
   </div>
   <div class="pipeline-connector"><div class="packet-pulse packet-emerald"></div></div>
   <div class="pipeline-stage stage-cyan">
     <span class="stage-num">STAGE 02</span>
-    <div class="stage-icon">[Topic emoji]</div>
+    <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
     <div class="stage-title">[Exact Step 2 Name from Document]</div>
     <div class="stage-desc">[Specific action of Step 2 derived 100% from Document context]</div>
   </div>
   <div class="pipeline-connector"><div class="packet-pulse packet-cyan"></div></div>
   <div class="pipeline-stage stage-indigo">
     <span class="stage-num">STAGE 03</span>
-    <div class="stage-icon">[Topic emoji]</div>
+    <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></div>
     <div class="stage-title">[Exact Step 3 Name from Document]</div>
     <div class="stage-desc">[Specific action of Step 3 derived 100% from Document context]</div>
   </div>
   <div class="pipeline-connector"><div class="packet-pulse packet-amber"></div></div>
   <div class="pipeline-stage stage-amber">
     <span class="stage-num">STAGE 04</span>
-    <div class="stage-icon">[Topic emoji]</div>
+    <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
     <div class="stage-title">[Exact Step 4 Name from Document]</div>
     <div class="stage-desc">[Specific action of Step 4 derived 100% from Document context]</div>
   </div>
@@ -188,25 +188,25 @@ IF the topic is physical, geometric, or quantum, you may alternatively use .thre
       mandate: `You MUST use a connected flow diagram (.flow-diagram) with active step nodes, animated conduits, and operational specifications:
 <div class="flow-diagram">
   <div class="flow-step card-emerald">
-    <div class="flow-node">[Emoji]</div>
+    <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div>
     <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 1 from Document]</div>
     <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 1 spec from text]</div>
   </div>
   <div class="flow-arrow">➔</div>
   <div class="flow-step card-cyan">
-    <div class="flow-node">[Emoji]</div>
+    <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="6" height="6" rx="1"></rect><rect x="16" y="2" width="6" height="6" rx="1"></rect><rect x="9" y="16" width="6" height="6" rx="1"></rect><path d="M5 8v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"></path><line x1="12" y1="13" x2="12" y2="16"></line></svg></div>
     <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 2 from Document]</div>
     <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 2 spec from text]</div>
   </div>
   <div class="flow-arrow">➔</div>
   <div class="flow-step card-indigo">
-    <div class="flow-node">[Emoji]</div>
+    <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
     <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 3 from Document]</div>
     <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 3 spec from text]</div>
   </div>
   <div class="flow-arrow">➔</div>
   <div class="flow-step card-amber">
-    <div class="flow-node">[Emoji]</div>
+    <div class="flow-node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div>
     <div style="font-size: 13px; font-weight: 700; color: #fff;">[Entity 4 from Document]</div>
     <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">[Entity 4 spec from text]</div>
   </div>
@@ -286,7 +286,8 @@ ABSOLUTE 100% TOPIC FIDELITY MANDATE (ZERO TOLERANCE FOR HARDCODED PLACEHOLDERS)
 3. If the document is about Linux containers, your stages, cards, and terminals MUST discuss PID namespaces, UTS namespaces, veth pairs, sethostbyname(), Open vSwitch, Dockerfiles, and dhcpd!
 4. STRICT ANTI-ARTICLE RULES: Output ONLY the <section ...> ... </section> tag. Always properly close the </section> tag at the end. Use multi-colors (.card-emerald, .card-cyan, .card-indigo, .card-amber, .card-rose).
 5. DO NOT use .motion-pipeline unless this slide is explicitly assigned ARCHETYPE 2!
-6. Keep internal reasoning under 80 tokens. Output valid HTML directly.`;
+6. ABSOLUTELY NO EMOJIS: Never output emojis (e.g. 📦, 🏷️, 🔒, 🔢, ⚙️, ⚡, 🔄, ✅) anywhere in titles, badges, cards, stages, or diagrams! Emojis look amateur and break across operating systems. Use crisp inline SVG vector icons (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">...</svg>) or clean typography badges instead.
+7. Keep internal reasoning under 80 tokens. Output valid HTML directly.`;
 }
 
 /**
@@ -328,23 +329,57 @@ export function synthesizeFallbackSlide(
 ): string {
   const isActive = slideIndex === 0;
   const slideType = slideIndex % 4;
+  const cleanDirective = slideDirective.replace(/\*\*/g, "").replace(/#{1,4}\s*/g, "");
 
-  const titleMatch = slideDirective.match(/(?:SLIDE\s+\d+:?|Slide\s+\d+:?|TITLE:?)\s*([^\n]+)/i);
-  const title = titleMatch ? titleMatch[1].replace(/^[#*\s-]+/, "").trim() : `${cleanTopic}: Component Architecture`;
+  // Extract category
+  let category = "SYSTEM ARCHITECTURE";
+  const catMatch = cleanDirective.match(/(?:CATEGORY|SUBTITLE\s*&?\s*CATEGORY)\s*[:\-—]\s*([^\n]+)/i);
+  if (catMatch && catMatch[1].trim().length >= 3) {
+    category = catMatch[1].replace(/^[#*\s-]+/, "").trim().toUpperCase();
+  }
 
-  const categoryMatch = slideDirective.match(/CATEGORY:\s*([^\n]+)/i);
-  const category = categoryMatch ? categoryMatch[1].trim() : "SYSTEM ARCHITECTURE";
+  // Extract title cleanly
+  let title = "";
+  const titleMatches = Array.from(cleanDirective.matchAll(/(?:(?:^|\n)\s*(?:SLIDE\s+\d+|TITLE)\s*[:\-—]\s*)([^\n]+)/gi));
+  for (const m of titleMatches) {
+    const candidate = m[1].replace(/^[#*\s-]+/, "").trim();
+    if (candidate.length >= 4 && !/^(?:category|subtitle|narrative|content|photo|primary takeaway)/i.test(candidate)) {
+      title = candidate;
+      break;
+    }
+  }
+  if (!title) {
+    const candidateLines = cleanDirective
+      .split("\n")
+      .map((l) => l.replace(/^[#*-\s0-9.:]+/, "").trim())
+      .filter((l) => l.length >= 6 && !/^(?:slide|category|subtitle|narrative|content|photo|primary takeaway)/i.test(l));
+    title = candidateLines[0] || `${cleanTopic}: System Architecture`;
+  }
 
-  // Extract relevant lines from directive as content points
-  const rawLines = slideDirective
+  // Extract real content bullet points (filtering out all meta-attribute lines)
+  const contentLines = cleanDirective
     .split("\n")
-    .map((l) => l.replace(/^[#*-\s]+/, "").trim())
-    .filter((l) => l.length > 15 && !l.toUpperCase().startsWith("SLIDE") && !l.toUpperCase().startsWith("CATEGORY"));
+    .map((l) => l.trim())
+    .filter((l) => {
+      if (l.length < 15) return false;
+      const u = l.toUpperCase();
+      return (
+        !u.startsWith("SLIDE") &&
+        !u.startsWith("TITLE") &&
+        !u.startsWith("SUBTITLE") &&
+        !u.startsWith("CATEGORY") &&
+        !u.startsWith("NARRATIVE") &&
+        !u.startsWith("PHOTO") &&
+        !u.startsWith("ARCHETYPE") &&
+        !u.startsWith("CREATIVE")
+      );
+    })
+    .map((l) => l.replace(/^(?:primary takeaway|takeaway|metric|formula|point|focus)\s*[:\-—]\s*/i, "").trim());
 
-  const p1 = rawLines[0] || `Primary operational mechanism of ${cleanTopic}`;
-  const p2 = rawLines[1] || `Deterministic state validation and telemetry monitoring`;
-  const p3 = rawLines[2] || `Production scaling threshold and boundary protection`;
-  const p4 = rawLines[3] || `Autonomous failover barrier and invariant preservation`;
+  const p1 = contentLines[0] || `Core mechanism and execution invariants of ${cleanTopic}`;
+  const p2 = contentLines[1] || `Deterministic state validation and telemetry monitoring`;
+  const p3 = contentLines[2] || `Production scaling threshold and boundary protection`;
+  const p4 = contentLines[3] || `Autonomous failover barrier and invariant preservation`;
 
   function extractShortPhrase(text: string, fallback: string): string {
     if (!text) return fallback;
@@ -369,34 +404,34 @@ export function synthesizeFallbackSlide(
     <p class="slide-subtitle">Deterministic sequential execution progression and lifecycle stages.</p>
   </div>
   <div class="pipeline-controls">
-    <span class="pipeline-tag">⚡ SYSTEM EXECUTION PIPELINE</span>
-    <button class="sim-play-btn" onclick="simulatePipelineFlow(this)">▶ Simulate Flow</button>
+    <span class="pipeline-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:-1px;margin-right:4px;"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline></svg>SYSTEM EXECUTION PIPELINE</span>
+    <button class="sim-play-btn" onclick="simulatePipelineFlow(this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="display:inline;vertical-align:-1px;margin-right:4px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Simulate Flow</button>
   </div>
   <div class="motion-pipeline">
     <div class="pipeline-stage stage-emerald">
       <span class="stage-num">STAGE 01</span>
-      <div class="stage-icon">⚙️</div>
+      <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></div>
       <div class="stage-title">${s1Title}</div>
       <div class="stage-desc">${p1}</div>
     </div>
     <div class="pipeline-connector"><div class="packet-pulse packet-emerald"></div></div>
     <div class="pipeline-stage stage-cyan">
       <span class="stage-num">STAGE 02</span>
-      <div class="stage-icon">⚡</div>
+      <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
       <div class="stage-title">${s2Title}</div>
       <div class="stage-desc">${p2}</div>
     </div>
     <div class="pipeline-connector"><div class="packet-pulse packet-cyan"></div></div>
     <div class="pipeline-stage stage-indigo">
       <span class="stage-num">STAGE 03</span>
-      <div class="stage-icon">🔄</div>
+      <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></div>
       <div class="stage-title">${s3Title}</div>
       <div class="stage-desc">${p3}</div>
     </div>
     <div class="pipeline-connector"><div class="packet-pulse packet-amber"></div></div>
     <div class="pipeline-stage stage-amber">
       <span class="stage-num">STAGE 04</span>
-      <div class="stage-icon">✅</div>
+      <div class="stage-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
       <div class="stage-title">${s4Title}</div>
       <div class="stage-desc">${p4}</div>
     </div>
@@ -446,10 +481,10 @@ export function synthesizeFallbackSlide(
   <div class="grid-split">
     <div class="three-container" data-model="topology-cluster-3d">
       <div class="three-overlay">
-        <span class="three-badge">⚡ 3D SYSTEM TOPOLOGY</span>
+        <span class="three-badge">3D SYSTEM TOPOLOGY</span>
         <span style="font-family: var(--font-display); font-size: 14px; font-weight: bold; color: #fff;">${title}</span>
       </div>
-      <div class="three-hint">🖱️ Click &amp; Drag to Rotate 3D Model</div>
+      <div class="three-hint"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-1px;margin-right:4px;"><path d="M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z"></path><line x1="12" y1="6" x2="12" y2="8"></line></svg>Click &amp; Drag to Rotate 3D Model</div>
     </div>
     <div class="glass-card card-indigo">
       <div class="glass-card-header">
