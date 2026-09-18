@@ -4,7 +4,6 @@ import { NemotronProcessViewer } from "./components/NemotronProcessViewer";
 import { HtmlPresentationViewer } from "./components/HtmlPresentationViewer";
 import { PresentationPlayer } from "./components/PresentationPlayer";
 import { EditorStudio } from "./components/EditorStudio";
-import { IotReactKeynote } from "./components/IotReactKeynote";
 import { useStreamThrottler } from "./hooks/useStreamThrottler";
 import {
   booleanLogicDeck,
@@ -29,8 +28,8 @@ import {
 } from "lucide-react";
 
 export function App() {
-  // Navigation Mode: "studio" (generator) | "player" (keynote) | "editor" (visual studio) | "react-keynote"
-  const [activeMode, setActiveMode] = useState<"studio" | "player" | "editor" | "react-keynote">("react-keynote");
+  // Navigation Mode: "studio" (generator) | "player" (keynote) | "editor" (visual studio)
+  const [activeMode, setActiveMode] = useState<"studio" | "player" | "editor">("studio");
 
   // Presentation State for Native GSAP Player / Editor
   const [currentDeck, setCurrentDeck] = useState<Presentation>(booleanLogicDeck);
@@ -173,6 +172,9 @@ export function App() {
                 if (event.model) {
                   setModelName(event.model);
                 }
+                if (event.presentation) {
+                  setCurrentDeck(event.presentation);
+                }
                 setActiveStage("done");
               } else if (event.type === "error") {
                 throw new Error(event.message);
@@ -237,17 +239,6 @@ export function App() {
 
           {/* Mode Navigation */}
           <nav className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-800 shadow-inner">
-            <button
-              onClick={() => setActiveMode("react-keynote")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                activeMode === "react-keynote"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-md shadow-cyan-500/20 font-black"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>⚛️ React Keynote</span>
-            </button>
             <button
               onClick={() => setActiveMode("studio")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
@@ -332,6 +323,8 @@ export function App() {
                 title={currentTitle}
                 modelName={modelName}
                 outline={outlineText || stage2Storyboard.value || stage1Analysis.value}
+                onPresentKeynote={() => setActiveMode("player")}
+                onOpenStudio={() => setActiveMode("editor")}
               />
             </div>
           ) : !isStreaming ? (
@@ -476,13 +469,6 @@ export function App() {
               </div>
             </div>
           ) : null}
-        </main>
-      )}
-
-      {/* Mode: React Keynote (IoT Lecture Deck) */}
-      {activeMode === "react-keynote" && (
-        <main className="w-full max-w-7xl px-4 sm:px-6 flex flex-col items-center mt-4">
-          <IotReactKeynote />
         </main>
       )}
 

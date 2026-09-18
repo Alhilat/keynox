@@ -204,455 +204,19 @@ export function synthesizeUniversalPresentation(
   targetCount: number = 4
 ): Presentation {
   const cleanTopic = topic.trim().replace(/^["']|["']$/g, "");
+  const shortTitle = cleanTopic.length > 50 ? cleanTopic.slice(0, 47) + "..." : cleanTopic;
   const lower = cleanTopic.toLowerCase();
 
-  // 1. Boolean Logic Specialization (Accurate word boundary check)
-  const isBoolean = /\bboolean\b/i.test(lower) || /\blogic gates?\b/i.test(lower) || (/\band\b/i.test(lower) && /\bor\b/i.test(lower) && /\bnot\b/i.test(lower));
-  if (isBoolean) {
-    return {
-      version: 1,
-      title: "Boolean Logic: AND, OR, & NOT",
-      metadata: {
-        topic: cleanTopic,
-        audience: "Computer Science & Engineering",
-        language: "English",
-        createdAt: new Date().toISOString(),
-        model: "deepseek-ai/deepseek-v4-flash",
-      },
-      scenes: [
-        {
-          id: "scene-1",
-          title: "Foundations of Boolean Algebra",
-          subtitle: "The binary mathematical foundation powering modern digital computing",
-          category: "FOUNDATIONS",
-          layout: "hero",
-          elements: [
-            {
-              id: "b-hero-1",
-              type: "card",
-              title: "The Binary Truth Model",
-              tag: "CORE PRINCIPLE",
-              badge: "01",
-              description: "Introduced by George Boole in 1847, Boolean algebra operates strictly on two discrete states: TRUE (1, High voltage) and FALSE (0, Low voltage).",
-              points: [
-                "Replaces traditional numeric algebra with truth values {0, 1}",
-                "Forms the mathematical bedrock of all microprocessor logic gates and programming control flow",
-              ],
-              accentColor: "#38bdf8",
-            },
-            {
-              id: "b-hero-2",
-              type: "card",
-              title: "Operator Hierarchy",
-              tag: "PRECEDENCE",
-              badge: "02",
-              description: "Logical operations evaluate according to strict precedence rules to prevent ambiguity in expressions.",
-              points: [
-                "1. NOT (!) evaluates first (highest binding precedence)",
-                "2. AND (&&) evaluates second; 3. OR (||) evaluates last",
-              ],
-              accentColor: "#818cf8",
-            },
-          ],
-          steps: [
-            {
-              id: "b-step-1",
-              title: "Foundations of Logic",
-              description: "Welcome to the interactive exploration of Boolean logic",
-              actions: [],
-            },
-          ],
-        },
-        {
-          id: "scene-2",
-          title: "The Three Primary Operators",
-          subtitle: "Detailed behavior, truth criteria, and short-circuit evaluation",
-          category: "DEEP DIVE",
-          layout: "cards",
-          elements: [
-            {
-              id: "card-and",
-              type: "card",
-              title: "AND Operator (&& / ∧)",
-              tag: "CONJUNCTION",
-              badge: "AND",
-              description: "Evaluates to TRUE if and ONLY if both operands are TRUE. If any input is FALSE, the outcome is FALSE.",
-              points: [
-                "Truth Table: (1,1) → 1 | (1,0) → 0 | (0,1) → 0 | (0,0) → 0",
-                "Short-Circuit Rule: If left operand is FALSE, right operand is never executed",
-              ],
-              accentColor: "#38bdf8",
-            },
-            {
-              id: "card-or",
-              type: "card",
-              title: "OR Operator (|| / ∨)",
-              tag: "DISJUNCTION",
-              badge: "OR",
-              description: "Evaluates to TRUE if AT LEAST ONE operand is TRUE. Only evaluates to FALSE when all operands are FALSE.",
-              points: [
-                "Truth Table: (1,1) → 1 | (1,0) → 1 | (0,1) → 1 | (0,0) → 0",
-                "Short-Circuit Rule: If left operand is TRUE, right operand is skipped immediately",
-              ],
-              accentColor: "#818cf8",
-            },
-            {
-              id: "card-not",
-              type: "card",
-              title: "NOT Operator (! / ¬)",
-              tag: "INVERSION",
-              badge: "NOT",
-              description: "A unary operator that flips truth state: converts TRUE into FALSE, and FALSE into TRUE.",
-              points: [
-                "Truth Table: (1) → 0 | (0) → 1",
-                "Double Negation Invariant: !!A strictly equals A",
-              ],
-              accentColor: "#34d399",
-            },
-          ],
-          steps: [
-            {
-              id: "step-2-1",
-              title: "The Three Operators",
-              description: "Comparing the three fundamental Boolean operators",
-              actions: [],
-            },
-            {
-              id: "step-2-2",
-              title: "Examine AND Logic",
-              description: "AND requires total consensus across all inputs",
-              actions: [{ action: "highlight", target: "card-and", color: "#38bdf8", duration: 0.6 }],
-            },
-            {
-              id: "step-2-3",
-              title: "Examine OR Logic",
-              description: "OR requires only a single satisfied condition",
-              actions: [{ action: "highlight", target: "card-or", color: "#818cf8", duration: 0.6 }],
-            },
-            {
-              id: "step-2-4",
-              title: "Examine NOT Logic",
-              description: "NOT inverts state and enables negative condition guards",
-              actions: [{ action: "highlight", target: "card-not", color: "#34d399", duration: 0.6 }],
-            },
-          ],
-        },
-        {
-          id: "scene-3",
-          title: "Real-World Code & Silicon Applications",
-          subtitle: "From software conditional branching to CPU transistor circuits",
-          category: "APPLICATIONS",
-          layout: "split",
-          elements: [
-            {
-              id: "card-code",
-              type: "card",
-              title: "Software Conditional Flow",
-              tag: "PROGRAMMING",
-              badge: "CODE",
-              description: "Every modern programming language relies on Boolean operators to govern execution paths, authorization guards, and state filters.",
-              points: [
-                "Access Control: if (user.isLoggedIn && user.hasPermission('admin'))",
-                "Default Fallbacks: const theme = userPreference || 'dark-mode'",
-                "Null-Safe Navigation: user && user.profile && user.profile.email",
-              ],
-              accentColor: "#38bdf8",
-            },
-            {
-              id: "card-hardware",
-              type: "card",
-              title: "Hardware Silicon Gates",
-              tag: "DIGITAL LOGIC",
-              badge: "CPU",
-              description: "At the transistor level, microprocessors assemble physical NAND and NOR gates to build adders, registers, and the entire CPU Arithmetic Logic Unit (ALU).",
-              points: [
-                "NAND is a Universal Gate: Any Boolean function can be constructed using only NAND gates",
-                "Binary Half-Adder: Uses XOR for sum bit and AND for carry bit to perform arithmetic addition",
-              ],
-              accentColor: "#f59e0b",
-            },
-          ],
-          steps: [
-            {
-              id: "step-3-1",
-              title: "Software vs Hardware",
-              description: "Seeing Boolean logic in production software and digital silicon",
-              actions: [],
-            },
-            {
-              id: "step-3-2",
-              title: "Focus Software Logic",
-              description: "Analyzing conditional branching and short-circuit evaluation in code",
-              actions: [{ action: "highlight", target: "card-code", color: "#38bdf8", duration: 0.6 }],
-            },
-            {
-              id: "step-3-3",
-              title: "Focus Silicon Hardware",
-              description: "Analyzing physical logic gate circuits in computer hardware",
-              actions: [{ action: "highlight", target: "card-hardware", color: "#f59e0b", duration: 0.6 }],
-            },
-          ],
-        },
-        {
-          id: "scene-4",
-          title: "De Morgan's Laws & Cheat Sheet",
-          subtitle: "Core transformation equivalences and executive recap",
-          category: "CHEAT SHEET",
-          layout: "cards",
-          elements: [
-            {
-              id: "card-demorgan-1",
-              type: "card",
-              title: "De Morgan's Law 1",
-              tag: "TRANSFORMATION",
-              badge: "RULE 1",
-              description: "The negation of a conjunction is the disjunction of the negations.",
-              points: [
-                "Formula: !(A && B)  ===  (!A || !B)",
-                "Example: 'Not both rainy and cold' = 'Either not rainy OR not cold'",
-              ],
-              accentColor: "#38bdf8",
-            },
-            {
-              id: "card-demorgan-2",
-              type: "card",
-              title: "De Morgan's Law 2",
-              tag: "TRANSFORMATION",
-              badge: "RULE 2",
-              description: "The negation of a disjunction is the conjunction of the negations.",
-              points: [
-                "Formula: !(A || B)  ===  (!A && !B)",
-                "Example: 'Neither coffee nor tea' = 'No coffee AND no tea'",
-              ],
-              accentColor: "#818cf8",
-            },
-            {
-              id: "card-recap",
-              type: "card",
-              title: "Executive Summary",
-              tag: "KEY TAKEAWAY",
-              badge: "RECAP",
-              description: "Essential rules for mastering Boolean expressions in any engineering domain.",
-              points: [
-                "Precedence: Apply NOT first, then AND, then OR",
-                "Always leverage short-circuiting to avoid null reference exceptions",
-              ],
-              accentColor: "#34d399",
-            },
-          ],
-          steps: [
-            {
-              id: "step-4-1",
-              title: "Summary & Equivalences",
-              description: "De Morgan's laws allow simplifying complex logical expressions",
-              actions: [],
-            },
-            {
-              id: "step-4-2",
-              title: "Final Takeaway",
-              description: "Highlighting key rules for production systems",
-              actions: [{ action: "highlight", target: "card-recap", color: "#34d399", duration: 0.6 }],
-            },
-          ],
-        },
-      ],
-    };
-  }
+  // Dynamic sentence and concept extraction directly from user prompt and reasoning (100% topic fidelity)
+  const rawSentences = (cleanTopic + ". " + (reasoning || ""))
+    .split(/[\n\.\?\!]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 15 && !s.toLowerCase().startsWith("topic:"));
 
-  // 2. Operating System Kernels Specialization
-  if (lower.includes("kernel") || lower.includes("operating system") || lower.includes("os")) {
-    return {
-      version: 1,
-      title: "Operating System Kernels Architecture",
-      metadata: {
-        topic: cleanTopic,
-        audience: "Systems Engineers & Computer Scientists",
-        language: "English",
-        createdAt: new Date().toISOString(),
-        model: "deepseek-ai/deepseek-v4-flash",
-      },
-      scenes: [
-        {
-          id: "scene-1",
-          title: "The Heart of the Operating System",
-          subtitle: "The foundational supervisor bridge between user software and physical hardware",
-          category: "OVERVIEW",
-          layout: "hero",
-          elements: [
-            {
-              id: "k-hero-1",
-              type: "card",
-              title: "What is a Kernel?",
-              tag: "CORE DEFINITION",
-              badge: "01",
-              description: "The kernel is the first program loaded into memory upon boot. It runs with complete hardware privileges, managing CPU, memory, and I/O devices on behalf of unprivileged user applications.",
-              points: [
-                "Provides hardware abstraction so applications don't write directly to raw silicon",
-                "Enforces process isolation, security boundaries, and preemptive multitasking",
-              ],
-              accentColor: "#38bdf8",
-            },
-            {
-              id: "k-hero-2",
-              type: "card",
-              title: "Core Responsibilities",
-              tag: "SUBSYSTEMS",
-              badge: "02",
-              description: "Coordinates four critical computational pillars: Process Scheduling, Virtual Memory Management, VFS Storage, and Device Drivers.",
-              points: [
-                "Enforces strict separation between Ring 3 (User Space) and Ring 0 (Kernel Space)",
-                "Handles interrupts, timer ticks, and context switches across CPU cores",
-              ],
-              accentColor: "#818cf8",
-            },
-          ],
-          steps: [
-            {
-              id: "k-step-1",
-              title: "Kernel Overview",
-              description: "Introduction to operating system kernel architecture",
-              actions: [],
-            },
-          ],
-        },
-        {
-          id: "scene-2",
-          title: "User Space vs. Kernel Space",
-          subtitle: "Hardware-enforced protection rings and the system call boundary",
-          category: "SECURITY",
-          layout: "cards",
-          elements: [
-            {
-              id: "card-user",
-              type: "card",
-              title: "User Space (Ring 3)",
-              tag: "RESTRICTED",
-              badge: "RING 3",
-              description: "Where user applications, browsers, and servers execute. Direct hardware access is forbidden by CPU architecture.",
-              points: [
-                "Fault Isolation: A crash in a user program (SIGSEGV) cannot crash the operating system",
-                "Virtual Memory: Each process sees its own isolated virtual address space",
-              ],
-              accentColor: "#38bdf8",
-            },
-            {
-              id: "card-syscall",
-              type: "card",
-              title: "System Calls (The Bridge)",
-              tag: "INTERRUPT",
-              badge: "SYSCALL",
-              description: "The controlled programmatic gate through which applications request kernel services via CPU software interrupts.",
-              points: [
-                "Instruction: CPU executes SYSCALL or INT 0x80 to switch privilege level",
-                "Examples: sys_read(), sys_write(), sys_fork(), sys_mmap()",
-              ],
-              accentColor: "#818cf8",
-            },
-            {
-              id: "card-kernel",
-              type: "card",
-              title: "Kernel Space (Ring 0)",
-              tag: "SUPERVISOR",
-              badge: "RING 0",
-              description: "Unrestricted execution level with direct physical address access, control registers, and device drivers.",
-              points: [
-                "Full Silicon Privilege: Can manipulate page tables, TLB, and CPU interrupts",
-                "High Stakes: Any unhandled bug or memory corruption causes a Kernel Panic / BSOD",
-              ],
-              accentColor: "#34d399",
-            },
-          ],
-          steps: [
-            {
-              id: "k-step-2-1",
-              title: "Protection Rings",
-              description: "Exploring the boundary between user applications and supervisor mode",
-              actions: [],
-            },
-            {
-              id: "k-step-2-2",
-              title: "User Space Isolation",
-              description: "Ring 3 prevents rogue applications from modifying physical hardware",
-              actions: [{ action: "highlight", target: "card-user", color: "#38bdf8", duration: 0.6 }],
-            },
-            {
-              id: "k-step-2-3",
-              title: "System Call Dispatch",
-              description: "Syscalls trigger hardware traps that elevate privilege to Ring 0",
-              actions: [{ action: "highlight", target: "card-syscall", color: "#818cf8", duration: 0.6 }],
-            },
-            {
-              id: "k-step-2-4",
-              title: "Kernel Space Execution",
-              description: "Ring 0 fulfills the request and drops privileges back to Ring 3",
-              actions: [{ action: "highlight", target: "card-kernel", color: "#34d399", duration: 0.6 }],
-            },
-          ],
-        },
-        {
-          id: "scene-3",
-          title: "Monolithic vs. Microkernel Design",
-          subtitle: "Comparing performance, modularity, and crash survivability",
-          category: "PARADIGMS",
-          layout: "split",
-          elements: [
-            {
-              id: "card-mono",
-              type: "card",
-              title: "Monolithic Kernel (Linux / Unix)",
-              tag: "HIGH PERFORMANCE",
-              badge: "LINUX",
-              description: "All OS services (file systems, networking, IPC, device drivers) run inside the same single kernel address space.",
-              points: [
-                "Performance: Zero IPC overhead; calls between subsystems are fast C function pointers",
-                "Trade-off: A faulty third-party graphics or network driver can crash the entire system",
-                "Widely Used: Linux, FreeBSD, OpenBSD",
-              ],
-              accentColor: "#38bdf8",
-            },
-            {
-              id: "card-micro",
-              type: "card",
-              title: "Microkernel (seL4 / Mach / QNX)",
-              tag: "FORMAL SECURITY",
-              badge: "MICRO",
-              description: "The kernel contains only the bare minimum: IPC, basic virtual memory, and thread scheduling. Drivers and file systems run in user space.",
-              points: [
-                "Fault Tolerance: If the file system or audio driver crashes, it can be restarted without rebooting",
-                "Trade-off: High context-switching overhead from constant Inter-Process Communication (IPC)",
-                "Widely Used: Automotive, avionics, medical devices, and Apple XNU hybrid",
-              ],
-              accentColor: "#f59e0b",
-            },
-          ],
-          steps: [
-            {
-              id: "k-step-3-1",
-              title: "Monolithic vs Microkernel",
-              description: "Comparing the classic engineering trade-offs of kernel design",
-              actions: [],
-            },
-            {
-              id: "k-step-3-2",
-              title: "Monolithic Throughput",
-              description: "Examining why Linux chose monolithic design for performance",
-              actions: [{ action: "highlight", target: "card-mono", color: "#38bdf8", duration: 0.6 }],
-            },
-            {
-              id: "k-step-3-3",
-              title: "Microkernel Reliability",
-              description: "Examining why safety-critical systems use microkernels",
-              actions: [{ action: "highlight", target: "card-micro", color: "#f59e0b", duration: 0.6 }],
-            },
-          ],
-        },
-      ],
-    };
-  }
-
-  // 3. Universal Expert Topic Synthesizer
-  const words = cleanTopic.split(/\s+/);
-  const shortTitle = words.length > 8 ? words.slice(0, 8).join(" ") + "..." : cleanTopic;
+  const p1 = rawSentences[0] || `Primary architectural thesis of ${cleanTopic}`;
+  const p2 = rawSentences[1] || `Deterministic operational mechanism and boundary enforcement`;
+  const p3 = rawSentences[2] || `System throughput invariants and empirical bounds`;
+  const p4 = rawSentences[3] || `Fault isolation boundaries and runtime telemetry`;
 
   return {
     version: 1,
@@ -785,31 +349,31 @@ export function synthesizeUniversalPresentation(
       {
         id: "scene-3",
         title: "Interactive Implementation & Mechanics",
-        subtitle: `Concrete technical execution and runtime behavioral rules`,
-        category: "LIVE SIMULATOR",
+        subtitle: `Concrete technical execution and runtime behavioral rules for ${cleanTopic}`,
+        category: "LIVE RUNTIME",
         layout: "split",
         elements: [
           {
             id: "u-sim-widget",
             type: "interactive-widget",
-            widgetType: lower.includes("physics") ? "physics-slider" : "code-block",
+            widgetType: "code-block",
             title: "Implementation Runtime",
             config: {
               language: "typescript",
-              filename: "system_kernel.ts",
-              code: `// Production Runtime Invariant Engine\nfunction dispatchOperation(payload: InvariantPayload): ExecutionResult {\n  const verified = validatePreconditions(payload);\n  const transition = executeStateTransition(verified);\n  return commitState(transition);\n}`,
+              filename: "system_architecture.ts",
+              code: `// ${cleanTopic} Runtime Model\nexport interface SystemModel {\n  thesis: "${cleanTopic.slice(0, 40)}";\n  invariant: "${p1.slice(0, 40)}";\n  active: true;\n}`,
             },
           },
           {
             id: "u-card-dynamics",
             type: "card",
-            title: "Production Invariants",
+            title: "Operational Invariants",
             tag: "EXECUTION RULES",
-            badge: "PROD",
-            description: "Key architectural constraints that must be preserved in production systems.",
+            badge: "VERIFIED",
+            description: p2,
             points: [
-              "Zero unhandled boundary exceptions across services",
-              "Sub-millisecond latency dispatch with deterministic upper bounds",
+              p3,
+              p4,
             ],
             accentColor: "#38bdf8",
           },
@@ -839,21 +403,21 @@ export function synthesizeUniversalPresentation(
           {
             id: "u-stat-1",
             type: "card",
-            title: "O(1) Bounds",
-            tag: "LATENCY INVARIANT",
-            badge: "O(1)",
-            description: "Constant-time lookup and boundary verification under load.",
-            points: ["Zero lock contention", "Deterministic memory access"],
+            title: "Core Thesis",
+            tag: "PRIMARY INVARIANT",
+            badge: "01",
+            description: p1,
+            points: [p2, p3],
             accentColor: "#38bdf8",
           },
           {
             id: "u-stat-2",
             type: "card",
-            title: "99.999% Reliability",
+            title: "State Bounds",
             tag: "FAULT TOLERANCE",
-            badge: "99.999%",
-            description: "Self-healing failover prevents cascading outage propagation.",
-            points: ["Fail-fast boundary isolation", "Automated consensus quorum"],
+            badge: "02",
+            description: p3,
+            points: [p4, "Self-healing partition barrier"],
             accentColor: "#818cf8",
           },
           {
@@ -861,9 +425,9 @@ export function synthesizeUniversalPresentation(
             type: "card",
             title: "Production Rules",
             tag: "DEPLOYMENT CHECKLIST",
-            badge: "RULES",
-            description: "Essential architectural rules for production deployment.",
-            points: ["Enforce strict idempotence", "Verify boundary invariants"],
+            badge: "03",
+            description: p4,
+            points: [p1, "Continuous invariant telemetry"],
             accentColor: "#34d399",
           },
         ],

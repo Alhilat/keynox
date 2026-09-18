@@ -6,6 +6,7 @@ export interface CachedPresentation {
   storyboard?: string;
   outline?: string;
   html: string;
+  presentation?: any;
   model: string;
   timestamp: number;
 }

@@ -10,9 +10,11 @@
     "dev:server": "npm --workspace=@presentation/server run dev",
     "dev:client": "npm --workspace=@presentation/client run dev",
     "dev": "npm run dev:server & npm run dev:client",
-    "build": "npm --workspaces run build"
+    "build": "npm --workspaces run build",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^5.0.1"
   }
 }

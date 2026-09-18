@@ -4,6 +4,7 @@ import { runStage1Analyzer } from "./stage1-analyzer";
 import { runStage2Storyboard } from "./stage2-storyboard";
 import { runStage3CreativeGenerator } from "./stage3-creative-generator";
 import { assembleHyperDeckPresentation } from "./html-assembler";
+import { convertHtmlToPresentationAst } from "./html-to-ast";
 
 export interface PipelineEvent {
   type:
@@ -27,6 +28,7 @@ export interface PipelineEvent {
   storyboard?: string;
   outline?: string; // backwards compatibility
   html?: string;
+  presentation?: any;
   topic?: string;
   model?: string;
   photoUrl?: string;
@@ -72,6 +74,7 @@ export class PipelineOrchestrator {
         type: "complete",
         message: "HyperDeck presentation ready (cached)",
         html: cached.html,
+        presentation: cached.presentation,
         outline: cached.outline || cached.storyboard || cached.analysis,
         topic: cached.topic,
         model: `${cached.model} (Cached)`,
@@ -155,24 +158,23 @@ export class PipelineOrchestrator {
     currentModel = activeModel;
     let slidesContent = rawSlides;
 
-    // 4.5 Synthesize Real Photos from Model 2's Prompts via NVIDIA NIM FLUX
+    // 4.5 Synthesize Real Photos from Model 2's Prompts via NVIDIA NIM FLUX (Concurrent Generation)
     const photoRegex = /<img([^>]*data-photo-prompt=["']([^"']+)["'][^>]*)>/gi;
     const photoMatches = Array.from(slidesContent.matchAll(photoRegex)).slice(0, 4);
 
     if (photoMatches.length > 0) {
       const { generatePhotoWithNvidia, createFallbackPhotoSvg } = await import("../services/imageService");
 
-      for (let i = 0; i < photoMatches.length; i++) {
-        const match = photoMatches[i];
+      onEvent({
+        type: "photo_start",
+        message: `Rendering ${photoMatches.length} photorealistic visual assets concurrently via NVIDIA FLUX...`,
+        delta: `\n🎨 [NVIDIA FLUX] Rendering ${photoMatches.length} slide visuals in parallel...\n`,
+      });
+
+      const photoPromises = photoMatches.map(async (match, i) => {
         const fullImgTag = match[0];
         const designerPrompt = match[2]?.trim();
-        if (!designerPrompt) continue;
-
-        onEvent({
-          type: "photo_start",
-          message: `Rendering photorealistic visual: "${designerPrompt.slice(0, 60)}..."`,
-          delta: `\n🎨 [NVIDIA FLUX] Rendering photo ${i + 1}/${photoMatches.length}: "${designerPrompt.slice(0, 60)}..."\n`,
-        });
+        if (!designerPrompt) return { fullImgTag, newImgTag: fullImgTag };
 
         try {
           const photoResult = await generatePhotoWithNvidia({
@@ -180,14 +182,14 @@ export class PipelineOrchestrator {
             width: 1024,
             height: 576,
             steps: 2,
-            timeoutMs: 7000,
+            timeoutMs: 8000,
           });
 
           onEvent({
             type: "photo_done",
-            message: `Photo rendered (${photoResult.latencyMs}ms)`,
+            message: `Photo ${i + 1} rendered (${photoResult.latencyMs}ms)`,
             photoUrl: photoResult.imageUrl,
-            delta: `✅ [NVIDIA FLUX] Photo ${i + 1} rendered (${photoResult.latencyMs}ms) & embedded into slide.\n`,
+            delta: `✅ [NVIDIA FLUX] Photo ${i + 1} rendered (${photoResult.latencyMs}ms)\n`,
           });
 
           let newImgTag = fullImgTag;
@@ -196,8 +198,7 @@ export class PipelineOrchestrator {
           } else {
             newImgTag = newImgTag.replace("<img", `<img src="${photoResult.imageUrl}"`);
           }
-
-          slidesContent = slidesContent.replace(fullImgTag, newImgTag);
+          return { fullImgTag, newImgTag };
         } catch (photoErr: any) {
           console.warn(`[PipelineOrchestrator] AI photo generation warning for photo ${i + 1}:`, photoErr?.message);
           const fallbackUrl = createFallbackPhotoSvg(designerPrompt);
@@ -214,8 +215,14 @@ export class PipelineOrchestrator {
           } else {
             newImgTag = newImgTag.replace("<img", `<img src="${fallbackUrl}"`);
           }
+          return { fullImgTag, newImgTag };
+        }
+      });
 
-          slidesContent = slidesContent.replace(fullImgTag, newImgTag);
+      const photoResults = await Promise.allSettled(photoPromises);
+      for (const res of photoResults) {
+        if (res.status === "fulfilled" && res.value) {
+          slidesContent = slidesContent.replace(res.value.fullImgTag, res.value.newImgTag);
         }
       }
     }
@@ -256,6 +263,14 @@ export class PipelineOrchestrator {
       theme,
     });
 
+    // 5.5 Convert HTML into Presentation AST for Native Keynote Player & Visual Studio
+    let presentationAst: any = null;
+    try {
+      presentationAst = convertHtmlToPresentationAst(cleanTopic, finalHtml, currentModel);
+    } catch (astErr: any) {
+      console.warn("[PipelineOrchestrator] Failed to convert HTML to AST:", astErr?.message);
+    }
+
     // 6. Cache the 3-stage artifacts
     presentationCache.set(
       topic,
@@ -265,6 +280,7 @@ export class PipelineOrchestrator {
         storyboard: storyboardText,
         outline: storyboardText,
         html: finalHtml,
+        presentation: presentationAst,
         model: currentModel,
       },
       requestedSlideCount
@@ -274,6 +290,7 @@ export class PipelineOrchestrator {
       type: "complete",
       message: "HyperDeck presentation synthesized successfully with 3-stage pipeline!",
       html: finalHtml,
+      presentation: presentationAst,
       outline: storyboardText,
       topic: cleanTopic,
       model: currentModel,

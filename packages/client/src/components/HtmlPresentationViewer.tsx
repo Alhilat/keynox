@@ -12,6 +12,8 @@ import {
   FileText,
   Image as ImageIcon,
   Monitor,
+  Play,
+  LayoutGrid,
 } from "lucide-react";
 import { ImageGeneratorModal } from "./ImageGeneratorModal";
 
@@ -20,6 +22,8 @@ interface HtmlPresentationViewerProps {
   title: string;
   modelName?: string;
   outline?: string;
+  onPresentKeynote?: () => void;
+  onOpenStudio?: () => void;
 }
 
 export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
@@ -27,6 +31,8 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
   title,
   modelName,
   outline,
+  onPresentKeynote,
+  onOpenStudio,
 }) => {
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(false);
@@ -675,6 +681,28 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
             <span className="hidden sm:inline">New Tab</span>
           </button>
 
+          {onPresentKeynote && (
+            <button
+              onClick={onPresentKeynote}
+              className="p-2 rounded-lg bg-emerald-600/25 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/40 transition-all text-xs flex items-center gap-1.5 font-bold shadow-sm shadow-emerald-500/15"
+              title="Present in Keynote Player with GSAP Step Animations"
+            >
+              <Play className="w-3.5 h-3.5 text-emerald-400 fill-current" />
+              <span className="hidden sm:inline">Keynote Player</span>
+            </button>
+          )}
+
+          {onOpenStudio && (
+            <button
+              onClick={onOpenStudio}
+              className="p-2 rounded-lg bg-indigo-600/25 hover:bg-indigo-600/35 text-indigo-300 border border-indigo-500/40 transition-all text-xs flex items-center gap-1.5 font-bold shadow-sm shadow-indigo-500/15"
+              title="Edit Slide Components and Animation Steps in Visual Studio"
+            >
+              <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">Visual Studio</span>
+            </button>
+          )}
+
           <button
             onClick={() => setShowImageModal(true)}
             className="p-2 rounded-lg bg-cyan-600/15 hover:bg-cyan-600/25 text-cyan-400 border border-cyan-500/30 transition-colors text-xs flex items-center gap-1.5 font-medium"
@@ -758,7 +786,7 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
             srcDoc={html}
             title={title}
             className="w-full h-full border-0 bg-[#07090e]"
-            sandbox="allow-scripts allow-same-origin allow-modals allow-fullscreen"
+            sandbox="allow-scripts allow-modals allow-fullscreen"
           />
         </div>
       </div>
