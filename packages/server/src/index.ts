@@ -1,5 +1,8 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import fastifyStatic from "@fastify/static";
+import path from "path";
+import fs from "fs";
 import { config } from "./config";
 import { aiRoutes } from "./routes/ai";
 
@@ -21,6 +24,25 @@ async function start() {
 
     await server.register(aiRoutes, { prefix: "/api/ai" });
 
+    // Serve Vite-built client static files in production
+    const clientDistPath = path.resolve(__dirname, "../../client/dist");
+    if (fs.existsSync(clientDistPath)) {
+      await server.register(fastifyStatic, {
+        root: clientDistPath,
+        prefix: "/",
+        wildcard: false,
+      });
+
+      // SPA fallback — serve index.html for all non-API, non-static routes
+      server.setNotFoundHandler((req, reply) => {
+        if (req.url.startsWith("/api")) {
+          reply.status(404).send({ error: "API route not found" });
+        } else {
+          reply.sendFile("index.html");
+        }
+      });
+    }
+
     await server.listen({ port: config.port, host: "0.0.0.0" });
     console.log(`🚀 Presentation Server running on http://localhost:${config.port}`);
   } catch (err) {
@@ -30,3 +52,4 @@ async function start() {
 }
 
 start();
+

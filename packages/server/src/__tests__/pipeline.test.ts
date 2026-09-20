@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { extractSlidesFromContent, extractCustomScripts, assembleHyperDeckPresentation } from "../pipeline/html-assembler";
-import { parseStoryboardIntoSlides, synthesizeFallbackSlide, resolveVisualTemplate, VISUAL_TEMPLATES, sanitizeAiTone } from "../pipeline/stage3-creative-generator";
+import { parseStoryboardIntoSlides, synthesizeFallbackSlide, resolveVisualTemplate, VISUAL_TEMPLATES, sanitizeAiTone, isValidSlideHtml } from "../pipeline/stage3-creative-generator";
 import { detectTargetSlideCount } from "../services/slideCountDetector";
 import { presentationCache } from "../pipeline/cache";
 import { convertHtmlToPresentationAst } from "../pipeline/html-to-ast";
@@ -133,6 +133,52 @@ describe("HyperDeck Pipeline & Engine Test Suite", () => {
       expect(html).toContain("font-size: 15px"); // .terminal-body
       expect(html).toContain("font-size: 34px"); // .slide-title
       expect(html).toContain("font-size: 16.5px"); // .slide-subtitle
+    });
+
+    it("should bundle interactive annotation drawing canvas, bottom toolbar, and zoom controls", () => {
+      const html = assembleHyperDeckPresentation({
+        topic: "Neural Network Architecture",
+        slidesHtml: '<section class="slide" id="slide0"><h2>Neural Layers</h2></section>',
+        targetCount: 1,
+      });
+
+      // Canvas element
+      expect(html).toContain('id="drawingCanvas"');
+      expect(html).toContain('class="drawing-canvas"');
+
+      // Top zoom controls
+      expect(html).toContain('id="topZoomControls"');
+      expect(html).toContain('onclick="zoomIn()"');
+      expect(html).toContain('onclick="zoomOut()"');
+      expect(html).toContain('onclick="resetZoom()"');
+
+      // Bottom annotation toolbar
+      expect(html).toContain('id="controlsBar"');
+      expect(html).toContain('onclick="setTool(\'pen\')"');
+      expect(html).toContain('onclick="setTool(\'highlighter\')"');
+      expect(html).toContain('onclick="setTool(\'scroll\')"');
+      expect(html).toContain('id="penColor"');
+      expect(html).toContain('onclick="undo()"');
+      expect(html).toContain('onclick="redo()"');
+      expect(html).toContain('onclick="saveDrawings()"');
+      expect(html).toContain('onclick="clearDrawings()"');
+      expect(html).toContain('id="annotateToggleBtn"');
+
+      // Footer indicator & controls-bar floating position
+      expect(html).toContain('id="footerSlideCounter"');
+      expect(html).toContain('id="footerCurrent"');
+      expect(html).not.toContain('class="thumbnails-bar"');
+      expect(html).toContain('bottom: max(74px');
+
+      // Engine controller functions
+      expect(html).toContain('function initDrawingEngine()');
+      expect(html).toContain('window.setTool = function(tool)');
+      expect(html).toContain('function saveSlideDrawing(');
+      expect(html).toContain('function loadSlideDrawing(');
+      expect(html).toContain('function applyZoom()');
+      expect(html).toContain('HYPERDECK_SET_FULLSCREEN');
+      expect(html).toContain(':fullscreen .controls-bar');
+      expect(html).toContain(':fullscreen .top-zoom-controls');
     });
   });
 
@@ -435,9 +481,155 @@ GNU/Linux supports over 50 types of filesystem.
       expect(cleaned).toBe(`<div class="glass-card card-amber">`);
     });
 
-    it("should strip slide prefix from titles in sanitizeTitleString", () => {
-      const cleaned = sanitizeTitleString("Slide 1: Confidentiality Diagram");
-      expect(cleaned).toBe("Confidentiality Diagram");
+    it("should auto-repair hallucinated CSS classes and invalid captions", () => {
+      const raw = `
+        <div class="tri-card-grid">
+          <div class="card card-indigo"><h3>Reconnaissance</h3></div>
+        </div>
+        <div class="checklist">
+          <div class="checklist-item">Rigorous access controls</div>
+        </div>
+        <div class="topology-flow">
+          <div class="topology-bus"><svg></svg><caption>Bus</caption></div>
+        </div>
+      `;
+      const cleaned = sanitizeAiTone(raw);
+      expect(cleaned).toContain('class="grid-3"');
+      expect(cleaned).toContain('class="glass-card card-indigo"');
+      expect(cleaned).toContain('class="checklist-group"');
+      expect(cleaned).toContain('class="check-item"');
+      expect(cleaned).toContain('class="topology-grid"');
+      expect(cleaned).toContain('<div class="topology-label">Bus</div>');
+      expect(cleaned).not.toContain("<caption>");
+    });
+
+    it("should upgrade pseudo-CLI commands and childish binary chips", () => {
+      const raw = `
+        <span class="terminal-cmd">$ network scan</span>
+        <span class="terminal-cmd">$ port scan</span>
+        <span class="terminal-cmd">$ vulnerability scan</span>
+        <div class="tier-chips"><span class="tier-chip">0</span><span class="tier-chip">1</span></div>
+      `;
+      const cleaned = sanitizeAiTone(raw);
+      expect(cleaned).toContain("$ nmap -sn 192.168.1.0/24");
+      expect(cleaned).toContain("$ nmap -sS -p 1-1024 192.168.1.50");
+      expect(cleaned).toContain("$ nmap --script=vuln 192.168.1.50");
+      expect(cleaned).toContain("NRZ / Manchester");
+      expect(cleaned).toContain("Binary Framing");
+    });
+
+    it("should strip robotic index-card prefixes from slide subtitles", () => {
+      const raw1 = `<p class="slide-subtitle">This slide compares the seven-layer OSI reference model with the four-layer TCP/IP stack.</p>`;
+      expect(sanitizeAiTone(raw1)).toBe(`<p class="slide-subtitle">The seven-layer OSI reference model with the four-layer TCP/IP stack.</p>`);
+
+      const raw2 = `<p class="slide-subtitle">This slide contrasts protocols that send data in clear text with encrypted communications.</p>`;
+      expect(sanitizeAiTone(raw2)).toBe(`<p class="slide-subtitle">Protocols that send data in clear text with encrypted communications.</p>`);
+
+      const raw3 = `<p class="slide-subtitle">This slide categorizes common network attack vectors into reconnaissance and injection.</p>`;
+      expect(sanitizeAiTone(raw3)).toBe(`<p class="slide-subtitle">Common network attack vectors into reconnaissance and injection.</p>`);
+    });
+  });
+
+  describe("isValidSlideHtml", () => {
+    it("should accept substantive slides with multiple tiers", () => {
+      const valid = `
+        <section class="slide active" id="slide0">
+          <div class="slide-title-group">
+            <h2 class="slide-title">OSI Reference Model</h2>
+            <p class="slide-subtitle">Seven-layer architectural abstraction for network communications.</p>
+          </div>
+          <div class="arch-stack">
+            <div class="stack-tier"><div class="tier-left"><span class="tier-badge badge-cyan">LAYER 7</span><div><div class="tier-name">Application</div><div class="tier-sub">HTTP/HTTPS</div></div></div></div>
+            <div class="stack-tier"><div class="tier-left"><span class="tier-badge badge-indigo">LAYER 4</span><div><div class="tier-name">Transport</div><div class="tier-sub">TCP/UDP</div></div></div></div>
+          </div>
+        </section>
+      `;
+      expect(isValidSlideHtml(valid)).toBe(true);
+    });
+
+    it("should reject hollow/empty arch-stacks with only 1 tier or empty inner divs", () => {
+      const hollow1 = `
+        <section class="slide" id="slide3">
+          <div class="slide-title-group">
+            <div class="slide-category">PROTOCOL STACK</div>
+            <h2 class="slide-title">OSI vs TCP/IP Model Comparison</h2>
+            <p class="slide-subtitle">Seven-layer OSI reference model compared with the TCP/IP stack.</p>
+          </div>
+          <div class="arch-stack">
+            <div class="stack-tier"><div class="tier-left"><span class="tier-badge badge-cyan">LAYER 7</span><div></div></div></div>
+          </div>
+        </section>
+      `;
+      expect(isValidSlideHtml(hollow1)).toBe(false);
+    });
+
+    it("should reject slides with insufficient text substance", () => {
+      const tooShort = `
+        <section class="slide" id="slide0">
+          <div class="glass-card">Hi</div>
+        </section>
+      `;
+      expect(isValidSlideHtml(tooShort)).toBe(false);
+    });
+  });
+
+  describe("Dynamic Academic Title Extraction", () => {
+    it("should extract true title from OCR text and reject dates and boilerplate", () => {
+      const ocrInput = `
+15/11/1446
+1
+Dept. Computer and Cyber Security Cybersecurity Fundamentals - 509201 Dr. Ali Al Mazari @ Jadara University
+Cybersecurity Fundamentals
+Network Security
+Agenda
+• Networking World
+– Concepts, Components, Topology, Types, Architectures, Protocols
+      `;
+      const res = extractCleanTopic(ocrInput);
+      expect(res.title).toBe("Cybersecurity Fundamentals: Network Security");
+      expect(res.title).not.toContain("15/11/1446");
+      expect(res.title).not.toContain("Mazari");
+      expect(res.title).not.toContain("509201");
+    });
+
+    it("should reject generic Title (Lecture 3) and extract actual title with lecture qualifier", () => {
+      const input = `TOPIC: Title (Lecture 3)
+15/11/1446
+1
+Dept. Computer and Cyber Security Cybersecurity Fundamentals - 509201 Dr. Ali Al Mazari @ Jadara University
+Cybersecurity Fundamentals
+Network Security`;
+      const res = extractCleanTopic(input);
+      expect(res.title).toBe("Cybersecurity Fundamentals: Network Security (Lecture 3)");
+    });
+
+    it("should reject generic Text placeholder and extract true book chapter title", () => {
+      const input = `Text:\n3 Containers\nContainers are a form of operating system virtualisation...\n3.1 Linux Namespaces\nNamespaces facilitate containers.`;
+      const res = extractCleanTopic(input);
+      expect(res.title).toBe("Containers: Linux Namespaces");
+      expect(res.title).not.toBe("Text");
+    });
+
+    it("should normalize code-diff, pipeline, and card-header classes in sanitizeAiTone", () => {
+      const raw = `
+        <div class="code-diff">
+          <div class="card-header"><span class="card-title">Title</span></div>
+          <div class="card-body"><p>Description</p></div>
+          <pre class="code-block"><code>echo hello</code></pre>
+        </div>
+        <div class="pipeline">
+          <div class="stage"><div class="label">Step 1</div></div>
+        </div>
+      `;
+      const cleaned = sanitizeAiTone(raw);
+      expect(cleaned).toContain('class="diff-container"');
+      expect(cleaned).toContain('class="glass-card-header"');
+      expect(cleaned).toContain('class="card-desc"');
+      expect(cleaned).toContain('class="terminal-body"');
+      expect(cleaned).toContain('class="motion-pipeline"');
+      expect(cleaned).toContain('class="pipeline-stage"');
+      expect(cleaned).toContain('class="stage-title"');
     });
   });
 });
+

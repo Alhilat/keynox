@@ -1,4 +1,4 @@
-# HyperDeck Platform
+# Keynox Platform
 
 > Web-Native Interactive Presentation Engine, Explainer Studio & Keynote Runtime
 

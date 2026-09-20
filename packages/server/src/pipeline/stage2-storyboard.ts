@@ -50,25 +50,26 @@ TARGET SLIDE COUNT: Exactly ${targetCount} Slides
 
 YOUR OBJECTIVE:
 1. Direct the visual architecture & narrative TEXT for each of the ${targetCount} slides.
-2. FULL DOCUMENT CHRONOLOGICAL SPAN: Distribute the ${targetCount} slides across the ENTIRE document from page 1 to the end. Never restrict all slides to a single section or listing. If the document covers Namespaces, Docker Architecture, Dockerfile Builds, and Open vSwitch Network Namespaces, each distinct technical pillar MUST receive its own dedicated slide.
+2. FULL DOCUMENT CHRONOLOGICAL SPAN & ZERO DUPLICATE SLIDES:
+   - STRICT ZERO REPETITION: Every single slide MUST cover a completely distinct chapter, section, or technical mechanism. NEVER output duplicate or near-identical slides! For example, NEVER generate multiple slides covering the exact same lifecycle, stages, or role overviews.
+   - Proportionally distribute the ${targetCount} slides across the ENTIRE document from page 1 to the final page. If the document covers Foundations, Evolution, Engineering Roles, Analytical Roles, Project Stages, Evaluation & Deployment, Industry Applications, Security vs Privacy, Threats (Ransomware, SQLi, Insider Threats), and Defense Solutions (Encryption, Masking, MFA), you MUST allocate slides so every major topic gets its own dedicated slide!
 3. ZERO PROMPT NOISE & ZERO BUZZWORDS: Never output prompt metadata ("TARGET SLIDE COUNT", "PREFERRED THEME") or canned filler ("Deterministic state validation", "Production scaling threshold") in your titles or content!
-4. MANDATORY AUTHENTIC VISUAL MODEL: For each slide, define the exact technical visual entity from the document:
-   - Architectural Subsystem Stack (e.g. Docker Architecture: App Layer -> Bin/Libs -> Docker Engine -> Host OS -> Hardware)
-   - Dual-PID Namespace Mapping (e.g. ntpd: Container PID 3 vs Host PID 5836)
-   - Image Build & Commit Pipeline (e.g. Dockerfile -> Build v0 -> Run & Install -> Commit v1 -> Final Image)
-   - Open vSwitch SDN Network Topology (e.g. Container eth0-d <-> veth0-d <-> ovsbr <-> veth0-e <-> eth0-e in emxns)
-   - Protocol Lease Sequence (e.g. DHCPDISCOVER -> DHCPOFFER 192.168.1.24 -> DHCPREQUEST -> DHCPACK)
-   - Terminal Shell Execution (e.g. real commands, flags, and outputs like $ docker run busybox date UTC vs BST)
+4. MANDATORY AUTHENTIC VISUAL MODEL: For each slide, define the exact technical visual entity directly described in that specific section of the document:
+   - Architectural Subsystem Stack (e.g. abstraction layers, hierarchy of components, user vs kernel space)
+   - Entity Topologies & Boundaries (e.g. component relationships, containment boundaries, isolation domains)
+   - Protocol Sequences & Workflows (e.g. lifecycle stages, state transitions, build/execution pipelines)
+   - Technical Comparisons & Data Structures (e.g. side-by-side matrices, inode structures, flags table)
+   - Terminal Shell & Code Execution (e.g. real commands, system calls, listings, and outputs from that section)
 5. CLASSIC ACADEMIC RESTRAINT: Use consistent, restrained, dignified academic layouts (Oxford Blue, Slate, White). Do NOT use flashy neon colors, rainbow palettes, or AI buzzword badges.
 
 REQUIREMENTS FOR EACH SLIDE (SLIDE 1 TO SLIDE ${targetCount}):
 You MUST generate EXACTLY ${targetCount} slides numbered SLIDE 1 to SLIDE ${targetCount}. Never stop early!
 For every single slide, you MUST provide:
-- SLIDE NUMBER & TITLE: Direct, human, clear technical headline (e.g. "Linux Namespaces & Process Isolation"). NEVER force the word "Invariant", "Taxonomy", or corporate buzzwords into titles!
-- SUBTITLE & CATEGORY: Short, concise category (e.g., KERNEL INTERNALS, DOCKER ARCHITECTURE, NETWORK PROTOCOLS). Never use pipe "|" or buzzwords like "ARCHITECTURE | INVARIANTS". Subtitles must be natural, informative, human explanations—NEVER robotic participle filler ("Establishing foundational enterprise asset protection through...").
+- SLIDE NUMBER & TITLE: Direct, human, clear technical headline (e.g. "Network Topologies & Structural Arrangement" or "Firewall Architectures & Inspection Modes"). NEVER force the word "Invariant", "Taxonomy", or corporate buzzwords into titles!
+- SUBTITLE & CATEGORY: Short, concise category (e.g., NETWORK FOUNDATIONS, PERIMETER SECURITY, PROTOCOL ARCHITECTURE, INTRUSION DEFENSE, CRYPTOGRAPHY). Never use pipe "|" or buzzwords like "ARCHITECTURE | INVARIANTS". Subtitles must be natural, direct factual statements—NEVER robotic index-card intros ("This slide compares...", "This slide outlines...", "This slide examines...", "In this slide...") and NEVER participle filler ("Establishing foundational...").
 - SLIDE NARRATIVE & CONTENT (100% CONCRETE FACTS):
   * Primary technical mechanism extracted from that section of the document.
-  * Real commands, flags, configuration snippets, and numeric metrics (e.g. 1.13MB, 158MB, 192.168.1.24, 0.425ms).
+  * Real commands, flags, configuration snippets, and numeric metrics (e.g. port numbers, key types, IP addresses).
 - VISUAL MODEL & COMPONENT DIRECTIVE:
   Specify the visual model and recommend the optimal template:
   * TEMPLATE_01_HERO_SPLIT_OVERVIEW: Hero concept card + 3 key takeaways (.grid-split)
@@ -100,9 +101,8 @@ CRITICAL MANDATES:
 - ABSOLUTELY NO EMOJIS: Maintain clean, professional, executive typography.
 - 100% domain fidelity derived from Model 1's extracted facts.`;
 
-  // Attempt 0: Gemini 3.8 Flash (if engine is gemini or auto)
-  const shouldTryGemini = (engine === "gemini" || engine === "auto") && geminiService.isAvailable();
-  if (shouldTryGemini) {
+  // Attempt 0: Pure Gemini requested explicitly by user
+  if (engine === "gemini" && geminiService.isAvailable()) {
     try {
       usedModel = `google/${geminiService.getModel()}`;
       await geminiService.streamChat({
@@ -114,8 +114,8 @@ CRITICAL MANDATES:
           },
           { role: "user", content: prompt },
         ],
-        temperature: 0.4,
-        maxTokens: 4000,
+        temperature: 0.3,
+        maxTokens: 8000,
         onReasoning: (delta) => onChunk(delta, true),
         onChunk: (delta) => {
           storyboardText += delta;
@@ -127,12 +127,12 @@ CRITICAL MANDATES:
         return { storyboard: storyboardText, usedModel };
       }
     } catch (geminiErr: any) {
-      console.warn(`[Stage2Storyboard] Gemini 3.8 Flash error (${geminiErr?.message}). Falling back to Nemotron...`);
+      console.warn(`[Stage2Storyboard] Gemini error (${geminiErr?.message}). Falling back to Nemotron...`);
       storyboardText = "";
     }
   }
 
-  // Attempt 1: Nemotron 120B Super
+  // Attempt 1: NVIDIA Nemotron 120B Super (Primary Generator for "auto" & "nvidia")
   try {
     usedModel = PRIMARY_MODEL;
     const stream = await openai.chat.completions.create({
@@ -145,8 +145,8 @@ CRITICAL MANDATES:
         },
         { role: "user", content: prompt },
       ],
-      max_tokens: 4000,
-      temperature: 0.5,
+      max_tokens: 8000,
+      temperature: 0.3,
       stream: true,
     });
 
@@ -165,10 +165,11 @@ CRITICAL MANDATES:
     console.warn(`[Stage2Storyboard] Primary model ${PRIMARY_MODEL} error (${err?.message}). Trying fallback ${FALLBACK_MODEL}...`);
   }
 
-  // Attempt 2: Nemotron 3.5 Lightning (fast fallback)
+  // Attempt 2: Nemotron 30B Nano Reasoning (fast fallback)
   if (!storyboardText || storyboardText.trim().length < 150) {
     try {
       storyboardText = "";
+      usedModel = FALLBACK_MODEL;
       const stream = await openai.chat.completions.create({
         model: FALLBACK_MODEL,
         messages: [
@@ -179,8 +180,8 @@ CRITICAL MANDATES:
           },
           { role: "user", content: prompt },
         ],
-        max_tokens: 4000,
-        temperature: 0.5,
+        max_tokens: 8000,
+        temperature: 0.3,
         stream: true,
       });
 
@@ -197,6 +198,32 @@ CRITICAL MANDATES:
       }
     } catch (err: any) {
       console.warn(`[Stage2Storyboard] Fallback model error:`, err?.message || err);
+    }
+  }
+
+  // Attempt 3: Gemini Fallback (if NVIDIA failed and Gemini is available)
+  if ((!storyboardText || storyboardText.trim().length < 150) && geminiService.isAvailable()) {
+    try {
+      usedModel = `google/${geminiService.getModel()}`;
+      await geminiService.streamChat({
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an executive Presentation Director and Visual Storyboard Architect. You write high-impact keynote slide copy and specify exact visual and photographic assets.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+        maxTokens: 8000,
+        onReasoning: (delta) => onChunk(delta, true),
+        onChunk: (delta) => {
+          storyboardText += delta;
+          onChunk(delta, false);
+        },
+      });
+    } catch (gErr: any) {
+      console.warn(`[Stage2Storyboard] Gemini fallback error:`, gErr?.message);
     }
   }
 

@@ -50,16 +50,16 @@ ${rawContent}
 TARGET PRESENTATION SCOPE: ${targetCount} Keynote Slides
 
 INSTRUCTIONS FOR DEEP KNOWLEDGE EXTRACTION:
-1. DOCUMENT TITLE & SCOPE: Identify the true overarching document title (e.g. "Chapter 3: Linux Containers, Namespaces & Docker Architecture"). Do NOT use a single listing number or sub-figure caption as the document title!
-2. CHRONOLOGICAL SECTION BREAKDOWN: Walk through the ENTIRE document from page 1 to the end. List every major section, subsystem, and protocol covered (e.g. 3.1 Namespaces, 3.2 Docker Engine, 3.2.3 Dockerfile & Build, 3.2.4 Open vSwitch & Network Namespaces).
-3. AUTHENTIC CODE LISTINGS, COMMANDS & OUTPUTS: Extract exact terminal commands, flags, configurations, and outputs from the text (e.g. $ sudo ./container_demo root/ -u, $ ls -di root: 10240432, container PID 1 vs host PID 5836, docker run busybox date UTC vs BST, Dockerfile directives, ovs-vsctl commands, dhcpd.conf, DORA lease exchange 192.168.1.24, ping latency 0.425ms).
-4. CONCRETE ARCHITECTURAL DIAGRAMS & TOPOLOGIES: Describe the exact diagrams and system topologies present in the document (e.g. Fig 3.1 Docker Layered Architecture, Fig 3.3 Open vSwitch Virtual Network with veth pairs, Dual-PID mapping table, Dockerfile Build & Commit pipeline).
-5. HARD QUANTITATIVE METRICS: Real image sizes (1.13MB, 158MB), PIDs, IP addresses (192.168.1.6, 192.168.1.24), ping round-trip times (0.425ms), and NTP offsets (0.000020s).
+1. DOCUMENT TITLE & SCOPE: Identify the true overarching document title directly from the document header or chapter title (e.g., "Containers: Linux Namespaces"). Do NOT use a single listing number, course code, instructor name, or sub-figure caption as the document title!
+2. EXHAUSTIVE CHRONOLOGICAL COVERAGE (MANDATORY FROM FIRST PAGE TO FINAL PAGE): Trace through the ENTIRE document from start to finish without omitting any part. If the document has 10+ pages, you MUST proportionally allocate extraction so that all sections from the first to the final page (including Real-World Applications, Security vs Privacy, Threats, and Solutions) are extracted with equal rigor. NEVER stop after the early pages!
+3. AUTHENTIC CODE LISTINGS, COMMANDS & OUTPUTS (STRICTLY FROM SOURCE ONLY): Extract exact terminal commands, system calls, flags, configurations, source code functions, and outputs directly present in the source text. NEVER invent external commands or technologies that are not mentioned in the source document. If the document covers a custom C utility (e.g. container_demo.c, container.c, run_proc.c, Makefile), extract its exact flags, system calls (unshare, chroot, chdir, fork, execl), and behavior.
+4. CONCRETE ARCHITECTURAL DIAGRAMS & TOPOLOGIES: Describe the exact system architectures, block diagrams, entity relationships, and containment boundaries described in the document.
+5. HARD QUANTITATIVE METRICS & KEY CONCEPTS: Extract all real numeric parameters, inode numbers, PIDs, addresses, flags, and data structures from the text.
 
 OUTPUT FORMAT:
 Synthesize a comprehensive, highly technical Domain Knowledge Extraction Report with structured sections:
 # SECTION 1: TRUE DOCUMENT TITLE & DOMAIN THESIS
-# SECTION 2: CHRONOLOGICAL SECTION-BY-SECTION COVERAGE
+# SECTION 2: CHRONOLOGICAL SECTION-BY-SECTION COVERAGE (PAGES 1 TO END)
 # SECTION 3: AUTHENTIC ARCHITECTURAL DIAGRAMS & SYSTEM TOPOLOGIES
 # SECTION 4: REAL TERMINAL COMMANDS, LISTINGS, CODE & CONFIGURATIONS
 # SECTION 5: CONCRETE METRICS, PIDS, ADDRESSES & BENCHMARK FIGURES
@@ -68,9 +68,8 @@ Synthesize a comprehensive, highly technical Domain Knowledge Extraction Report 
 CRITICAL MANDATE:
 Extract 100% concrete facts directly from the document. Cover the entire text from start to finish so no section is lost. Write in clear, natural academic English. Strictly avoid generic AI filler buzzwords (e.g. repetitive "invariants", "taxonomies", "paradigms", "telemetry") unless they are the actual technical terminology in the source text. Never output generic corporate buzzwords or placeholder templates.`;
 
-  // Attempt 0: Gemini 3.8 Flash (if engine is gemini or auto)
-  const shouldTryGemini = (engine === "gemini" || engine === "auto") && geminiService.isAvailable();
-  if (shouldTryGemini) {
+  // Attempt 0: Pure Gemini requested explicitly by user
+  if (engine === "gemini" && geminiService.isAvailable()) {
     try {
       usedModel = `google/${geminiService.getModel()}`;
       await geminiService.streamChat({
@@ -82,8 +81,8 @@ Extract 100% concrete facts directly from the document. Cover the entire text fr
           },
           { role: "user", content: prompt },
         ],
-        temperature: 0.3,
-        maxTokens: 3500,
+        temperature: 0.25,
+        maxTokens: 8000,
         onReasoning: (delta) => onChunk(delta, true),
         onChunk: (delta) => {
           analysisText += delta;
@@ -95,12 +94,12 @@ Extract 100% concrete facts directly from the document. Cover the entire text fr
         return { analysis: analysisText, cleanTopic, usedModel };
       }
     } catch (geminiErr: any) {
-      console.warn(`[Stage1Analyzer] Gemini 3.8 Flash error (${geminiErr?.message}). Falling back to Nemotron...`);
+      console.warn(`[Stage1Analyzer] Gemini error (${geminiErr?.message}). Falling back to Nemotron...`);
       analysisText = "";
     }
   }
 
-  // Attempt 1: Nemotron 120B Super
+  // Attempt 1: NVIDIA Nemotron 120B Super (Primary Generator for "auto" & "nvidia")
   try {
     usedModel = PRIMARY_MODEL;
     const stream = await openai.chat.completions.create({
@@ -113,8 +112,8 @@ Extract 100% concrete facts directly from the document. Cover the entire text fr
         },
         { role: "user", content: prompt },
       ],
-      max_tokens: 3500,
-      temperature: 0.4,
+      max_tokens: 8000,
+      temperature: 0.25,
       stream: true,
     });
 
@@ -147,7 +146,7 @@ Extract 100% concrete facts directly from the document. Cover the entire text fr
           },
           { role: "user", content: prompt },
         ],
-        max_tokens: 3500,
+        max_tokens: 8000,
         temperature: 0.4,
         stream: true,
       });
@@ -165,6 +164,32 @@ Extract 100% concrete facts directly from the document. Cover the entire text fr
       }
     } catch (err: any) {
       console.warn(`[Stage1Analyzer] Fallback model error:`, err?.message || err);
+    }
+  }
+
+  // Attempt 3: Gemini Fallback (if NVIDIA failed and Gemini is available)
+  if ((!analysisText || analysisText.trim().length < 120) && geminiService.isAvailable()) {
+    try {
+      usedModel = `google/${geminiService.getModel()}`;
+      await geminiService.streamChat({
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an elite Principal Technical Analyst. Your mission is to analyze technical papers and documents with 100% topic fidelity and extract detailed mathematical, quantitative, and architectural models.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.25,
+        maxTokens: 8000,
+        onReasoning: (delta) => onChunk(delta, true),
+        onChunk: (delta) => {
+          analysisText += delta;
+          onChunk(delta, false);
+        },
+      });
+    } catch (gErr: any) {
+      console.warn(`[Stage1Analyzer] Gemini fallback error:`, gErr?.message);
     }
   }
 

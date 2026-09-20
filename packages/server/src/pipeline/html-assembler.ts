@@ -162,7 +162,7 @@ export function assembleHyperDeckPresentation(options: AssembleOptions): string 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(topic)} — Onyx</title>
+  <title>${escapeHtml(topic)} — Keynox</title>
   
   <!-- Preconnect & Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -180,10 +180,122 @@ export function assembleHyperDeckPresentation(options: AssembleOptions): string 
   
   <style>
 ${MASTER_DESIGN_SYSTEM_CSS}
+
+    /* Presentation Annotation & Zoom Controls */
+    .controls-bar {
+      position: absolute; 
+      bottom: max(74px, calc(56px + 18px)); 
+      left: 50%;
+      transform: translateX(-50%) translateZ(0); 
+      display: none;
+      align-items: center; gap: 6px;
+      background: rgba(15, 23, 42, 0.96); 
+      padding: 8px 12px; border-radius: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.12);
+      z-index: 2147483647; width: 95vw; max-width: 580px;
+      overflow-x: auto; flex-wrap: nowrap; justify-content: flex-start;
+      scrollbar-width: none; 
+      -ms-overflow-style: none; 
+      backdrop-filter: blur(16px);
+      transition: opacity 0.2s ease;
+    }
+    @media (min-width: 580px) {
+      .controls-bar { justify-content: center; }
+    }
+    .controls-bar::-webkit-scrollbar { display: none; }
+    
+    .controls-bar.visible,
+    :fullscreen .controls-bar,
+    :-webkit-full-screen .controls-bar {
+      display: flex !important;
+    }
+
+    .slide-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono, monospace);
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-muted, #94a3b8);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+      padding: 6px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+    .slide-indicator .current {
+      color: #fff;
+      font-weight: 800;
+    }
+    .slide-indicator .sep {
+      opacity: 0.4;
+    }
+
+    .top-zoom-controls {
+      position: absolute;
+      top: max(15px, env(safe-area-inset-top));
+      right: max(15px, env(safe-area-inset-right));
+      display: none;
+      gap: 6px;
+      z-index: 2147483647;
+    }
+    .top-zoom-controls.visible,
+    :fullscreen .top-zoom-controls,
+    :-webkit-full-screen .top-zoom-controls {
+      display: flex !important;
+    }
+
+    .btn-annot {
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      background-color: #2563eb; color: white; padding: 7px 11px;
+      border-radius: 20px; text-decoration: none; font-weight: 500; font-size: 12px;
+      border: none; cursor: pointer; white-space: nowrap;
+      touch-action: manipulation; flex-shrink: 0;
+      transition: background-color 0.15s, transform 0.1s;
+      font-family: inherit;
+    }
+    .btn-annot svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .btn-annot:active { background-color: #1d4ed8; transform: scale(0.93); }
+    .btn-annot.active { background-color: #dc2626 !important; }
+    .btn-annot:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .color-picker {
+      width: 26px; height: 26px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%;
+      cursor: pointer; background: none; padding: 0; flex-shrink: 0;
+      -webkit-appearance: none; appearance: none;
+      outline: none;
+    }
+    .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-picker::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+    .drawing-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+      touch-action: none;
+    }
   </style>
 </head>
 <body class="theme-${options.theme || 'oxford'}">
   <main class="hyperdeck-stage" id="hyperdeckStage">
+    <!-- Top Right Zoom Controls -->
+    <div class="top-zoom-controls" id="topZoomControls">
+      <button class="btn-annot" onclick="zoomIn()" title="Zoom In (+)" style="background-color: rgba(15, 23, 42, 0.95);">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+      </button>
+      <button class="btn-annot" onclick="zoomOut()" title="Zoom Out (-)" style="background-color: rgba(15, 23, 42, 0.95);">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"></path></svg>
+      </button>
+      <button class="btn-annot" onclick="resetZoom()" id="zoomResetBtn" title="Reset Zoom (100%)" style="background-color: rgba(15, 23, 42, 0.95); font-size: 11px; padding: 6px 9px; min-width: 42px;">
+        100%
+      </button>
+    </div>
+
     <!-- Progress Indicator -->
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="progressBar"></div>
@@ -192,7 +304,7 @@ ${MASTER_DESIGN_SYSTEM_CSS}
     <!-- Executive Header -->
     <header class="stage-header">
       <div class="header-left">
-        <span class="badge">ONYX</span>
+        <span class="badge">KEYNOX</span>
         <h1 class="deck-title">${escapeHtml(topic)}</h1>
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
@@ -203,6 +315,7 @@ ${MASTER_DESIGN_SYSTEM_CSS}
     <!-- Slide Content Viewport -->
     <section class="slides-viewport" id="viewport">
 ${renderedSlidesHtml}
+      <canvas id="drawingCanvas" class="drawing-canvas"></canvas>
     </section>
 
     <!-- Floating Stage Chevrons for Easy Click-Through -->
@@ -213,13 +326,53 @@ ${renderedSlidesHtml}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
     </button>
 
+    <!-- Bottom Drawing Tools -->
+    <div class="controls-bar" id="controlsBar">
+      <button id="penBtn" class="btn-annot" onclick="setTool('pen')" title="Pen Tool (P)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+        Pen
+      </button>
+      <button id="highlighterBtn" class="btn-annot" onclick="setTool('highlighter')" title="Highlighter Tool (H)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10M5 16h14M8 3v5m8-5v5M6 8a2 2 0 00-2 2v4a2 2 0 002 2h12a2 2 0 002-2v-4a2 2 0 00-2-2H6z"></path></svg>
+        Highlight
+      </button>
+      <button id="scrollBtn" class="btn-annot active" onclick="setTool('scroll')" title="Scroll / Interact Mode (S)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+        Scroll
+      </button>
+      
+      <input type="color" id="penColor" class="color-picker" value="#ef4444" title="Pen Color">
+      
+      <button class="btn-annot" onclick="undo()" title="Undo (Ctrl+Z)" style="background-color: #475569;">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+      </button>
+      <button class="btn-annot" onclick="redo()" title="Redo (Ctrl+Y)" style="background-color: #475569;">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"></path></svg>
+      </button>
+
+      <button class="btn-annot" id="saveBtn" onclick="saveDrawings()" style="background-color: #10b981;" title="Save Drawings">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+        Save
+      </button>
+      <button class="btn-annot" onclick="clearDrawings()" style="background-color: #334155;" title="Clear Current Slide Drawings">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        Clear
+      </button>
+      <button class="btn-annot" onclick="toggleAnnotationBar(false)" title="Hide Bar" style="background-color: rgba(255, 255, 255, 0.08); padding: 7px 8px;">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
     <!-- Persistent Navigation Footer -->
     <footer class="stage-footer">
-      <nav class="thumbnails-bar" id="thumbsBar">
-        ${thumbButtons}
-      </nav>
+      <div class="slide-indicator" id="footerSlideCounter">
+        <span class="current" id="footerCurrent">01</span>
+        <span class="sep">/</span>
+        <span class="total">${effectiveCount < 10 ? "0" + effectiveCount : effectiveCount}</span>
+      </div>
 
       <div class="nav-actions">
+        <button class="btn-nav" id="annotateToggleBtn" onclick="toggleAnnotationBar()" title="Drawing & Annotation Tools (P)">✏️ Draw</button>
         <button class="btn-nav" id="prevBtn" onclick="prevSlide()" title="Previous (Left Arrow / K)">◀ Prev</button>
         <button class="btn-nav btn-primary" id="nextBtn" onclick="nextSlide()" title="Next (Right Arrow / Space / J)">Next ▶</button>
         <button class="btn-nav" onclick="toggleFullscreen()" title="Fullscreen (F)">⛶</button>
@@ -307,13 +460,29 @@ ${renderedSlidesHtml}
         }
       });
 
-      thumbBtns.forEach((btn, idx) => {
-        btn.classList.toggle('active', idx === currentSlide);
-      });
+      if (thumbBtns && thumbBtns.length > 0) {
+        thumbBtns.forEach((btn, idx) => {
+          btn.classList.toggle('active', idx === currentSlide);
+        });
+      }
 
       const progress = totalSlides > 1 ? ((currentSlide + 1) / totalSlides) * 100 : 100;
       if (progressBar) progressBar.style.width = progress + '%';
       if (slideCounter) slideCounter.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+      const footerCur = document.getElementById('footerCurrent');
+      if (footerCur) {
+        const curNum = currentSlide + 1;
+        footerCur.textContent = curNum < 10 ? '0' + curNum : String(curNum);
+      }
+
+      // Reset zoom if slide changed and scale is not 1
+      if (typeof resetZoom === 'function' && currentScale !== 1.0) {
+        resetZoom();
+      }
+      // Load drawing layer for current slide
+      if (typeof loadSlideDrawing === 'function') {
+        loadSlideDrawing(currentSlide);
+      }
 
       // Invoke custom slide hooks if declared (e.g. initSlide1())
       if (typeof window['initSlide' + currentSlide] === 'function') {
@@ -353,8 +522,282 @@ ${renderedSlidesHtml}
       }
     });
 
+    // =========================================================================
+    // Interactive Annotation, Pen/Highlighter Drawing & Zoom Engine
+    // =========================================================================
+    let currentTool = 'scroll';
+    let currentScale = 1.0;
+    let drawingCanvas = null;
+    let drawCtx = null;
+    let isPainting = false;
+    let undoStack = [];
+    let redoStack = [];
+    const slideDrawings = new Map();
+    const storageKey = 'keynox_drawings_' + (window.location.pathname.replace(/[^a-zA-Z0-9]/g, '_') || 'deck');
+
+    function initDrawingEngine() {
+      drawingCanvas = document.getElementById('drawingCanvas');
+      if (!drawingCanvas) return;
+      drawCtx = drawingCanvas.getContext('2d', { alpha: true, desynchronized: true });
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      // Load saved drawings from localStorage
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          Object.entries(parsed).forEach(([idx, dataUrl]) => {
+            slideDrawings.set(Number(idx), dataUrl);
+          });
+        }
+      } catch (e) {
+        // Safe fallback
+      }
+
+      loadSlideDrawing(currentSlide);
+
+      // Event listeners for drawing
+      drawingCanvas.addEventListener('mousedown', startPosition);
+      window.addEventListener('mouseup', stopPosition);
+      drawingCanvas.addEventListener('mousemove', draw);
+      drawingCanvas.addEventListener('mouseleave', () => { if (isPainting) stopPosition(); });
+
+      drawingCanvas.addEventListener('touchstart', startPosition, { passive: false });
+      window.addEventListener('touchend', stopPosition);
+      drawingCanvas.addEventListener('touchmove', draw, { passive: false });
+    }
+
+    function resizeCanvas() {
+      const vp = document.getElementById('viewport');
+      if (!drawingCanvas || !vp || !drawCtx) return;
+      const rect = vp.getBoundingClientRect();
+      const prevData = drawingCanvas.width > 0 && drawingCanvas.height > 0 ? drawingCanvas.toDataURL() : null;
+      drawingCanvas.width = rect.width;
+      drawingCanvas.height = rect.height;
+      drawingCanvas.style.width = rect.width + 'px';
+      drawingCanvas.style.height = rect.height + 'px';
+      if (prevData) {
+        const img = new Image();
+        img.src = prevData;
+        img.onload = () => { drawCtx.drawImage(img, 0, 0, drawingCanvas.width, drawingCanvas.height); };
+      }
+    }
+
+    function getCoords(e) {
+      const rect = drawingCanvas.getBoundingClientRect();
+      let clientX = e.clientX;
+      let clientY = e.clientY;
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      }
+      const scaleX = drawingCanvas.width / (rect.width || 1);
+      const scaleY = drawingCanvas.height / (rect.height || 1);
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    function saveState() {
+      if (drawingCanvas) {
+        undoStack.push(drawingCanvas.toDataURL());
+        if (undoStack.length > 30) undoStack.shift();
+      }
+    }
+
+    function restoreState(dataUrl) {
+      if (!drawingCanvas || !drawCtx) return;
+      const img = new Image();
+      img.src = dataUrl;
+      img.onload = () => {
+        drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        drawCtx.drawImage(img, 0, 0, drawingCanvas.width, drawingCanvas.height);
+      };
+    }
+
+    function startPosition(e) {
+      if (currentTool === 'scroll') return;
+      isPainting = true;
+      const coords = getCoords(e);
+      drawCtx.beginPath();
+      drawCtx.moveTo(coords.x, coords.y);
+      e.preventDefault();
+    }
+
+    function stopPosition() {
+      if (!isPainting) return;
+      isPainting = false;
+      drawCtx.beginPath();
+      redoStack = [];
+      saveState();
+      slideDrawings.set(currentSlide, drawingCanvas.toDataURL());
+    }
+
+    function draw(e) {
+      if (!isPainting || currentTool === 'scroll') return;
+      const coords = getCoords(e);
+      if (currentTool === 'highlighter') {
+        drawCtx.globalCompositeOperation = 'source-over';
+        drawCtx.lineWidth = 24;
+        drawCtx.lineCap = 'round';
+        drawCtx.lineJoin = 'round';
+        drawCtx.strokeStyle = 'rgba(255, 235, 59, 0.65)';
+      } else {
+        drawCtx.globalCompositeOperation = 'source-over';
+        drawCtx.lineWidth = 3.5;
+        drawCtx.lineCap = 'round';
+        drawCtx.lineJoin = 'round';
+        drawCtx.strokeStyle = document.getElementById('penColor')?.value || '#ef4444';
+      }
+      drawCtx.lineTo(coords.x, coords.y);
+      drawCtx.stroke();
+      e.preventDefault();
+    }
+
+    window.setTool = function(tool) {
+      currentTool = tool;
+      const penBtn = document.getElementById('penBtn');
+      const hlBtn = document.getElementById('highlighterBtn');
+      const scrollBtn = document.getElementById('scrollBtn');
+      if (penBtn) penBtn.classList.toggle('active', tool === 'pen');
+      if (hlBtn) hlBtn.classList.toggle('active', tool === 'highlighter');
+      if (scrollBtn) scrollBtn.classList.toggle('active', tool === 'scroll');
+
+      if (drawingCanvas) {
+        drawingCanvas.style.pointerEvents = (tool === 'scroll') ? 'none' : 'auto';
+        drawingCanvas.style.cursor = (tool === 'scroll') ? 'default' : 'crosshair';
+      }
+    };
+
+    window.undo = function() {
+      if (undoStack.length > 1) {
+        redoStack.push(undoStack.pop());
+        const target = undoStack[undoStack.length - 1];
+        restoreState(target);
+        slideDrawings.set(currentSlide, target);
+      }
+    };
+
+    window.redo = function() {
+      if (redoStack.length > 0) {
+        const nextState = redoStack.pop();
+        undoStack.push(nextState);
+        restoreState(nextState);
+        slideDrawings.set(currentSlide, nextState);
+      }
+    };
+
+    window.saveDrawings = function() {
+      if (!drawingCanvas) return;
+      slideDrawings.set(currentSlide, drawingCanvas.toDataURL());
+      try {
+        const payload = JSON.stringify(Object.fromEntries(slideDrawings));
+        localStorage.setItem(storageKey, payload);
+      } catch (err) {
+        console.warn('Storage error:', err);
+      }
+      const saveBtn = document.getElementById('saveBtn');
+      if (saveBtn) {
+        const orig = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> Saved!';
+        setTimeout(() => { saveBtn.innerHTML = orig; }, 2000);
+      }
+    };
+
+    window.clearDrawings = function() {
+      if (!drawingCanvas || !drawCtx) return;
+      if (confirm('Clear all drawings on current slide?')) {
+        drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        slideDrawings.delete(currentSlide);
+        redoStack = [];
+        saveState();
+      }
+    };
+
+    function saveSlideDrawing(idx) {
+      if (drawingCanvas && drawCtx) {
+        slideDrawings.set(idx, drawingCanvas.toDataURL());
+      }
+    }
+
+    function loadSlideDrawing(idx) {
+      if (!drawingCanvas || !drawCtx) return;
+      drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+      undoStack = [];
+      redoStack = [];
+      saveState(); // Blank base state
+      const dataUrl = slideDrawings.get(idx);
+      if (dataUrl) {
+        const img = new Image();
+        img.src = dataUrl;
+        img.onload = () => {
+          drawCtx.drawImage(img, 0, 0, drawingCanvas.width, drawingCanvas.height);
+          saveState(); // Loaded drawing
+        };
+      }
+    }
+
+    // Zoom Controls
+    window.zoomIn = function() {
+      currentScale = Math.min(currentScale + 0.15, 2.5);
+      applyZoom();
+    };
+
+    window.zoomOut = function() {
+      currentScale = Math.max(currentScale - 0.15, 0.4);
+      applyZoom();
+    };
+
+    window.resetZoom = function() {
+      currentScale = 1.0;
+      applyZoom();
+    };
+
+    function applyZoom() {
+      const activeSlide = document.querySelector('.slide.active');
+      if (activeSlide) {
+        activeSlide.style.transform = 'scale(' + currentScale + ')';
+        activeSlide.style.transformOrigin = 'center center';
+        activeSlide.style.transition = 'transform 0.2s ease-out';
+      }
+      const resetBtn = document.getElementById('zoomResetBtn');
+      if (resetBtn) {
+        resetBtn.textContent = Math.round(currentScale * 100) + '%';
+      }
+    }
+
+    // Toggle Toolbar Visibility
+    window.toggleAnnotationBar = function(force) {
+      const bar = document.getElementById('controlsBar');
+      const zoom = document.getElementById('topZoomControls');
+      const isCurrentlyVisible = bar?.classList.contains('visible');
+      const nextVisible = typeof force === 'boolean' ? force : !isCurrentlyVisible;
+      if (bar) bar.classList.toggle('visible', nextVisible);
+      if (zoom) zoom.classList.toggle('visible', nextVisible);
+      if (!nextVisible) {
+        setTool('scroll');
+      }
+    };
+
+    // Fullscreen listeners to automatically reveal annotation tools
+    document.addEventListener('fullscreenchange', () => {
+      const isFs = Boolean(document.fullscreenElement);
+      toggleAnnotationBar(isFs);
+    });
+
+    // Remote message listener (e.g. from Keynox client when parent goes fullscreen)
+    window.addEventListener('message', (e) => {
+      if (!e.data || typeof e.data !== 'object') return;
+      if (e.data.type === 'HYPERDECK_SET_FULLSCREEN') {
+        toggleAnnotationBar(Boolean(e.data.isFullscreen));
+      }
+    });
+
     function nextSlide() {
       if (currentSlide < totalSlides - 1) {
+        saveSlideDrawing(currentSlide);
         currentSlide++;
         updatePresentationState();
       }
@@ -362,6 +805,7 @@ ${renderedSlidesHtml}
 
     function prevSlide() {
       if (currentSlide > 0) {
+        saveSlideDrawing(currentSlide);
         currentSlide--;
         updatePresentationState();
       }
@@ -369,6 +813,7 @@ ${renderedSlidesHtml}
 
     function goToSlide(idx) {
       if (idx >= 0 && idx < totalSlides) {
+        saveSlideDrawing(currentSlide);
         currentSlide = idx;
         updatePresentationState();
       }
@@ -395,6 +840,22 @@ ${renderedSlidesHtml}
         toggleFullscreen();
       } else if (!isNaN(Number(e.key)) && Number(e.key) >= 1 && Number(e.key) <= totalSlides) {
         goToSlide(Number(e.key) - 1);
+      } else if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        if (e.shiftKey) window.redo(); else window.undo();
+      } else if (e.ctrlKey && (e.key === 'y' || e.key === 'Y')) {
+        e.preventDefault();
+        window.redo();
+      } else if (!e.ctrlKey && !e.altKey && !e.metaKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        if (e.key === 'p' || e.key === 'P') {
+          toggleAnnotationBar(true);
+          setTool('pen');
+        } else if (e.key === 'h' || e.key === 'H') {
+          toggleAnnotationBar(true);
+          setTool('highlighter');
+        } else if (e.key === 's' || e.key === 'S' || e.key === 'Escape') {
+          setTool('scroll');
+        }
       }
     });
 
@@ -713,6 +1174,7 @@ ${renderedSlidesHtml}
 
     // Initialize
     initMotionPipelines();
+    initDrawingEngine();
     updatePresentationState();
     if (window.renderMathInElement) {
       try {

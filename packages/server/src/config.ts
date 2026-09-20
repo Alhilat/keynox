@@ -15,7 +15,8 @@ const ConfigSchema = z.object({
   geminiApiKey: z.string().default(""),
   geminiModel: z.string().default("gemini-3.5-flash-lite"),
   geminiBaseUrl: z.string().default("https://generativelanguage.googleapis.com/v1beta/openai"),
-  defaultAiProvider: z.enum(["gemini", "nvidia", "auto"]).default("gemini"),
+  defaultAiProvider: z.enum(["gemini", "nvidia", "auto"]).default("auto"),
+  geminiCriticEnabled: z.boolean().default(true),
 });
 
 const rawConfig = {
@@ -28,7 +29,8 @@ const rawConfig = {
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiModel: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
   geminiBaseUrl: process.env.GEMINI_BASE_URL || "https://generativelanguage.googleapis.com/v1beta/openai",
-  defaultAiProvider: (process.env.DEFAULT_AI_PROVIDER as any) || "gemini",
+  defaultAiProvider: (process.env.DEFAULT_AI_PROVIDER as any) || "auto",
+  geminiCriticEnabled: process.env.GEMINI_CRITIC_ENABLED !== "false",
 };
 
 export const config = ConfigSchema.parse(rawConfig);

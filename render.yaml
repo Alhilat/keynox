@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: keynox
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node packages/server/dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: DEFAULT_AI_PROVIDER
+        value: auto

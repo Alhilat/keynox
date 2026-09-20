@@ -10,7 +10,7 @@ export const booleanLogicDeck: Presentation = {
     topic: "Boolean Logic & Digital Circuits",
     audience: "Engineers & Computer Scientists",
     createdAt: new Date().toISOString(),
-    model: "Onyx Engine",
+    model: "Keynox Engine",
   },
   scenes: [
     {
@@ -376,7 +376,7 @@ export const equationSolverDeck: Presentation = {
     topic: "Solving Linear Equations",
     audience: "Math & Science Students",
     createdAt: new Date().toISOString(),
-    model: "Onyx Engine",
+    model: "Keynox Engine",
   },
   scenes: [
     {
@@ -554,7 +554,7 @@ export const physicsDeck: Presentation = {
     topic: "Classical Mechanics",
     audience: "Physics & Engineering",
     createdAt: new Date().toISOString(),
-    model: "Onyx Engine",
+    model: "Keynox Engine",
   },
   scenes: [
     {
@@ -687,7 +687,7 @@ export const osKernelDeck: Presentation = {
     topic: "Operating System Kernels",
     audience: "Systems Engineers",
     createdAt: new Date().toISOString(),
-    model: "Onyx Engine",
+    model: "Keynox Engine",
   },
   scenes: [
     {

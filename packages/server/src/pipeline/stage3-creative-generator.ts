@@ -31,6 +31,20 @@ export function parseStoryboardIntoSlides(storyboardText: string, targetCount: n
       );
     });
 
+  // Deduplicate: filter out duplicate slides that have identical or near-identical headlines
+  const seenTitles = new Set<string>();
+  const deduplicatedSections: string[] = [];
+  for (const sec of rawSections) {
+    const titleMatch = sec.match(/(?:SLIDE\s*\d+[:\-—.\s]*|TITLE[:\-—.\s]*)([^\n]+)/i);
+    const titleNorm = titleMatch ? titleMatch[1].replace(/[^a-zA-Z0-9]/g, "").toLowerCase() : "";
+    if (titleNorm && seenTitles.has(titleNorm)) {
+      continue; // skip duplicate title
+    }
+    if (titleNorm) seenTitles.add(titleNorm);
+    deduplicatedSections.push(sec);
+  }
+  rawSections = deduplicatedSections;
+
   if (rawSections.length >= targetCount) {
     return rawSections.slice(0, targetCount);
   }
@@ -55,11 +69,18 @@ export function parseStoryboardIntoSlides(storyboardText: string, targetCount: n
       .map((s) => s.trim())
       .filter((s) => s.length > 40 && !s.toUpperCase().includes("CRITICAL MANDATE"));
 
+    // Find sections that have not been covered yet by earlier slides
+    const unusedSections = analysisSections.filter((sec) => {
+      const heading = sec.split("\n")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+      return !result.some((r) => r.toLowerCase().replace(/[^a-z0-9]/g, "").includes(heading.slice(0, 20)));
+    });
+    const pool = unusedSections.length > 0 ? unusedSections : analysisSections;
+
     let aIdx = 0;
-    while (result.length < targetCount && analysisSections.length > 0) {
+    while (result.length < targetCount && pool.length > 0) {
       const idx = result.length + 1;
-      const sectionSnippet = analysisSections[aIdx % analysisSections.length] || cleanAnalysis.slice(0, 800);
-      result.push(`SLIDE ${idx}: Technical Deep Dive Part ${idx}\n${sectionSnippet}`);
+      const sectionSnippet = pool[aIdx % pool.length] || cleanAnalysis.slice(0, 800);
+      result.push(`SLIDE ${idx}: Technical Architecture Part ${idx}\n${sectionSnippet}`);
       aIdx++;
     }
   }
@@ -416,15 +437,22 @@ ABSOLUTE 100% TOPIC FIDELITY & SCHOLARLY HUMAN STANDARDS:
 6. REAL TECHNICAL MECHANISMS (NO SYNTHETIC MOCK DATA):
    - Do NOT invent fake percentages (e.g. "30% Probability"), fake demographic ranges (e.g. "Ages 10–100"), or fake bracketed identifiers (e.g. "[User_X]", "[Database_Table_Y]"). If exact figures are not in the document, explain the concepts authoritatively using real domain terminology without making up numbers.
 7. CLASSIC ACADEMIC RESTRAINT & ZERO INLINE RAINBOW OVERRIDES:
-   - Rely strictly on clean pre-bundled CSS classes (.glass-card, .card-indigo, .card-emerald, .card-amber, .card-rose, .arch-stack, .stack-tier, .terminal-card, .points-list).
+   - Rely strictly on clean pre-bundled CSS classes (.glass-card, .card-indigo, .card-emerald, .card-amber, .card-rose, .arch-stack, .stack-tier, .terminal-card, .points-list, .grid-3, .grid-split, .checklist-group, .check-item).
    - NEVER write inline rainbow overrides like style="border-top: 3px solid #f59e0b", style="color: #0ea5e9", or style="background: rgba(...)". Keep the styling dignified, authoritative, and clean (Oxford academic aesthetic).
-8. Keep internal reasoning under 80 tokens. Output valid HTML directly.`;
+8. MANDATORY COMPLETE ARCHITECTURAL STACKS:
+   - If using .arch-stack or .layer-stack, you MUST render ALL relevant layers/tiers completely (at least 3–4 tiers). Each tier MUST have .tier-name, .tier-sub, and .tier-chips. NEVER output a hollow stack or a single tier with an empty <div></div>!
+9. AUTHENTIC INDUSTRY CLI COMMANDS:
+   - In .terminal-card, NEVER invent pseudo-commands like "$ network scan" or "$ port scan". Output real commands with flags and arguments (e.g. $ nmap -sn 192.168.1.0/24, $ nmap -sS -p 1-1024 192.168.1.50, $ curl -I https://example.com, $ iptables -L -n -v, $ tcpdump -i eth0 -nn).
+10. NATURAL DIRECT SUBTITLES:
+    - In <p class="slide-subtitle">, NEVER begin with "This slide compares...", "This slide outlines...", "This slide examines...", "In this slide...". State the direct technical truth as an authoritative academic fact.
+11. Keep internal reasoning under 80 tokens. Output valid HTML directly.`;
 }
 
 /**
- * Validates that a slide is non-empty, contains complete HTML structure, and is NOT truncated.
+ * Validates that a slide is non-empty, contains complete HTML structure, has substantive text,
+ * and does NOT contain hollow/empty containers or truncation.
  */
-function isValidSlideHtml(html: string): boolean {
+export function isValidSlideHtml(html: string): boolean {
   if (!html) return false;
   let clean = html.trim().replace(/^```html\s*/i, "").replace(/```\s*$/i, "").trim();
   if (clean.length < 150) return false;
@@ -444,6 +472,8 @@ function isValidSlideHtml(html: string): boolean {
     clean.includes("flow-diagram") ||
     clean.includes("comparison-matrix");
 
+  if (!hasContent) return false;
+
   // Reject if it contains reasoning leak indicators or raw unfilled prompt templates
   const lower = clean.toLowerCase();
   if (
@@ -460,12 +490,29 @@ function isValidSlideHtml(html: string): boolean {
     return false;
   }
 
-  return hasContent;
+  // Reject hollow arch-stacks: arch-stack with fewer than 2 tiers or with empty inner divs
+  if (clean.includes("arch-stack") || clean.includes("layer-stack")) {
+    const tiers = clean.match(/class=["'](?:stack-tier|layer-item)["']/gi) || [];
+    if (tiers.length < 2) return false;
+    // Check for empty tier body: e.g. <span class="tier-badge...">...</span><div></div>
+    if (/<span\s+class=["']tier-badge[^"']*["']>[^<]*<\/span>\s*<div>\s*<\/div>/i.test(clean)) {
+      return false;
+    }
+  }
+
+  // Ensure substantive text content (strip tags and check character count)
+  const textContent = clean.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  if (textContent.length < 60) {
+    return false;
+  }
+
+  return true;
 }
 
 /**
  * Post-processes slide HTML to eliminate AI buzzword slop, pseudo-math,
- * robotic participle subtitle clichés, and inline rainbow color overrides.
+ * robotic participle subtitle clichés, fake CLI commands, hallucinated CSS classes,
+ * and inline rainbow color overrides.
  */
 export function sanitizeAiTone(slideHtml: string): string {
   if (!slideHtml || typeof slideHtml !== "string") return "";
@@ -501,11 +548,14 @@ export function sanitizeAiTone(slideHtml: string): string {
     }
   );
 
-  // 3. Naturalize robotic participle subtitles
+  // 3. Naturalize robotic participle subtitles & strip "This slide compares / outlines / explores..."
   clean = clean.replace(
     /(<p class="slide-subtitle">)([\s\S]*?)(<\/p>)/gi,
     (_, open, sub, close) => {
       let s = sub.trim();
+      // Strip index-card introductory prefixes
+      s = s.replace(/^(?:This slide (?:compares|contrasts|explores|examines|categorizes|explains|details|illustrates|presents|highlights|outlines|describes|focuses on|discusses)|In this slide,? (?:we|the|it)|This section (?:covers|details|examines|focuses on))\s+/i, "");
+      // Strip participle clichés
       s = s.replace(/^(?:Establishing|Analyzing|Incorporating|Leveraging|Facilitating|Orchestrating|Delivering|Implementing)\s+(?:foundational\s+)?(?:enterprise\s+)?(?:systemic\s+)?/i, "");
       if (s.length > 0) {
         s = s.charAt(0).toUpperCase() + s.slice(1);
@@ -525,16 +575,43 @@ export function sanitizeAiTone(slideHtml: string): string {
     }
   );
 
-  // 4. Strip hilarious AI demographic hallucinations and mock percentages
+  // 4. Strip AI demographic hallucinations and mock percentages
   clean = clean.replace(/Ages\s+10[–-]100,\s*/gi, "");
   clean = clean.replace(/<span\b[^>]*>\s*(?:30|40|20)%\s*Probability\s*<\/span>/gi, '<span class="badge badge-amber">CRITICAL</span>');
 
-  // 5. Convert inline styled rainbow cards to classic academic classes
-  clean = clean.replace(/<div class="card" style="border-top:\s*3px\s+solid\s+#f59e0b;[^"]*">/gi, '<div class="glass-card card-amber">');
-  clean = clean.replace(/<div class="card" style="border-top:\s*3px\s+solid\s+#0ea5e9;[^"]*">/gi, '<div class="glass-card card-cyan">');
-  clean = clean.replace(/<div class="card" style="border-top:\s*3px\s+solid\s+#f43f5e;[^"]*">/gi, '<div class="glass-card card-rose">');
-  clean = clean.replace(/<div class="card" style="border-top:\s*3px\s+solid\s+#10b981;[^"]*">/gi, '<div class="glass-card card-emerald">');
-  clean = clean.replace(/<div class="card" style="border-top:\s*3px\s+solid\s+#6366f1;[^"]*">/gi, '<div class="glass-card card-indigo">');
+  // 5. Auto-repair hallucinated CSS class names
+  clean = clean.replace(/class=["']tri-card-grid["']/gi, 'class="grid-3"');
+  clean = clean.replace(/class=["']card card-/gi, 'class="glass-card card-');
+  clean = clean.replace(/class=["']card(["'\s>])/gi, 'class="glass-card$1');
+  clean = clean.replace(/class=["']checklist["']/gi, 'class="checklist-group"');
+  clean = clean.replace(/class=["']checklist-item["']/gi, 'class="check-item"');
+  clean = clean.replace(/class=["']topology-flow["']/gi, 'class="topology-grid"');
+  clean = clean.replace(/class=["']code-diff["']/gi, 'class="diff-container"');
+  clean = clean.replace(/class=["']card-header["']/gi, 'class="glass-card-header"');
+  clean = clean.replace(/class=["']card-body["']/gi, 'class="card-desc"');
+  clean = clean.replace(/class=["']code-block["']/gi, 'class="terminal-body"');
+  clean = clean.replace(/class=["']pipeline["']/gi, 'class="motion-pipeline"');
+  clean = clean.replace(/class=["']stage["']/gi, 'class="pipeline-stage"');
+  clean = clean.replace(/class=["']label["']/gi, 'class="stage-title"');
+
+  // 6. Fix invalid <caption> inside <div>
+  clean = clean.replace(/<caption\b[^>]*>([\s\S]*?)<\/caption>/gi, '<div class="topology-label">$1</div>');
+
+  // 7. Auto-upgrade fake CLI pseudo-commands to authentic tools
+  clean = clean.replace(/\$\s*network scan\b/gi, "$ nmap -sn 192.168.1.0/24");
+  clean = clean.replace(/\$\s*port scan\b/gi, "$ nmap -sS -p 1-1024 192.168.1.50");
+  clean = clean.replace(/\$\s*vulnerability scan\b/gi, "$ nmap --script=vuln 192.168.1.50");
+  clean = clean.replace(/\$\s*check security\b/gi, "$ iptables -L -n -v");
+
+  // 8. Replace childish single-character chips (e.g. "0" and "1") with authentic signaling terms
+  clean = clean.replace(/<span class="tier-chip">0<\/span>\s*<span class="tier-chip">1<\/span>/gi, '<span class="tier-chip">NRZ / Manchester</span><span class="tier-chip">Binary Framing</span>');
+
+  // 9. Convert inline styled rainbow cards to classic academic classes
+  clean = clean.replace(/<div class="glass-card" style="border-top:\s*3px\s+solid\s+#f59e0b;[^"]*">/gi, '<div class="glass-card card-amber">');
+  clean = clean.replace(/<div class="glass-card" style="border-top:\s*3px\s+solid\s+#0ea5e9;[^"]*">/gi, '<div class="glass-card card-cyan">');
+  clean = clean.replace(/<div class="glass-card" style="border-top:\s*3px\s+solid\s+#f43f5e;[^"]*">/gi, '<div class="glass-card card-rose">');
+  clean = clean.replace(/<div class="glass-card" style="border-top:\s*3px\s+solid\s+#10b981;[^"]*">/gi, '<div class="glass-card card-emerald">');
+  clean = clean.replace(/<div class="glass-card" style="border-top:\s*3px\s+solid\s+#6366f1;[^"]*">/gi, '<div class="glass-card card-indigo">');
 
   // Strip inline background/border tints on stack-tier
   clean = clean.replace(/class="stack-tier" style="border-color:\s*rgba\([^)]+\);\s*background:\s*rgba\([^)]+\);?"/gi, 'class="stack-tier"');
@@ -1018,8 +1095,12 @@ export async function runStage3CreativeGenerator(
 
   const slideSections = parseStoryboardIntoSlides(storyboardText, targetCount, analysisText);
   const effectiveCount = Math.max(slideSections.length, targetCount);
-  const shouldUseGemini = (engine === "gemini" || engine === "auto") && geminiService.isAvailable();
-  let activeModel = shouldUseGemini ? `google/${geminiService.getModel()}` : MODEL_SUPER;
+  const isPureGemini = engine === "gemini" && geminiService.isAvailable();
+  let activeModel = isPureGemini
+    ? `google/${geminiService.getModel()}`
+    : engine === "auto"
+    ? `${MODEL_SUPER} + Gemini Critic`
+    : MODEL_SUPER;
 
   console.log(`[Stage3CreativeGenerator] Concurrently synthesizing ${effectiveCount} slides with ${activeModel}...`);
   callbacks.onChunk(`\n[Model 3: ${activeModel}] Initiating concurrent synthesis across ${effectiveCount} slide sections...\n`);
@@ -1073,8 +1154,8 @@ export async function runStage3CreativeGenerator(
     let slideHtml = "";
     let attemptSuccess = false;
 
-    // Attempt 0: Gemini 3.8 Flash (Ultra-fast concurrent generation)
-    if (shouldUseGemini) {
+    // Attempt 0: Pure Gemini (if explicitly selected by user)
+    if (isPureGemini) {
       try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 35000);
@@ -1110,20 +1191,20 @@ export async function runStage3CreativeGenerator(
       }
     }
 
-    // Attempt 1: Active Super Model
+    // Attempt 1: NVIDIA Nemotron 120B Super (Primary Generator for "auto" & "nvidia")
     if (!attemptSuccess) {
       try {
         slideHtml = await callModel(MODEL_SUPER);
         if (isValidSlideHtml(slideHtml)) {
           attemptSuccess = true;
-          activeModel = MODEL_SUPER;
+          if (!isPureGemini) activeModel = engine === "auto" ? `${MODEL_SUPER} + Gemini Critic` : MODEL_SUPER;
         }
       } catch (err: any) {
         console.warn(`[Stage3CreativeGenerator] Slide ${i + 1} super model error (${err?.message}). Retrying with fallback...`);
       }
     }
 
-    // Attempt 2: Nano Omni reasoning model
+    // Attempt 2: Nemotron 30B Nano Reasoning (fast fallback)
     if (!attemptSuccess) {
       try {
         slideHtml = await callModel(MODEL_LIGHTNING);
@@ -1135,7 +1216,33 @@ export async function runStage3CreativeGenerator(
       }
     }
 
-    // Attempt 3: Resilient structural synthesis strictly derived from directive
+    // Attempt 3: Gemini Fallback (if both NVIDIA models failed and Gemini is available)
+    if (!attemptSuccess && geminiService.isAvailable()) {
+      try {
+        const contentAcc = await geminiService.streamChat({
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an elite Keynote Presentation Visual Designer. You output ONLY the valid HTML <section class='slide'> block. Keep internal reasoning to under 80 tokens. Begin outputting HTML immediately.",
+            },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.35,
+          maxTokens: 4000,
+          onReasoning: (reasoning) => callbacks.onReasoning(reasoning),
+          onChunk: () => {},
+        });
+        if (isValidSlideHtml(contentAcc)) {
+          slideHtml = contentAcc;
+          attemptSuccess = true;
+        }
+      } catch (gErr: any) {
+        console.warn(`[Stage3CreativeGenerator] Slide ${i + 1} Gemini fallback error:`, gErr?.message);
+      }
+    }
+
+    // Attempt 4: Resilient structural synthesis strictly derived from directive
     if (!attemptSuccess || !isValidSlideHtml(slideHtml)) {
       console.log(`[Stage3CreativeGenerator] Using resilient structural fallback for slide ${i + 1}`);
       slideHtml = synthesizeFallbackSlide(cleanTopic, i, effectiveCount, slideDirective);
@@ -1188,6 +1295,23 @@ export async function runStage3CreativeGenerator(
 
     // 5. Sanitize AI tone: strip pseudo-math, buzzwords, and inline rainbow overrides
     cleanSlide = sanitizeAiTone(cleanSlide);
+
+    // 6. Gemini Quality Critic (Audits KaTeX equations, verifies zero slop, repairs syntax)
+    if (!isPureGemini && (engine === "auto" || config.geminiCriticEnabled) && geminiService.isAvailable()) {
+      try {
+        const audit = await geminiService.evaluateAndAuditSlide(cleanTopic, cleanSlide, i, effectiveCount);
+        if (audit.passed && audit.slideHtml && audit.slideHtml !== cleanSlide) {
+          console.log(`[Stage3CreativeGenerator] Gemini Critic refined slide ${i + 1}: ${audit.notes}`);
+          cleanSlide = audit.slideHtml;
+          if (!cleanSlide.startsWith("<section")) {
+            cleanSlide = `${expectedOpen}\n${cleanSlide}`;
+          }
+          cleanSlide = sanitizeAiTone(cleanSlide);
+        }
+      } catch (critErr: any) {
+        console.warn(`[Stage3CreativeGenerator] Critic pass skipped for slide ${i + 1}:`, critErr?.message);
+      }
+    }
 
     callbacks.onChunk(`\n/* Slide ${i + 1}/${effectiveCount} ready */\n${cleanSlide}\n`);
     console.log(`[Stage3CreativeGenerator] Slide ${i + 1}/${effectiveCount} ready (${cleanSlide.length} chars).`);

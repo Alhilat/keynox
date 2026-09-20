@@ -73,7 +73,7 @@ export class PipelineOrchestrator {
       }
       onEvent({
         type: "complete",
-        message: "HyperDeck presentation ready (cached)",
+        message: "Keynox presentation ready (cached)",
         html: cached.html,
         presentation: cached.presentation,
         outline: cached.outline || cached.storyboard || cached.analysis,
@@ -139,7 +139,11 @@ export class PipelineOrchestrator {
       topic: cleanTopic,
     });
 
-    let currentModel = engine === "gemini" ? "google/gemini-3.8-flash" : "nvidia/nemotron-3-super-120b-a12b";
+    let currentModel = engine === "gemini"
+      ? "google/gemini-3.8-flash"
+      : engine === "auto"
+      ? "nvidia/nemotron-3-super-120b-a12b (Gemini Critic)"
+      : "nvidia/nemotron-3-super-120b-a12b";
     const { rawSlides, activeModel } = await runStage3CreativeGenerator(
       cleanTopic,
       storyboardText,
@@ -293,7 +297,7 @@ export class PipelineOrchestrator {
 
     onEvent({
       type: "complete",
-      message: "HyperDeck presentation synthesized successfully with 3-stage pipeline!",
+      message: "Keynox presentation synthesized successfully with 3-stage pipeline!",
       html: finalHtml,
       presentation: presentationAst,
       outline: storyboardText,

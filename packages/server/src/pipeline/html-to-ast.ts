@@ -13,7 +13,7 @@ import { extractSlidesFromContent } from "./html-assembler";
 export function convertHtmlToPresentationAst(
   topic: string,
   html: string,
-  modelName: string = "HyperDeck 3-Stage Engine"
+  modelName: string = "Keynox 3-Stage Engine"
 ): Presentation {
   const rawSlides = extractSlidesFromContent(html);
   const scenes: Scene[] = [];
@@ -218,7 +218,7 @@ export function convertHtmlToPresentationAst(
     title: cleanTopic,
     metadata: {
       topic: cleanTopic,
-      model: `${modelName} (HyperDeck 3-Stage Pipeline)`,
+      model: `${modelName} (Keynox 3-Stage Pipeline)`,
       createdAt: new Date().toISOString(),
     },
     scenes: scenes.length > 0 ? scenes : [

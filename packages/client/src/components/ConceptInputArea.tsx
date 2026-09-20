@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Loader2,
   Send,
@@ -10,12 +10,11 @@ import {
   Landmark,
   Compass,
   Scroll,
-  Layers,
-  Sliders,
-  Cpu,
-  Radio,
-  Activity,
   Palette,
+  ChevronDown,
+  Sparkles,
+  Paperclip,
+  Layers,
 } from "lucide-react";
 import { extractPdfDocument, ExtractedPdfResult } from "../utils/pdfExtractor";
 
@@ -40,78 +39,58 @@ const VISUAL_LOOKS: {
   icon: any;
   desc: string;
   swatch: string;
-  activeBorder: string;
-  glow: string;
+  badgeColor: string;
 }[] = [
   {
     id: "oxford",
     name: "Oxford Navy",
     icon: Landmark,
     desc: "Academic Navy & Crisp Slate",
-    swatch: "from-blue-700 via-blue-900 to-slate-900",
-    activeBorder: "border-blue-500 ring-1 ring-blue-500/50",
-    glow: "bg-blue-500/10",
+    swatch: "from-blue-600 to-indigo-900",
+    badgeColor: "bg-blue-500",
   },
   {
     id: "cambridge",
     name: "Cambridge Slate",
     icon: BookOpen,
-    desc: "Minimalist Academic Silver & Chalk",
-    swatch: "from-slate-400 via-slate-600 to-neutral-900",
-    activeBorder: "border-slate-300 ring-1 ring-slate-300/50",
-    glow: "bg-slate-400/10",
+    desc: "Minimalist Silver & Chalk",
+    swatch: "from-slate-400 to-neutral-800",
+    badgeColor: "bg-slate-400",
   },
   {
     id: "harvard",
     name: "Harvard Crimson",
     icon: GraduationCap,
     desc: "Ivy League Burgundy & Warm Slate",
-    swatch: "from-red-700 via-red-900 to-neutral-900",
-    activeBorder: "border-red-600 ring-1 ring-red-600/50",
-    glow: "bg-red-600/10",
+    swatch: "from-red-600 to-rose-950",
+    badgeColor: "bg-red-500",
   },
   {
     id: "heidelberg",
     name: "Heidelberg Scholar",
     icon: Compass,
     desc: "Classical Botanical & Forest Green",
-    swatch: "from-emerald-700 via-emerald-900 to-neutral-900",
-    activeBorder: "border-emerald-600 ring-1 ring-emerald-600/50",
-    glow: "bg-emerald-600/10",
+    swatch: "from-emerald-600 to-teal-950",
+    badgeColor: "bg-emerald-500",
   },
   {
     id: "princeton",
     name: "Princeton Bronze",
     icon: Scroll,
-    desc: "Antique Scholar Bronze & Warm Ochre",
-    swatch: "from-amber-700 via-amber-900 to-neutral-900",
-    activeBorder: "border-amber-600 ring-1 ring-amber-600/50",
-    glow: "bg-amber-600/10",
+    desc: "Antique Scholar Bronze & Ochre",
+    swatch: "from-amber-600 to-amber-950",
+    badgeColor: "bg-amber-500",
   },
 ];
 
-const TOPIC_PRESETS = [
-  {
-    label: "Quantum Qubits & Transmons",
-    prompt:
-      "Superconducting Artificial Atoms: Transmon qubits, Josephson junction non-linearities, and microwave dispersive readout in circuit QED",
-  },
-  {
-    label: "Distributed Raft Consensus",
-    prompt:
-      "Distributed Consensus: Raft protocol leader election, log replication safety invariants, and joint consensus cluster membership",
-  },
-  {
-    label: "Attention & Vision Transformers",
-    prompt:
-      "Self-Attention Architectures: Multi-Head Attention equations, scaled dot-product computation, and Vision Transformer patch projections",
-  },
-  {
-    label: "Edge IoT & LoRaWAN Networks",
-    prompt:
-      "IoT System Architecture: Low-power sensor telemetry, LoRaWAN chirped spread spectrum, and edge MQTT brokers",
-  },
+const ARCHETYPE_OPTIONS = [
+  { id: "equations", label: "Formulas & Derivations" },
+  { id: "architecture-stack", label: "Architecture Stack" },
+  { id: "protocol-matrix", label: "Comparison Matrix" },
+  { id: "telemetry-cable", label: "Interactive Data Flow" },
 ];
+
+const SLIDE_COUNT_OPTIONS = [4, 6, 8, 10, 12, 16];
 
 export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
   onGenerate,
@@ -123,10 +102,10 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
   const [pdfProgress, setPdfProgress] = useState("");
   const [pdfMetadata, setPdfMetadata] = useState<ExtractedPdfResult | null>(null);
 
-  // Pre-generation look & style choices
+  // Configuration options
   const [selectedTheme, setSelectedTheme] = useState<VisualLookTheme>("oxford");
-  const [targetSlideCount, setTargetSlideCount] = useState<number>(5);
-  const [selectedEngine, setSelectedEngine] = useState<AiEngine>("gemini");
+  const [targetSlideCount, setTargetSlideCount] = useState<number>(6);
+  const [selectedEngine, setSelectedEngine] = useState<AiEngine>("auto");
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([
     "equations",
     "architecture-stack",
@@ -134,8 +113,40 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
     "telemetry-cable",
   ]);
 
+  // Dropdown / Popover UI states
+  const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showSlidePicker, setShowSlidePicker] = useState(false);
+  const [showEnginePicker, setShowEnginePicker] = useState(false);
+  const [showArchetypePicker, setShowArchetypePicker] = useState(false);
+
+  const themePickerRef = useRef<HTMLDivElement>(null);
+  const slidePickerRef = useRef<HTMLDivElement>(null);
+  const enginePickerRef = useRef<HTMLDivElement>(null);
+  const archetypePickerRef = useRef<HTMLDivElement>(null);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Close popovers when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (themePickerRef.current && !themePickerRef.current.contains(target)) {
+        setShowThemePicker(false);
+      }
+      if (slidePickerRef.current && !slidePickerRef.current.contains(target)) {
+        setShowSlidePicker(false);
+      }
+      if (enginePickerRef.current && !enginePickerRef.current.contains(target)) {
+        setShowEnginePicker(false);
+      }
+      if (archetypePickerRef.current && !archetypePickerRef.current.contains(target)) {
+        setShowArchetypePicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const toggleWidget = (wId: string) => {
     setSelectedWidgets((prev) =>
@@ -157,7 +168,10 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
     if (pdfMetadata) {
       const userInstructions =
         text.trim() || "Synthesize complete technical architecture and key takeaways";
-      const targetSlides = pdfMetadata.totalPages >= 8 ? targetSlideCount : Math.max(4, Math.min(targetSlideCount, pdfMetadata.totalPages));
+      const targetSlides =
+        pdfMetadata.totalPages >= 8
+          ? targetSlideCount
+          : Math.max(4, Math.min(targetSlideCount, pdfMetadata.totalPages));
 
       let payload = `TOPIC: "${pdfMetadata.title}"\n`;
       payload += `TARGET SLIDE COUNT: ${targetSlides} Slides\n`;
@@ -244,9 +258,10 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
   };
 
   const hasContent = Boolean(pdfMetadata || text.trim());
+  const activeLook = VISUAL_LOOKS.find((l) => l.id === selectedTheme) || VISUAL_LOOKS[0];
 
   return (
-    <div className="w-full flex flex-col gap-3">
+    <div className="w-full flex flex-col items-center">
       {/* Hidden File Input for PDF Upload */}
       <input
         ref={fileInputRef}
@@ -256,80 +271,30 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
         onChange={handleFileChange}
       />
 
-      {/* Preset Topics Pill Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider font-mono shrink-0">
-          Presets:
-        </span>
-        {TOPIC_PRESETS.map((preset, idx) => (
-          <button
-            key={idx}
-            type="button"
-            disabled={isLoading || isExtractingPdf}
-            onClick={() => {
-              setText(preset.prompt);
-              clearPdf();
-            }}
-            className="text-xs px-3 py-1.5 rounded-full bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-neutral-800 hover:border-neutral-600 text-neutral-300 hover:text-white transition-all shrink-0 active:scale-95 disabled:opacity-40 shadow-sm"
-          >
-            {preset.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Main Input Form with Dropzone */}
+      {/* Modern Minimalist Glassmorphic Input Form */}
       <form
         onSubmit={handleSubmit}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`w-full rounded-2xl border transition-all p-4 bg-[#0a0a0a] backdrop-blur-xl shadow-2xl flex flex-col gap-3 relative ${
+        className={`w-full rounded-2xl border transition-all duration-300 p-4 sm:p-5 bg-[#0a0a0c]/90 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex flex-col gap-3 relative ${
           isDragging
-            ? "border-cyan-400 bg-[#0d141f] scale-[1.01]"
-            : "border-neutral-800 hover:border-neutral-700 focus-within:border-cyan-500/80 focus-within:shadow-cyan-500/10"
+            ? "border-blue-500/80 bg-blue-950/20 scale-[1.005] shadow-[0_0_25px_rgba(59,130,246,0.2)]"
+            : "border-white/[0.08] hover:border-white/[0.14] focus-within:border-white/20 focus-within:shadow-[0_0_30px_rgba(255,255,255,0.03)]"
         }`}
       >
-        {/* Top Header info */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
-              {pdfMetadata ? "PDF Document Loaded" : "Interactive Keynote Generator"}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 text-slate-500 font-mono text-[11px]">
-            {(text.length > 0 || pdfMetadata) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setText("");
-                  clearPdf();
-                }}
-                disabled={isLoading || isExtractingPdf}
-                className="flex items-center gap-1 text-slate-400 hover:text-red-400 transition-colors"
-                title="Clear input"
-              >
-                <XCircle className="w-3.5 h-3.5" />
-                <span>Clear</span>
-              </button>
-            )}
-            <span>{text.length} chars</span>
-          </div>
-        </div>
-
-        {/* Loaded PDF Metadata Card */}
+        {/* Loaded PDF Metadata Pill */}
         {pdfMetadata && (
-          <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-indigo-950/40 border border-cyan-500/35 flex items-center justify-between gap-3 text-xs shadow-lg">
-            <div className="flex items-center gap-2.5 text-cyan-300 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0">
-                <FileText className="w-4 h-4 text-cyan-400" />
+          <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/25 flex items-center justify-center shrink-0">
+                <FileText className="w-3.5 h-3.5 text-blue-400" />
               </div>
               <div className="min-w-0">
-                <div className="font-bold text-white truncate text-sm">{pdfMetadata.title}</div>
-                <div className="text-slate-400 font-mono text-[11px] flex items-center gap-2 flex-wrap">
-                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-                    <CheckCircle2 className="w-3 h-3" /> High-Fidelity Extracted
+                <div className="font-semibold text-white truncate text-xs">{pdfMetadata.title}</div>
+                <div className="text-neutral-400 font-mono text-[10px] flex items-center gap-2">
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Ready
                   </span>
                   <span>&bull;</span>
                   <span>{pdfMetadata.totalPages} pages</span>
@@ -341,7 +306,7 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
             <button
               type="button"
               onClick={clearPdf}
-              className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors shrink-0"
+              className="text-neutral-400 hover:text-red-400 p-1 rounded-md hover:bg-white/[0.05] transition-colors shrink-0"
               title="Remove PDF"
             >
               <XCircle className="w-4 h-4" />
@@ -351,13 +316,13 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
 
         {/* Loading PDF Extraction Spinner */}
         {isExtractingPdf && (
-          <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center gap-2.5 text-xs text-cyan-300">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400 shrink-0" />
-            <span className="font-mono">{pdfProgress}</span>
+          <div className="p-2.5 rounded-xl bg-blue-950/30 border border-blue-800/40 flex items-center gap-2 text-xs text-blue-300">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400 shrink-0" />
+            <span className="font-mono text-[11px]">{pdfProgress}</span>
           </div>
         )}
 
-        {/* Textarea */}
+        {/* Clean Spacious Prompt Textarea */}
         <textarea
           ref={textareaRef}
           value={text}
@@ -367,176 +332,240 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
           rows={3}
           placeholder={
             pdfMetadata
-              ? "Add optional custom instructions (e.g. 'Focus on the Multi-Head Attention mechanism and benchmarks')..."
-              : "Enter topic, paste technical notes, or drag & drop a PDF paper here...&#10;e.g. 'Chapter 1: Introduction to Internet of Things: Equations, 4-Stage Layered Architecture, 11 Communication Protocols, and Data Sources.'"
+              ? "Add custom directives (e.g. 'Focus on system architecture, protocol state machines, and mathematical proof')..."
+              : "What presentation would you like to create? Enter a topic, paste notes, or drag & drop a PDF..."
           }
-          className="w-full bg-transparent text-slate-100 placeholder-slate-500 text-sm leading-relaxed focus:outline-none resize-y min-h-[75px] max-h-[220px]"
+          className="w-full bg-transparent text-white placeholder:text-neutral-500 text-sm sm:text-base leading-relaxed focus:outline-none resize-none min-h-[70px] max-h-[220px]"
         />
 
-        {/* ========================================================== */}
-        {/* PRE-GENERATION SELECTOR: CHOOSE YOUR LOOK & ARCHETYPES */}
-        {/* ========================================================== */}
-        <div className="pt-3 border-t border-slate-800/90 flex flex-col gap-3">
-          {/* Visual Look / Palette Picker */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono font-bold text-slate-300 flex items-center gap-1.5">
-                <Palette className="w-3.5 h-3.5 text-fuchsia-400" />
-                <span>CHOOSE VISUAL LOOK / PALETTE:</span>
-              </span>
-              <span className="text-[11px] font-mono text-cyan-400 font-bold">
-                {VISUAL_LOOKS.find((l) => l.id === selectedTheme)?.name}
-              </span>
+        {/* Bottom Streamlined Options & Actions Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-white/[0.06]">
+          {/* Left: Compact Configuration Pills */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* 1. Theme Pill & Popover */}
+            <div className="relative" ref={themePickerRef}>
+              <button
+                type="button"
+                onClick={() => setShowThemePicker(!showThemePicker)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-neutral-300 hover:text-white text-xs font-medium transition-colors"
+              >
+                <span className={`w-2 h-2 rounded-full ${activeLook.badgeColor}`} />
+                <span>{activeLook.name}</span>
+                <ChevronDown className="w-3 h-3 text-neutral-400" />
+              </button>
+
+              {showThemePicker && (
+                <div className="absolute left-0 bottom-full mb-2 w-56 p-1.5 rounded-xl bg-[#111116] border border-white/[0.12] shadow-2xl z-50 flex flex-col gap-1 backdrop-blur-xl">
+                  <div className="px-2 py-1 text-[10px] font-mono uppercase text-neutral-400 font-semibold tracking-wider">
+                    Visual Theme
+                  </div>
+                  {VISUAL_LOOKS.map((theme) => {
+                    const IconComp = theme.icon;
+                    const isSelected = selectedTheme === theme.id;
+                    return (
+                      <button
+                        key={theme.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedTheme(theme.id);
+                          setShowThemePicker(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+                          isSelected
+                            ? "bg-white/[0.12] text-white font-semibold"
+                            : "text-neutral-300 hover:bg-white/[0.05] hover:text-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <IconComp className="w-3.5 h-3.5 text-neutral-400" />
+                          <span>{theme.name}</span>
+                        </div>
+                        <span className={`w-2.5 h-2.5 rounded-full ${theme.badgeColor}`} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {VISUAL_LOOKS.map((look) => {
-                const IconComp = look.icon;
-                const isSelected = selectedTheme === look.id;
-                return (
-                  <button
-                    key={look.id}
-                    type="button"
-                    onClick={() => setSelectedTheme(look.id)}
-                    className={`p-2.5 rounded-xl border-2 transition-all flex flex-col items-start gap-1.5 text-left relative overflow-hidden shadow-sm ${
-                      isSelected
-                        ? `${look.activeBorder} ${look.glow} scale-[1.03] shadow-lg`
-                        : "border-slate-700/70 bg-slate-800/60 hover:bg-slate-800 hover:border-slate-600 text-slate-300"
-                    }`}
-                  >
-                    <div className="w-full flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <IconComp className="w-3.5 h-3.5 text-white" />
-                        <span className="text-xs font-black text-white">{look.name}</span>
-                      </div>
-                      <span
-                        className={`w-2.5 h-2.5 rounded-full bg-gradient-to-r ${look.swatch} border border-white/40`}
-                      />
-                    </div>
-                    <span className="text-[10px] text-slate-400 leading-tight line-clamp-1">
-                      {look.desc}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+            {/* 2. Slide Count Pill & Popover */}
+            <div className="relative" ref={slidePickerRef}>
+              <button
+                type="button"
+                onClick={() => setShowSlidePicker(!showSlidePicker)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-neutral-300 hover:text-white text-xs font-medium transition-colors"
+              >
+                <Layers className="w-3 h-3 text-neutral-400" />
+                <span>{targetSlideCount} Slides</span>
+                <ChevronDown className="w-3 h-3 text-neutral-400" />
+              </button>
 
-          {/* Quick Options: Slide Count & Widgets */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-neutral-800">
-            {/* Target Slide Count */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-neutral-400">SLIDES:</span>
-              <div className="flex items-center gap-1 bg-[#111111] p-1 rounded-lg border border-neutral-800 overflow-x-auto max-w-[280px] sm:max-w-none scrollbar-none">
-                {[4, 6, 8, 10, 12, 14, 16, 18, 20].map((count) => (
-                  <button
-                    key={count}
-                    type="button"
-                    onClick={() => setTargetSlideCount(count)}
-                    className={`px-2 py-0.5 rounded text-xs font-mono font-bold transition-all ${
-                      targetSlideCount === count
-                        ? "bg-white text-black shadow-md font-black"
-                        : "text-neutral-400 hover:text-white"
-                    }`}
-                  >
-                    {count}
-                  </button>
-                ))}
-              </div>
+              {showSlidePicker && (
+                <div className="absolute left-0 bottom-full mb-2 w-40 p-1.5 rounded-xl bg-[#111116] border border-white/[0.12] shadow-2xl z-50 flex flex-col gap-1 backdrop-blur-xl">
+                  <div className="px-2 py-1 text-[10px] font-mono uppercase text-neutral-400 font-semibold tracking-wider">
+                    Slide Count
+                  </div>
+                  <div className="grid grid-cols-3 gap-1 px-1 py-0.5">
+                    {SLIDE_COUNT_OPTIONS.map((count) => (
+                      <button
+                        key={count}
+                        type="button"
+                        onClick={() => {
+                          setTargetSlideCount(count);
+                          setShowSlidePicker(false);
+                        }}
+                        className={`py-1 rounded-md text-xs font-mono font-bold transition-colors ${
+                          targetSlideCount === count
+                            ? "bg-white text-black"
+                            : "text-neutral-300 hover:bg-white/[0.08] hover:text-white"
+                        }`}
+                      >
+                        {count}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* AI Engine Selector */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-mono font-bold text-neutral-400">ENGINE:</span>
-              <div className="flex items-center gap-1 bg-[#111111] p-1 rounded-lg border border-neutral-800">
-                {[
-                  { id: "gemini" as const, label: "Gemini 3.8 Flash", activeClass: "bg-amber-400 text-black font-bold shadow-sm" },
-                  { id: "nvidia" as const, label: "Nemotron 120B", activeClass: "bg-emerald-400 text-black font-bold shadow-sm" },
-                  { id: "auto" as const, label: "Auto Hybrid", activeClass: "bg-cyan-400 text-black font-bold shadow-sm" },
-                ].map((eng) => (
-                  <button
-                    key={eng.id}
-                    type="button"
-                    onClick={() => setSelectedEngine(eng.id)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold transition-all ${
-                      selectedEngine === eng.id
-                        ? eng.activeClass
-                        : "text-neutral-400 hover:text-white"
-                    }`}
-                  >
-                    {eng.label}
-                  </button>
-                ))}
-              </div>
+            {/* 3. AI Engine Pill & Popover */}
+            <div className="relative" ref={enginePickerRef}>
+              <button
+                type="button"
+                onClick={() => setShowEnginePicker(!showEnginePicker)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-neutral-300 hover:text-white text-xs font-medium transition-colors"
+              >
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>
+                  {selectedEngine === "auto"
+                    ? "Auto (Nemotron + Gemini)"
+                    : selectedEngine === "nvidia"
+                    ? "Nemotron 120B"
+                    : "Gemini 3.8 Flash"}
+                </span>
+                <ChevronDown className="w-3 h-3 text-neutral-400" />
+              </button>
+
+              {showEnginePicker && (
+                <div className="absolute left-0 bottom-full mb-2 w-56 p-1.5 rounded-xl bg-[#111116] border border-white/[0.12] shadow-2xl z-50 flex flex-col gap-1 backdrop-blur-xl">
+                  <div className="px-2 py-1 text-[10px] font-mono uppercase text-neutral-400 font-semibold tracking-wider">
+                    AI Engine
+                  </div>
+                  {[
+                    { id: "auto" as const, name: "Auto (Nemotron + Critic)", desc: "NVIDIA Generator + Gemini Audit (Recommended)" },
+                    { id: "nvidia" as const, name: "Nemotron 120B", desc: "Pure NVIDIA NIM Synthesis" },
+                    { id: "gemini" as const, name: "Gemini 3.8 Flash", desc: "Pure Google Gemini Generation" },
+                  ].map((eng) => (
+                    <button
+                      key={eng.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedEngine(eng.id);
+                        setShowEnginePicker(false);
+                      }}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+                        selectedEngine === eng.id
+                          ? "bg-white/[0.12] text-white font-semibold"
+                          : "text-neutral-300 hover:bg-white/[0.05] hover:text-white"
+                      }`}
+                    >
+                      <div className="font-medium">{eng.name}</div>
+                      <div className="text-[10px] text-neutral-400">{eng.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Interactive Widget Archetypes */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-mono font-bold text-neutral-400 hidden sm:inline">
-                COMPONENTS:
-              </span>
-              {[
-                { id: "equations", label: "Formulas" },
-                { id: "architecture-stack", label: "Architecture Stack" },
-                { id: "protocol-matrix", label: "Matrix Grid" },
-                { id: "telemetry-cable", label: "Data Flow" },
-              ].map((w) => {
-                const isActive = selectedWidgets.includes(w.id);
-                return (
-                  <button
-                    key={w.id}
-                    type="button"
-                    onClick={() => toggleWidget(w.id)}
-                    className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-bold transition-all border ${
-                      isActive
-                        ? "bg-neutral-800 border-neutral-600 text-white"
-                        : "bg-[#111111] border-neutral-800 text-neutral-500 hover:text-neutral-300"
-                    }`}
-                  >
-                    {w.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+            {/* 4. Interactive Components Pill & Popover */}
+            <div className="relative" ref={archetypePickerRef}>
+              <button
+                type="button"
+                onClick={() => setShowArchetypePicker(!showArchetypePicker)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                  selectedWidgets.length > 0
+                    ? "bg-white/[0.04] border-white/[0.08] text-neutral-300 hover:text-white hover:bg-white/[0.08]"
+                    : "bg-white/[0.02] border-white/[0.05] text-neutral-500"
+                }`}
+              >
+                <span>Components ({selectedWidgets.length})</span>
+                <ChevronDown className="w-3 h-3 text-neutral-400" />
+              </button>
 
-        {/* Bottom Actions Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 mt-1 border-t border-slate-800/80">
-          <div className="flex items-center gap-2">
+              {showArchetypePicker && (
+                <div className="absolute left-0 bottom-full mb-2 w-56 p-1.5 rounded-xl bg-[#111116] border border-white/[0.12] shadow-2xl z-50 flex flex-col gap-1 backdrop-blur-xl">
+                  <div className="px-2 py-1 text-[10px] font-mono uppercase text-neutral-400 font-semibold tracking-wider">
+                    Interactive Modules
+                  </div>
+                  {ARCHETYPE_OPTIONS.map((opt) => {
+                    const active = selectedWidgets.includes(opt.id);
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => toggleWidget(opt.id)}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+                          active
+                            ? "bg-white/[0.12] text-white font-medium"
+                            : "text-neutral-400 hover:bg-white/[0.05] hover:text-neutral-200"
+                        }`}
+                      >
+                        <span>{opt.label}</span>
+                        {active && <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 5. Attach PDF Button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading || isExtractingPdf}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 hover:border-cyan-500/40 text-xs font-semibold text-slate-300 hover:text-white transition-all active:scale-95 shadow-sm"
-              title="Upload academic paper, slides, or technical PDF"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-neutral-300 hover:text-white text-xs font-medium transition-colors"
+              title="Upload PDF document"
             >
-              <FileText className="w-3.5 h-3.5 text-cyan-400" />
+              <Paperclip className="w-3 h-3 text-neutral-400" />
               <span>Attach PDF</span>
             </button>
-
-            <span className="text-[11px] text-slate-500 hidden md:inline font-mono">
-              or drop a .pdf file directly here
-            </span>
           </div>
 
-          <button
-            type="submit"
-            disabled={isLoading || isExtractingPdf || !hasContent}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-400 to-indigo-500 hover:from-cyan-400 hover:to-indigo-400 disabled:opacity-30 disabled:cursor-not-allowed text-slate-950 text-xs sm:text-sm font-bold shadow-lg shadow-cyan-500/25 transition-all active:scale-95 hover:shadow-cyan-500/40"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
-                <span>Synthesizing in {selectedTheme.toUpperCase()}...</span>
-              </>
-            ) : (
-              <>
-                <span>Generate Presentation</span>
-                <Send className="w-3.5 h-3.5" />
-              </>
+          {/* Right: Primary Generate Action Button */}
+          <div className="flex items-center gap-2 ml-auto">
+            {text.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setText("");
+                  clearPdf();
+                }}
+                disabled={isLoading || isExtractingPdf}
+                className="text-neutral-500 hover:text-neutral-300 text-xs px-2 py-1 transition-colors"
+              >
+                Clear
+              </button>
             )}
-          </button>
+
+            <button
+              type="submit"
+              disabled={isLoading || isExtractingPdf || !hasContent}
+              className="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-white hover:bg-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed text-black text-xs sm:text-sm font-semibold shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all active:scale-95"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-black" />
+                  <span>Synthesizing...</span>
+                </>
+              ) : (
+                <>
+                  <span>Generate</span>
+                  <Send className="w-3 h-3 text-black" />
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </form>
     </div>

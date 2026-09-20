@@ -10,8 +10,12 @@
     "dev:server": "npm --workspace=@presentation/server run dev",
     "dev:client": "npm --workspace=@presentation/client run dev",
     "dev": "npm run dev:server & npm run dev:client",
-    "build": "npm --workspaces run build",
+    "build": "npm --workspace=@presentation/schema run build && npm --workspace=@presentation/engine run build && npm --workspace=@presentation/server run build && npm --workspace=@presentation/client run build",
+    "start": "node packages/server/dist/index.js",
     "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "typescript": "^5.4.5",

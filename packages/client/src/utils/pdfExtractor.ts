@@ -155,8 +155,7 @@ export async function extractPdfDocument(
   try {
     if (onProgress) onProgress(3, 4, "Analyzing with NVIDIA NIM Multimodal Vision...");
     const base64 = await fileToBase64(file);
-    const apiHost = window.location.hostname === "localhost" ? "http://localhost:3001" : "";
-    const res = await fetch(`${apiHost}/api/ai/extract-pdf`, {
+    const res = await fetch(`/api/ai/extract-pdf`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

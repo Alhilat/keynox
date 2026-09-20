@@ -1,4 +1,4 @@
-# HYPERDECK PLATFORM — SYSTEM ARCHITECTURE & DEVELOPER GUIDE
+# KEYNOX PLATFORM — SYSTEM ARCHITECTURE & DEVELOPER GUIDE
 
 > **Fast-track orientation file for AI agents and senior engineers.**  
 > Read this file first to understand the entire repository, technical architecture, and design constraints.
@@ -7,7 +7,7 @@
 
 ## 1. Executive Summary & Core Vision
 
-HyperDeck is an **interactive, web-native presentation engine, visual studio, and explainer runtime** designed to replace static slide decks (like PowerPoint and Google Slides). 
+Keynox is an **interactive, web-native presentation engine, visual studio, and explainer runtime** designed to replace static slide decks (like PowerPoint and Google Slides). 
 
 ### Core Product Philosophy
 - **Presentations are Executable Web Applications**: Slides are not static text boxes with bullet points. They contain **live, interactive simulators** (e.g. clickable Boolean logic circuits, physics dynamics sliders, live code runners) and **fine-grained mathematical step animations** where terms visibly move and transform across equations using GSAP.

@@ -43,7 +43,17 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement));
+      const isFs = Boolean(document.fullscreenElement);
+      setIsFullscreen(isFs);
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: "HYPERDECK_SET_FULLSCREEN",
+            isFullscreen: isFs,
+          },
+          "*"
+        );
+      }
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => {
@@ -142,7 +152,7 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
 
     const win = window.open(
       "",
-      "OnyxPresenterWindow",
+      "KeynoxPresenterWindow",
       "width=1120,height=750,menubar=no,toolbar=no,location=no,status=no,resizable=yes"
     );
     if (!win) {
@@ -156,7 +166,7 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Onyx Presenter Console &bull; ${safeTitle}</title>
+  <title>Keynox Presenter Console &bull; ${safeTitle}</title>
   <style>
     :root {
       --bg: #000000;

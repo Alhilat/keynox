@@ -12,6 +12,7 @@ import {
   osKernelDeck,
 } from "./data/showcaseDecks";
 import { Presentation } from "@presentation/schema";
+import { KeynoxLogo } from "./components/KeynoxLogo";
 import {
   Layers,
   AlertCircle,
@@ -35,7 +36,7 @@ export function App() {
   // Standalone HTML Explainer Site State
   const [htmlSite, setHtmlSite] = useState<string>("");
   const [currentTitle, setCurrentTitle] = useState<string>("");
-  const [modelName, setModelName] = useState<string>("Onyx Engine");
+  const [modelName, setModelName] = useState<string>("Keynox Engine");
   const [outlineText, setOutlineText] = useState<string>("");
 
   // Streaming Process State (3-Stage LLM Pipeline)
@@ -200,19 +201,21 @@ export function App() {
   return (
     <div className="min-h-screen bg-[#000000] text-slate-100 flex flex-col items-center pb-20">
       {/* Executive Keynote Studio Header */}
-      <header className="w-full border-b border-neutral-900 bg-black/90 backdrop-blur-2xl sticky top-0 z-30 px-4 sm:px-8 py-3">
+      <header className="w-full border-b border-white/[0.06] bg-black/80 backdrop-blur-2xl sticky top-0 z-30 px-4 sm:px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Brand Name & Glowing Monogram */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-neutral-950 border border-neutral-800 flex items-center justify-center text-white shadow-lg relative overflow-hidden group">
-              <Layers className="w-4.5 h-4.5" />
-            </div>
+          <div className="relative flex items-center gap-3.5 group">
+            {/* Radiant ambient backlight behind the logo and name */}
+            <div className="absolute -left-3 -top-2.5 -bottom-2.5 -right-4 bg-gradient-to-r from-blue-600/20 via-indigo-500/15 to-purple-600/10 blur-xl opacity-80 group-hover:opacity-100 transition-opacity pointer-events-none rounded-2xl -z-10" />
+
+            <KeynoxLogo size={38} />
+
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-display text-lg font-black text-white tracking-tight">
-                  Onyx
+                  Keynox
                 </span>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800">
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-white/[0.06] text-neutral-300 border border-white/[0.1] tracking-wide">
                   STUDIO
                 </span>
               </div>
@@ -276,134 +279,133 @@ export function App() {
               />
             </div>
           ) : !isStreaming ? (
-            /* Premium Interactive Showcase Gallery */
-            <div className="w-full max-w-5xl mt-8 p-7 rounded-3xl border border-neutral-900 bg-[#080808]/90 backdrop-blur-xl shadow-2xl relative overflow-hidden flex flex-col items-center">
-              <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 border-b border-neutral-900 pb-4">
+            /* Clean Interactive Showcase Gallery */
+            <div className="w-full max-w-5xl mt-6 p-6 rounded-2xl border border-white/[0.06] bg-[#08080a]/80 backdrop-blur-xl shadow-xl flex flex-col items-center">
+              <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-5 border-b border-white/[0.06] pb-3.5">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                    <h3 className="text-sm font-bold text-white tracking-wide uppercase font-mono">
-                      Curated Interactive Systems
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                    <h3 className="text-xs font-semibold text-neutral-300 tracking-wider uppercase font-mono">
+                      Interactive Showcases
                     </h3>
                   </div>
                   <p className="text-xs text-neutral-400 mt-0.5">
-                    Zero-latency executable models ready to inspect in Keynote Player or Visual Studio.
+                    Live executable demonstration decks ready to present or inspect in studio.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#111111] border border-neutral-800 font-mono text-neutral-400 font-semibold">
-                    4 Interactive Showcases
+                  <span className="text-[10px] px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] font-mono text-neutral-400 font-semibold">
+                    4 Decks
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 w-full">
                 {/* 1: Boolean Logic */}
                 <button
                   onClick={() => handleSelectShowcase(booleanLogicDeck)}
-                  className="p-5 rounded-2xl bg-[#0d0d0d] hover:bg-[#141414] border border-neutral-800/80 hover:border-neutral-600 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
+                  className="p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.14] text-left transition-all duration-200 group flex flex-col justify-between relative overflow-hidden"
                 >
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 group-hover:scale-110 transition-transform">
-                        <Binary className="w-5 h-5" />
+                      <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 group-hover:scale-105 transition-transform">
+                        <Binary className="w-4 h-4" />
                       </div>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                         CIRCUIT
                       </span>
                     </div>
-                    <div className="text-sm font-bold text-white mb-1.5 group-hover:text-cyan-300 transition-colors">
+                    <div className="text-sm font-semibold text-white mb-1 group-hover:text-cyan-300 transition-colors">
                       Boolean Logic
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
-                      Interactive digital logic gates with live toggles &amp; reactive truth table row tracking.
+                    <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">
+                      Interactive digital logic gates with live toggles &amp; reactive truth table tracking.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-neutral-800 flex items-center justify-between text-xs font-semibold text-cyan-400">
-                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Presentation</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                  <div className="mt-4 pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-xs text-cyan-400">
+                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Deck</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
                 {/* 2: Physics Dynamics */}
                 <button
                   onClick={() => handleSelectShowcase(physicsDeck)}
-                  className="p-5 rounded-2xl bg-[#0d0d0d] hover:bg-[#141414] border border-neutral-800/80 hover:border-neutral-600 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
+                  className="p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.14] text-left transition-all duration-200 group flex flex-col justify-between relative overflow-hidden"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                        <Activity className="w-5 h-5" />
+                      <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:scale-105 transition-transform">
+                        <Activity className="w-4 h-4" />
                       </div>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         PHYSICS
                       </span>
                     </div>
-                    <div className="text-sm font-bold text-white mb-1.5 group-hover:text-emerald-300 transition-colors">
+                    <div className="text-sm font-semibold text-white mb-1 group-hover:text-emerald-300 transition-colors">
                       Physics Dynamics
                     </div>
                     <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">
-                      Newtonian mechanics running acceleration $a = F/m$ with live mass and force sliders.
+                      Newtonian mechanics calculating acceleration with live mass and force sliders.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-neutral-800 flex items-center justify-between text-xs font-semibold text-emerald-400">
-                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Presentation</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                  <div className="mt-4 pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-xs text-emerald-400">
+                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Deck</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
                 {/* 3: Equation Solver */}
                 <button
                   onClick={() => handleSelectShowcase(equationSolverDeck)}
-                  className="p-5 rounded-2xl bg-[#0d0d0d] hover:bg-[#141414] border border-neutral-800/80 hover:border-neutral-600 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
+                  className="p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.14] text-left transition-all duration-200 group flex flex-col justify-between relative overflow-hidden"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 group-hover:scale-110 transition-transform">
-                        <Sparkles className="w-5 h-5" />
+                      <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 group-hover:scale-105 transition-transform">
+                        <Sparkles className="w-4 h-4" />
                       </div>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                        GSAP MORPH
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                        MORPH
                       </span>
                     </div>
-                    <div className="text-sm font-bold text-white mb-1.5 group-hover:text-indigo-300 transition-colors">
+                    <div className="text-sm font-semibold text-white mb-1 group-hover:text-indigo-300 transition-colors">
                       Equation Solver
                     </div>
                     <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">
-                      Fine-grained mathematical derivations with animated terms visibly morphing across steps.
+                      Mathematical derivations with animated terms visibly morphing across steps.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-neutral-800 flex items-center justify-between text-xs font-semibold text-indigo-400">
-                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Presentation</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                  <div className="mt-4 pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-xs text-indigo-400">
+                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Deck</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
                 {/* 4: OS Kernel */}
                 <button
                   onClick={() => handleSelectShowcase(osKernelDeck)}
-                  className="p-5 rounded-2xl bg-[#0d0d0d] hover:bg-[#141414] border border-neutral-800/80 hover:border-neutral-600 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
+                  className="p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.14] text-left transition-all duration-200 group flex flex-col justify-between relative overflow-hidden"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-110 transition-transform">
-                        <Cpu className="w-5 h-5" />
+                      <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-105 transition-transform">
+                        <Cpu className="w-4 h-4" />
                       </div>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                        TOPOLOGY
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        SYSTEMS
                       </span>
                     </div>
-                    <div className="text-sm font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors">
+                    <div className="text-sm font-semibold text-white mb-1 group-hover:text-amber-300 transition-colors">
                       OS Kernel Arch
                     </div>
                     <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">
                       Memory paging, Ring 0-3 privilege architectures, and context switching workflows.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-neutral-800 flex items-center justify-between text-xs font-semibold text-amber-400">
-                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Presentation</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                  <div className="mt-4 pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-xs text-amber-400">
+                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Deck</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
               </div>
@@ -425,7 +427,7 @@ export function App() {
           </div>
           <PresentationPlayer
             presentation={currentDeck}
-            source="Onyx Keynote"
+            source="Keynox Keynote"
             onOpenStudio={() => setActiveMode("editor")}
           />
         </main>
