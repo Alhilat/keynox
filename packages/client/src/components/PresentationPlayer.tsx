@@ -158,15 +158,15 @@ export const PresentationPlayer: React.FC<PresentationPlayerProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowSlideSidebar(!showSlideSidebar)}
-            title={showSlideSidebar ? "Hide Slide Deck Sidebar" : "Show Slide Deck Sidebar"}
+            title={showSlideSidebar ? "Hide Slide Sidebar" : "Show Slide Sidebar"}
             className={`px-3 py-2 rounded-xl border transition-all text-xs flex items-center gap-1.5 ${
               showSlideSidebar
-                ? "bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-sm"
-                : "bg-slate-900/80 text-slate-400 hover:text-white border-slate-800 hover:bg-slate-800"
+                ? "bg-neutral-800 text-white border-neutral-600 shadow-sm"
+                : "bg-neutral-900/80 text-neutral-400 hover:text-white border-neutral-800 hover:bg-neutral-800"
             }`}
           >
             <PanelLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Deck</span>
+            <span className="hidden sm:inline">Slides</span>
           </button>
 
           <button
@@ -175,7 +175,7 @@ export const PresentationPlayer: React.FC<PresentationPlayerProps> = ({
             className={`px-3 py-2 rounded-xl border transition-all text-xs flex items-center gap-1.5 ${
               isLaserPointer
                 ? "bg-red-500/20 text-red-400 border-red-500/50 shadow-lg shadow-red-500/25 animate-pulse"
-                : "bg-slate-900/80 text-slate-400 hover:text-white border-slate-800 hover:bg-slate-800"
+                : "bg-neutral-900/80 text-neutral-400 hover:text-white border-neutral-800 hover:bg-neutral-800"
             }`}
           >
             <Crosshair className="w-4 h-4" />
@@ -185,19 +185,19 @@ export const PresentationPlayer: React.FC<PresentationPlayerProps> = ({
           <button
             onClick={toggleSound}
             title={isSoundEnabled ? "Mute Sound Effects" : "Enable Sound Effects"}
-            className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors"
+            className="p-2 rounded-xl bg-neutral-900/80 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition-colors"
           >
             {isSoundEnabled ? (
               <Volume2 className="w-4 h-4 text-emerald-400" />
             ) : (
-              <VolumeX className="w-4 h-4 text-slate-500" />
+              <VolumeX className="w-4 h-4 text-neutral-500" />
             )}
           </button>
 
           <button
             onClick={() => setIsJsonModalOpen(true)}
             title="Inspect Presentation JSON"
-            className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors"
+            className="p-2 rounded-xl bg-neutral-900/80 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-800 transition-colors"
           >
             <Code className="w-4 h-4" />
           </button>
@@ -205,8 +205,8 @@ export const PresentationPlayer: React.FC<PresentationPlayerProps> = ({
           {onOpenStudio && (
             <button
               onClick={onOpenStudio}
-              title="Edit Slide Deck in Visual Studio"
-              className="px-3.5 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm shadow-indigo-500/10"
+              title="Edit Presentation in Visual Studio"
+              className="px-3.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white border border-neutral-700 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
             >
               <Sliders className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Studio</span>

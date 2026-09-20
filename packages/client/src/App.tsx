@@ -15,9 +15,6 @@ import { Presentation } from "@presentation/schema";
 import {
   Layers,
   AlertCircle,
-  Play,
-  LayoutGrid,
-  SlidersHorizontal,
   FileCode2,
   Binary,
   Activity,
@@ -38,7 +35,7 @@ export function App() {
   // Standalone HTML Explainer Site State
   const [htmlSite, setHtmlSite] = useState<string>("");
   const [currentTitle, setCurrentTitle] = useState<string>("");
-  const [modelName, setModelName] = useState<string>("HyperDeck 3-Stage Engine");
+  const [modelName, setModelName] = useState<string>("Onyx Engine");
   const [outlineText, setOutlineText] = useState<string>("");
 
   // Streaming Process State (3-Stage LLM Pipeline)
@@ -93,6 +90,7 @@ export function App() {
           theme: options?.theme || "cyber",
           slideCount: options?.slideCount || 5,
           archetypes: options?.archetypes || [],
+          engine: options?.engine || "gemini",
         }),
       });
 
@@ -200,79 +198,29 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#060911] text-slate-100 flex flex-col items-center pb-20">
+    <div className="min-h-screen bg-[#000000] text-slate-100 flex flex-col items-center pb-20">
       {/* Executive Keynote Studio Header */}
-      <header className="w-full border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-2xl sticky top-0 z-30 px-4 sm:px-8 py-3">
+      <header className="w-full border-b border-neutral-900 bg-black/90 backdrop-blur-2xl sticky top-0 z-30 px-4 sm:px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Brand Name & Glowing Monogram */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-700/80 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/15 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-cyan-400/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="w-9 h-9 rounded-xl bg-neutral-950 border border-neutral-800 flex items-center justify-center text-white shadow-lg relative overflow-hidden group">
               <Layers className="w-4.5 h-4.5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-display text-lg font-black text-white tracking-tight">
-                  HyperDeck
+                  Onyx
                 </span>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-800">
                   STUDIO
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                Interactive Presentation Engine &bull; 3-Stage AI Synthesis
+              <p className="text-[11px] text-neutral-400 hidden sm:block">
+                Interactive Presentation Runtime &bull; Executable Visual Studio
               </p>
             </div>
           </div>
-
-          {/* Engine Status Badges (Hidden on tiny screens) */}
-          <div className="hidden md:flex items-center gap-2.5">
-            <div className="px-2.5 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-[11px] font-mono text-slate-400 flex items-center gap-1.5 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>3-Stage LLM Pipeline</span>
-            </div>
-            <div className="px-2.5 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-[11px] font-mono text-slate-400 flex items-center gap-1.5 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-              <span>NVIDIA FLUX 8K</span>
-            </div>
-          </div>
-
-          {/* Mode Navigation */}
-          <nav className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-800 shadow-inner">
-            <button
-              onClick={() => setActiveMode("studio")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                activeMode === "studio"
-                  ? "bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-md border border-slate-600"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Studio</span>
-            </button>
-            <button
-              onClick={() => setActiveMode("player")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                activeMode === "player"
-                  ? "bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-md border border-slate-600"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Play className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Present</span>
-            </button>
-            <button
-              onClick={() => setActiveMode("editor")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                activeMode === "editor"
-                  ? "bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-md border border-slate-600"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Editor</span>
-            </button>
-          </nav>
         </div>
       </header>
 
@@ -329,12 +277,8 @@ export function App() {
             </div>
           ) : !isStreaming ? (
             /* Premium Interactive Showcase Gallery */
-            <div className="w-full max-w-5xl mt-8 p-7 rounded-3xl border border-slate-800/90 bg-slate-950/60 backdrop-blur-xl shadow-2xl relative overflow-hidden flex flex-col items-center">
-              {/* Background ambient lighting */}
-              <div className="absolute top-0 right-1/4 w-96 h-48 bg-blue-600/5 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-1/4 w-96 h-48 bg-indigo-600/5 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 border-b border-slate-800/60 pb-4">
+            <div className="w-full max-w-5xl mt-8 p-7 rounded-3xl border border-neutral-900 bg-[#080808]/90 backdrop-blur-xl shadow-2xl relative overflow-hidden flex flex-col items-center">
+              <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 border-b border-neutral-900 pb-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
@@ -342,14 +286,13 @@ export function App() {
                       Curated Interactive Systems
                     </h3>
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-neutral-400 mt-0.5">
                     Zero-latency executable models ready to inspect in Keynote Player or Visual Studio.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 font-mono text-slate-300 font-semibold flex items-center gap-1.5">
-                    <Zap className="w-3 h-3 text-amber-400" />
-                    4 Verified Showcases
+                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#111111] border border-neutral-800 font-mono text-neutral-400 font-semibold">
+                    4 Interactive Showcases
                   </span>
                 </div>
               </div>
@@ -358,7 +301,7 @@ export function App() {
                 {/* 1: Boolean Logic */}
                 <button
                   onClick={() => handleSelectShowcase(booleanLogicDeck)}
-                  className="p-5 rounded-2xl bg-slate-900/70 hover:bg-slate-900 border border-slate-800/80 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
+                  className="p-5 rounded-2xl bg-[#0d0d0d] hover:bg-[#141414] border border-neutral-800/80 hover:border-neutral-600 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
                 >
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div>
@@ -377,8 +320,8 @@ export function App() {
                       Interactive digital logic gates with live toggles &amp; reactive truth table row tracking.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs font-semibold text-cyan-400">
-                    <span className="text-[11px] font-mono text-slate-500 group-hover:text-slate-300 transition-colors">Launch Deck</span>
+                  <div className="mt-4 pt-3 border-t border-neutral-800 flex items-center justify-between text-xs font-semibold text-cyan-400">
+                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Presentation</span>
                     <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
@@ -386,9 +329,8 @@ export function App() {
                 {/* 2: Physics Dynamics */}
                 <button
                   onClick={() => handleSelectShowcase(physicsDeck)}
-                  className="p-5 rounded-2xl bg-slate-900/70 hover:bg-slate-900 border border-slate-800/80 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
+                  className="p-5 rounded-2xl bg-[#0d0d0d] hover:bg-[#141414] border border-neutral-800/80 hover:border-neutral-600 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
                 >
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:scale-110 transition-transform">
@@ -401,12 +343,12 @@ export function App() {
                     <div className="text-sm font-bold text-white mb-1.5 group-hover:text-emerald-300 transition-colors">
                       Physics Dynamics
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                    <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">
                       Newtonian mechanics running acceleration $a = F/m$ with live mass and force sliders.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs font-semibold text-emerald-400">
-                    <span className="text-[11px] font-mono text-slate-500 group-hover:text-slate-300 transition-colors">Launch Deck</span>
+                  <div className="mt-4 pt-3 border-t border-neutral-800 flex items-center justify-between text-xs font-semibold text-emerald-400">
+                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Presentation</span>
                     <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
@@ -414,9 +356,8 @@ export function App() {
                 {/* 3: Equation Solver */}
                 <button
                   onClick={() => handleSelectShowcase(equationSolverDeck)}
-                  className="p-5 rounded-2xl bg-slate-900/70 hover:bg-slate-900 border border-slate-800/80 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
+                  className="p-5 rounded-2xl bg-[#0d0d0d] hover:bg-[#141414] border border-neutral-800/80 hover:border-neutral-600 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
                 >
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 group-hover:scale-110 transition-transform">
@@ -429,12 +370,12 @@ export function App() {
                     <div className="text-sm font-bold text-white mb-1.5 group-hover:text-indigo-300 transition-colors">
                       Equation Solver
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                    <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">
                       Fine-grained mathematical derivations with animated terms visibly morphing across steps.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs font-semibold text-indigo-400">
-                    <span className="text-[11px] font-mono text-slate-500 group-hover:text-slate-300 transition-colors">Launch Deck</span>
+                  <div className="mt-4 pt-3 border-t border-neutral-800 flex items-center justify-between text-xs font-semibold text-indigo-400">
+                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Presentation</span>
                     <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
@@ -442,9 +383,8 @@ export function App() {
                 {/* 4: OS Kernel */}
                 <button
                   onClick={() => handleSelectShowcase(osKernelDeck)}
-                  className="p-5 rounded-2xl bg-slate-900/70 hover:bg-slate-900 border border-slate-800/80 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
+                  className="p-5 rounded-2xl bg-[#0d0d0d] hover:bg-[#141414] border border-neutral-800/80 hover:border-neutral-600 text-left transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
                 >
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-110 transition-transform">
@@ -457,12 +397,12 @@ export function App() {
                     <div className="text-sm font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors">
                       OS Kernel Arch
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                    <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">
                       Memory paging, Ring 0-3 privilege architectures, and context switching workflows.
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs font-semibold text-amber-400">
-                    <span className="text-[11px] font-mono text-slate-500 group-hover:text-slate-300 transition-colors">Launch Deck</span>
+                  <div className="mt-4 pt-3 border-t border-neutral-800 flex items-center justify-between text-xs font-semibold text-amber-400">
+                    <span className="text-[11px] font-mono text-neutral-500 group-hover:text-neutral-300 transition-colors">Launch Presentation</span>
                     <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
@@ -475,9 +415,17 @@ export function App() {
       {/* Mode 2: Present (Keynote Player) */}
       {activeMode === "player" && (
         <main className="w-full max-w-7xl px-4 sm:px-6 flex flex-col items-center mt-4">
+          <div className="w-full flex items-center justify-between mb-3">
+            <button
+              onClick={() => setActiveMode("studio")}
+              className="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-xs font-mono text-neutral-300 hover:text-white transition-colors flex items-center gap-1.5"
+            >
+              &larr; Return to Workspace
+            </button>
+          </div>
           <PresentationPlayer
             presentation={currentDeck}
-            source="HyperDeck Keynote"
+            source="Onyx Keynote"
             onOpenStudio={() => setActiveMode("editor")}
           />
         </main>
@@ -486,6 +434,14 @@ export function App() {
       {/* Mode 3: Editor (Visual Studio) */}
       {activeMode === "editor" && (
         <main className="w-full max-w-7xl px-4 sm:px-6 flex flex-col items-center mt-4">
+          <div className="w-full flex items-center justify-between mb-3">
+            <button
+              onClick={() => setActiveMode("studio")}
+              className="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-xs font-mono text-neutral-300 hover:text-white transition-colors flex items-center gap-1.5"
+            >
+              &larr; Return to Workspace
+            </button>
+          </div>
           <EditorStudio
             presentation={currentDeck}
             onChange={(updated) => setCurrentDeck(updated)}

@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { extractSlidesFromContent, extractCustomScripts, assembleHyperDeckPresentation } from "../pipeline/html-assembler";
-import { parseStoryboardIntoSlides, synthesizeFallbackSlide, resolveVisualTemplate, VISUAL_TEMPLATES } from "../pipeline/stage3-creative-generator";
+import { parseStoryboardIntoSlides, synthesizeFallbackSlide, resolveVisualTemplate, VISUAL_TEMPLATES, sanitizeAiTone } from "../pipeline/stage3-creative-generator";
 import { detectTargetSlideCount } from "../services/slideCountDetector";
 import { presentationCache } from "../pipeline/cache";
 import { convertHtmlToPresentationAst } from "../pipeline/html-to-ast";
-import { extractCleanTopic, sanitizeDocumentContent } from "../pipeline/topic-extractor";
+import { extractCleanTopic, sanitizeDocumentContent, sanitizeTitleString } from "../pipeline/topic-extractor";
 import { PresentationSchema } from "@presentation/schema";
 
 describe("HyperDeck Pipeline & Engine Test Suite", () => {
@@ -100,6 +100,39 @@ describe("HyperDeck Pipeline & Engine Test Suite", () => {
       expect(html).toContain("katex.min.css");
       expect(html).toContain("katex.min.js");
       expect(html).toContain("renderMathInElement");
+      expect(html).toContain("ignoredTags");
+      expect(html).toContain("ignoredClasses");
+      // Verify delimiters do not match plain brackets or parentheses
+      expect(html).toContain('\\\\[');
+      expect(html).toContain('\\\\(');
+    });
+
+    it("should use modern developer font stack, anti-aliasing, and enlarged keynote font sizes", () => {
+      const html = assembleHyperDeckPresentation({
+        topic: "Embedded Systems Architecture",
+        slidesHtml: '<section class="slide" id="slide0"><div class="terminal-card"><pre class="terminal-body"><code>void setup() {}</code></pre></div></section>',
+        targetCount: 1,
+      });
+
+      // Verify Google Fonts includes modern crisp developer typography
+      expect(html).toContain("family=Fira+Code");
+      expect(html).toContain("family=Plus+Jakarta+Sans");
+      expect(html).toContain("family=JetBrains+Mono");
+
+      // Verify font stack includes modern fallbacks and Linux vector fonts
+      expect(html).toContain("'Fira Code'");
+      expect(html).toContain("'DejaVu Sans Mono'");
+      expect(html).toContain("'Cascadia Code'");
+      expect(html).toContain("'SF Mono'");
+
+      // Verify hardware anti-aliasing is enabled
+      expect(html).toContain("-webkit-font-smoothing: antialiased");
+      expect(html).toContain("text-rendering: optimizeLegibility");
+
+      // Verify comfortable enlarged presentation font sizes
+      expect(html).toContain("font-size: 15px"); // .terminal-body
+      expect(html).toContain("font-size: 34px"); // .slide-title
+      expect(html).toContain("font-size: 16.5px"); // .slide-subtitle
     });
   });
 
@@ -142,12 +175,12 @@ SLIDE 2: VFS Subsystem
       expect(res.isExplicit).toBe(true);
     });
 
-    it("should enforce boundaries between 3 and 8 slides", () => {
+    it("should enforce boundaries between 3 and 20 slides", () => {
       const tooSmall = detectTargetSlideCount("Physics in 1 slide", undefined);
       expect(tooSmall.count).toBe(3);
 
       const tooLarge = detectTargetSlideCount("Compiler design in 25 slides", undefined);
-      expect(tooLarge.count).toBe(8);
+      expect(tooLarge.count).toBe(20);
     });
   });
 
@@ -231,6 +264,13 @@ SLIDE 2: VFS Subsystem
       expect(res.title).toContain("Containers");
       expect(res.title).not.toContain("PREFERRED THEME");
       expect(res.title).not.toContain("Slides");
+    });
+
+    it("should sanitize unclosed parentheses and trailing cont from titles", () => {
+      expect(sanitizeTitleString("Document Analysis: Page 18 (")).toBe("");
+      expect(sanitizeTitleString("Linux Source Tree Descriptions (cont")).toBe("Linux Source Tree Descriptions");
+      expect(sanitizeTitleString("Overview of GNU/Linux (cont.)")).toBe("Overview of GNU/Linux");
+      expect(sanitizeTitleString("Chapter 2: Bootloader Mechanics -")).toBe("Chapter 2: Bootloader Mechanics");
     });
   });
 
@@ -353,6 +393,51 @@ GNU/Linux supports over 50 types of filesystem.
       expect(sanitized).toContain("4.4 The Filesystem");
       expect(sanitized).toContain("The GNU/Linux file space comprises one or more filesystems.");
       expect(sanitized).toContain("GNU/Linux supports over 50 types of filesystem.");
+    });
+  });
+
+  describe("sanitizeAiTone", () => {
+    it("should strip pipe separators and buzzword suffixes from slide categories", () => {
+      const raw = `<div class="slide-category">CORE SECURITY ARCHITECTURE | CIA TRIAD INVARIANTS</div>`;
+      const cleaned = sanitizeAiTone(raw);
+      expect(cleaned).toBe(`<div class="slide-category">CORE SECURITY ARCHITECTURE</div>`);
+    });
+
+    it("should strip pseudo-math formulas on conceptual security topics", () => {
+      const raw = `
+        <div class="slide-title-group">
+          <div class="slide-category">SECURITY ARCHITECTURE</div>
+          <h2 class="slide-title">CIA Triad</h2>
+        </div>
+        <div style="margin-top: 1.25rem;">
+          <div class="equation-display" style="background: rgba(245, 158, 11, 0.08); padding: 0.85rem;">
+            $$ S = \\text{Secure} \\iff (\\text{Confidentiality} \\cap \\text{Integrity} \\cap \\text{Availability}) $$
+          </div>
+        </div>
+      `;
+      const cleaned = sanitizeAiTone(raw);
+      expect(cleaned).not.toContain("equation-display");
+      expect(cleaned).not.toContain("\\text{Secure}");
+      expect(cleaned).toContain("CIA Triad");
+    });
+
+    it("should naturalize robotic participle subtitle clichés and replace buzzwords", () => {
+      const raw = `<p class="slide-subtitle">Establishing foundational enterprise asset protection through strict cryptographic boundaries and systemic invariants.</p>`;
+      const cleaned = sanitizeAiTone(raw);
+      expect(cleaned).not.toContain("Establishing");
+      expect(cleaned).not.toContain("systemic invariants");
+      expect(cleaned).toContain("security guarantees");
+    });
+
+    it("should convert inline styled rainbow cards to clean academic classes", () => {
+      const raw = `<div class="card" style="border-top: 3px solid #f59e0b; background: rgba(15, 23, 42, 0.6); padding: 1.25rem; border-radius: 8px;">`;
+      const cleaned = sanitizeAiTone(raw);
+      expect(cleaned).toBe(`<div class="glass-card card-amber">`);
+    });
+
+    it("should strip slide prefix from titles in sanitizeTitleString", () => {
+      const cleaned = sanitizeTitleString("Slide 1: Confidentiality Diagram");
+      expect(cleaned).toBe("Confidentiality Diagram");
     });
   });
 });

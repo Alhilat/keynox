@@ -7,16 +7,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "#090d16",
-        surface: "#111827",
-        surfaceLight: "#1f2937",
+        background: "#000000",
+        surface: "#0a0a0a",
+        surfaceLight: "#141414",
         accent: "#3b82f6",
         accentGlow: "#60a5fa",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Outfit", "Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "Fira Code", "monospace"],
+        sans: ["Plus Jakarta Sans", "Inter", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans", "Outfit", "Inter", "system-ui", "sans-serif"],
+        mono: ["Fira Code", "JetBrains Mono", "Cascadia Code", "SF Mono", "Menlo", "Monaco", "Consolas", "Liberation Mono", "DejaVu Sans Mono", "monospace"],
       },
     },
   },

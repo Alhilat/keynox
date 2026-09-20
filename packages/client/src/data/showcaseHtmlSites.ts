@@ -64,7 +64,7 @@ export const booleanLogicHtmlSite = `<!DOCTYPE html>
       background: rgba(11, 15, 25, 0.7);
     }
     .badge {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace;
       font-size: 11px;
       font-weight: 700;
       padding: 3px 8px;
@@ -80,7 +80,7 @@ export const booleanLogicHtmlSite = `<!DOCTYPE html>
       color: #fff;
     }
     .slide-counter {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace;
       font-size: 12px;
       color: var(--text-muted);
       background: rgba(15, 23, 42, 0.8);
@@ -195,7 +195,7 @@ export const booleanLogicHtmlSite = `<!DOCTYPE html>
       background: rgba(15, 23, 42, 0.8);
       border: 1px solid rgba(51, 65, 85, 0.9);
       color: #fff;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
@@ -229,13 +229,13 @@ export const booleanLogicHtmlSite = `<!DOCTYPE html>
       box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
     }
     .gate-title {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace;
       font-size: 10px;
       color: #94a3b8;
       margin-bottom: 4px;
     }
     .gate-val {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace;
       font-size: 14px;
       font-weight: 900;
       color: #64748b;
@@ -248,7 +248,7 @@ export const booleanLogicHtmlSite = `<!DOCTYPE html>
       border: 1px solid rgba(51, 65, 85, 0.6);
       border-radius: 8px;
       padding: 8px 12px;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace;
       font-size: 10px;
       color: #94a3b8;
     }
@@ -278,7 +278,7 @@ export const booleanLogicHtmlSite = `<!DOCTYPE html>
       background: rgba(30, 41, 59, 0.5);
       border: 1px solid rgba(51, 65, 85, 0.7);
       color: #94a3b8;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace;
       font-size: 11px;
       cursor: pointer;
       margin-right: 6px;

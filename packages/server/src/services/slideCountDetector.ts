@@ -16,7 +16,7 @@ export function detectTargetSlideCount(
 ): DetectedSlideCount {
   // If explicitly passed through API
   if (typeof providedCount === "number" && !isNaN(providedCount)) {
-    const clamped = Math.min(8, Math.max(3, Math.round(providedCount)));
+    const clamped = Math.min(20, Math.max(3, Math.round(providedCount)));
     return {
       count: clamped,
       isExplicit: true,
@@ -27,13 +27,13 @@ export function detectTargetSlideCount(
   const clean = topic.trim();
   const lower = clean.toLowerCase();
 
-  // 1. Check for numeric patterns: "6 slides", "5 pages", "7 scenes", "in 6 slides", "create 5 slides"
+  // 1. Check for numeric patterns: "6 slides", "12 pages", "20 scenes", "in 16 slides", "create 20 slides"
   const digitRegex = /(?:(?:create|generate|make|build|in|with)\s+)?(\d+)\s*[- ]*(?:slides?|pages?|scenes?|parts?)/i;
   const digitMatch = lower.match(digitRegex);
   if (digitMatch && digitMatch[1]) {
     const parsed = parseInt(digitMatch[1], 10);
     if (!isNaN(parsed)) {
-      const clamped = Math.min(8, Math.max(3, parsed));
+      const clamped = Math.min(20, Math.max(3, parsed));
       return {
         count: clamped,
         isExplicit: true,

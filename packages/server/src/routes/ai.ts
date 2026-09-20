@@ -5,22 +5,23 @@ import { generatePresentationWithDeepSeek, streamPresentationGeneration } from "
 
 const GenerateRequestSchema = z.object({
   topic: z.string().min(1, "Topic cannot be empty"),
-  slideCount: z.number().int().min(3).max(10).optional(),
+  slideCount: z.number().int().min(3).max(25).optional(),
   theme: z.string().optional(),
   archetypes: z.array(z.string()).optional(),
   audience: z.string().optional(),
   language: z.string().optional(),
+  engine: z.enum(["gemini", "nvidia", "auto"]).optional(),
 });
 
 export const aiRoutes: FastifyPluginAsync = async (fastify) => {
-  // Two-Stage Nemotron Streaming Pipeline (Nano 30B Outline -> Ultra 550B Full HTML/CSS/JS Site)
+  // Two-Stage Nemotron/Gemini Streaming Pipeline (Nano 30B / Gemini Outline -> Ultra 550B / Gemini Full HTML/CSS/JS Site)
   fastify.post("/stream", async (request, reply) => {
     const validatedInput = GenerateRequestSchema.safeParse(request.body);
     if (!validatedInput.success) {
       return reply.status(400).send({ error: "Invalid topic parameter" });
     }
 
-    const { topic, slideCount, theme } = validatedInput.data;
+    const { topic, slideCount, theme, engine } = validatedInput.data;
 
     reply.raw.setHeader("Content-Type", "text/event-stream");
     reply.raw.setHeader("Cache-Control", "no-cache");
@@ -34,7 +35,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
           reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
         },
         slideCount,
-        theme
+        theme,
+        engine
       );
     } catch (err: any) {
       reply.raw.write(
@@ -52,7 +54,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ error: "Invalid topic parameter" });
     }
 
-    const { topic, slideCount, theme } = validatedInput.data;
+    const { topic, slideCount, theme, engine } = validatedInput.data;
 
     reply.raw.setHeader("Content-Type", "text/event-stream");
     reply.raw.setHeader("Cache-Control", "no-cache");
@@ -66,7 +68,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
           reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
         },
         slideCount,
-        theme
+        theme,
+        engine
       );
     } catch (err: any) {
       reply.raw.write(

@@ -47,7 +47,8 @@ export class PipelineOrchestrator {
     topic: string,
     onEvent: PipelineEventHandler,
     requestedSlideCount?: number,
-    theme?: string
+    theme?: string,
+    engine: "gemini" | "nvidia" | "auto" = "auto"
   ): Promise<{ outline: string; html: string }> {
     const { count: targetCount, isExplicit, reason } = detectTargetSlideCount(topic, requestedSlideCount);
 
@@ -94,7 +95,8 @@ export class PipelineOrchestrator {
       targetCount,
       (delta) => {
         onEvent({ type: "stage1_chunk", delta });
-      }
+      },
+      engine
     );
 
     onEvent({
@@ -118,7 +120,8 @@ export class PipelineOrchestrator {
       targetCount,
       (delta) => {
         onEvent({ type: "stage2_chunk", delta });
-      }
+      },
+      engine
     );
 
     onEvent({
@@ -136,7 +139,7 @@ export class PipelineOrchestrator {
       topic: cleanTopic,
     });
 
-    let currentModel = "nvidia/nemotron-3-super-120b-a12b";
+    let currentModel = engine === "gemini" ? "google/gemini-3.8-flash" : "nvidia/nemotron-3-super-120b-a12b";
     const { rawSlides, activeModel } = await runStage3CreativeGenerator(
       cleanTopic,
       storyboardText,
@@ -149,11 +152,12 @@ export class PipelineOrchestrator {
           currentModel = model;
           onEvent({
             type: "stage3_start",
-            message: `[Model 3: Creative Engine] Synthesizing slides with ${model.replace("nvidia/", "")}...`,
+            message: `[Model 3: Creative Engine] Synthesizing slides with ${model.replace("nvidia/", "").replace("google/", "")}...`,
             topic: cleanTopic,
           });
         },
-      }
+      },
+      engine
     );
     currentModel = activeModel;
     let slidesContent = rawSlides;
@@ -168,7 +172,7 @@ export class PipelineOrchestrator {
       onEvent({
         type: "photo_start",
         message: `Rendering ${photoMatches.length} photorealistic visual assets concurrently via NVIDIA FLUX...`,
-        delta: `\n🎨 [NVIDIA FLUX] Rendering ${photoMatches.length} slide visuals in parallel...\n`,
+        delta: `\n[Image Service] Rendering ${photoMatches.length} slide visuals in parallel...\n`,
       });
 
       const photoPromises = photoMatches.map(async (match, i) => {
@@ -189,7 +193,7 @@ export class PipelineOrchestrator {
             type: "photo_done",
             message: `Photo ${i + 1} rendered (${photoResult.latencyMs}ms)`,
             photoUrl: photoResult.imageUrl,
-            delta: `✅ [NVIDIA FLUX] Photo ${i + 1} rendered (${photoResult.latencyMs}ms)\n`,
+            delta: `[Image Service] Photo ${i + 1} rendered (${photoResult.latencyMs}ms)\n`,
           });
 
           let newImgTag = fullImgTag;
@@ -206,7 +210,7 @@ export class PipelineOrchestrator {
             type: "photo_done",
             message: `Photo fallback visual ready`,
             photoUrl: fallbackUrl,
-            delta: `⚠️ [NVIDIA FLUX] Using visual fallback for photo ${i + 1}\n`,
+            delta: `[Image Service] Using visual fallback for photo ${i + 1}\n`,
           });
 
           let newImgTag = fullImgTag;
@@ -248,7 +252,8 @@ export class PipelineOrchestrator {
         {
           onReasoning: (delta) => onEvent({ type: "stage3_reasoning", delta }),
           onChunk: (delta) => onEvent({ type: "stage3_chunk", delta }),
-        }
+        },
+        engine
       );
       slidesContent = retryResult.rawSlides;
       currentModel = retryResult.activeModel;

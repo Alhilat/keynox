@@ -104,7 +104,7 @@ function fileToBase64(file: File): Promise<string> {
 /**
  * Renders PDF pages to base64 JPEG images for NVIDIA NIM Multimodal Vision analysis
  */
-async function renderPdfPagesToImages(pdf: any, maxPages = 5): Promise<string[]> {
+async function renderPdfPagesToImages(pdf: any, maxPages = 15): Promise<string[]> {
   const images: string[] = [];
   const total = Math.min(pdf.numPages, maxPages);
   for (let i = 1; i <= total; i++) {
@@ -128,12 +128,12 @@ async function renderPdfPagesToImages(pdf: any, maxPages = 5): Promise<string[]>
 
 /**
  * Extracts and cleans PDF content for HyperDeck presentation synthesis.
- * Uses NVIDIA NIM Multimodal Vision (meta/llama-3.2-11b-vision-instruct) to preserve
+ * Uses Multimodal Vision (Gemini / NVIDIA NIM) to preserve
  * diagrams, formulas, tables, and multi-column layouts with 100% fidelity.
  */
 export async function extractPdfDocument(
   file: File,
-  maxPages: number = 20,
+  maxPages: number = 40,
   onProgress?: (current: number, total: number, status?: string) => void
 ): Promise<ExtractedPdfResult> {
   if (onProgress) onProgress(1, 4, "Preparing document...");
@@ -141,12 +141,12 @@ export async function extractPdfDocument(
   const arrayBuffer = await file.arrayBuffer();
   let pageImages: string[] = [];
 
-  // Step 1: Render key pages with HTML5 Canvas for NVIDIA NIM Vision
+  // Step 1: Render key pages with HTML5 Canvas for Multimodal Vision
   try {
-    if (onProgress) onProgress(2, 4, "Rendering pages for NVIDIA NIM Vision...");
+    if (onProgress) onProgress(2, 4, "Rendering pages for Multimodal Vision...");
     const pdfjs = await loadPdfJs();
     const pdf = await pdfjs.getDocument({ data: arrayBuffer.slice(0) }).promise;
-    pageImages = await renderPdfPagesToImages(pdf, 5);
+    pageImages = await renderPdfPagesToImages(pdf, 15);
   } catch (canvasErr) {
     console.warn("[PdfExtractor] Client canvas rendering skipped, using raw file:", canvasErr);
   }

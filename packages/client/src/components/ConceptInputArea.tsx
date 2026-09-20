@@ -5,11 +5,11 @@ import {
   XCircle,
   FileText,
   CheckCircle2,
-  Sparkles,
-  Zap,
-  Droplets,
-  Flame,
-  Leaf,
+  BookOpen,
+  GraduationCap,
+  Landmark,
+  Compass,
+  Scroll,
   Layers,
   Sliders,
   Cpu,
@@ -19,12 +19,14 @@ import {
 } from "lucide-react";
 import { extractPdfDocument, ExtractedPdfResult } from "../utils/pdfExtractor";
 
-export type VisualLookTheme = "cyber" | "ocean" | "sunset" | "emerald" | "cosmic";
+export type VisualLookTheme = "oxford" | "cambridge" | "harvard" | "heidelberg" | "princeton";
+export type AiEngine = "gemini" | "nvidia" | "auto";
 
 export interface GenerationOptions {
   theme: VisualLookTheme;
   slideCount: number;
   archetypes: string[];
+  engine?: AiEngine;
 }
 
 interface ConceptInputAreaProps {
@@ -42,70 +44,70 @@ const VISUAL_LOOKS: {
   glow: string;
 }[] = [
   {
-    id: "cyber",
-    name: "Neon Cyber",
-    icon: Zap,
-    desc: "Electric Magenta & Laser Cyan",
-    swatch: "from-fuchsia-500 via-purple-500 to-cyan-400",
-    activeBorder: "border-fuchsia-400 ring-2 ring-fuchsia-500/50 shadow-fuchsia-500/30",
-    glow: "bg-fuchsia-500/15",
+    id: "oxford",
+    name: "Oxford Navy",
+    icon: Landmark,
+    desc: "Academic Navy & Crisp Slate",
+    swatch: "from-blue-700 via-blue-900 to-slate-900",
+    activeBorder: "border-blue-500 ring-1 ring-blue-500/50",
+    glow: "bg-blue-500/10",
   },
   {
-    id: "ocean",
-    name: "Ocean Azure",
-    icon: Droplets,
-    desc: "Deep Cobalt & Electric Cyan",
-    swatch: "from-cyan-400 via-teal-400 to-blue-600",
-    activeBorder: "border-cyan-400 ring-2 ring-cyan-500/50 shadow-cyan-500/30",
-    glow: "bg-cyan-500/15",
+    id: "cambridge",
+    name: "Cambridge Slate",
+    icon: BookOpen,
+    desc: "Minimalist Academic Silver & Chalk",
+    swatch: "from-slate-400 via-slate-600 to-neutral-900",
+    activeBorder: "border-slate-300 ring-1 ring-slate-300/50",
+    glow: "bg-slate-400/10",
   },
   {
-    id: "sunset",
-    name: "Solar Sunset",
-    icon: Flame,
-    desc: "Fiery Amber & Radiant Coral",
-    swatch: "from-amber-400 via-orange-500 to-rose-500",
-    activeBorder: "border-amber-400 ring-2 ring-amber-500/50 shadow-amber-500/30",
-    glow: "bg-amber-500/15",
+    id: "harvard",
+    name: "Harvard Crimson",
+    icon: GraduationCap,
+    desc: "Ivy League Burgundy & Warm Slate",
+    swatch: "from-red-700 via-red-900 to-neutral-900",
+    activeBorder: "border-red-600 ring-1 ring-red-600/50",
+    glow: "bg-red-600/10",
   },
   {
-    id: "emerald",
-    name: "Emerald Matrix",
-    icon: Leaf,
-    desc: "Vivid Jade & Electric Lime",
-    swatch: "from-emerald-400 via-teal-400 to-lime-400",
-    activeBorder: "border-emerald-400 ring-2 ring-emerald-500/50 shadow-emerald-500/30",
-    glow: "bg-emerald-500/15",
+    id: "heidelberg",
+    name: "Heidelberg Scholar",
+    icon: Compass,
+    desc: "Classical Botanical & Forest Green",
+    swatch: "from-emerald-700 via-emerald-900 to-neutral-900",
+    activeBorder: "border-emerald-600 ring-1 ring-emerald-600/50",
+    glow: "bg-emerald-600/10",
   },
   {
-    id: "cosmic",
-    name: "Cosmic Amethyst",
-    icon: Sparkles,
-    desc: "Royal Violet & Starlight Gold",
-    swatch: "from-purple-600 via-fuchsia-500 to-amber-400",
-    activeBorder: "border-purple-400 ring-2 ring-purple-500/50 shadow-purple-500/30",
-    glow: "bg-purple-500/15",
+    id: "princeton",
+    name: "Princeton Bronze",
+    icon: Scroll,
+    desc: "Antique Scholar Bronze & Warm Ochre",
+    swatch: "from-amber-700 via-amber-900 to-neutral-900",
+    activeBorder: "border-amber-600 ring-1 ring-amber-600/50",
+    glow: "bg-amber-600/10",
   },
 ];
 
 const TOPIC_PRESETS = [
   {
-    label: "⚛️ Quantum Qubits & Transmons",
+    label: "Quantum Qubits & Transmons",
     prompt:
       "Superconducting Artificial Atoms: Transmon qubits, Josephson junction non-linearities, and microwave dispersive readout in circuit QED",
   },
   {
-    label: "⚡ Distributed Raft Consensus",
+    label: "Distributed Raft Consensus",
     prompt:
       "Distributed Consensus: Raft protocol leader election, log replication safety invariants, and joint consensus cluster membership",
   },
   {
-    label: "🧠 Attention & Vision Transformers",
+    label: "Attention & Vision Transformers",
     prompt:
       "Self-Attention Architectures: Multi-Head Attention equations, scaled dot-product computation, and Vision Transformer patch projections",
   },
   {
-    label: "🌐 Edge IoT & LoRaWAN Networks",
+    label: "Edge IoT & LoRaWAN Networks",
     prompt:
       "IoT System Architecture: Low-power sensor telemetry, LoRaWAN chirped spread spectrum, and edge MQTT brokers",
   },
@@ -122,8 +124,9 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
   const [pdfMetadata, setPdfMetadata] = useState<ExtractedPdfResult | null>(null);
 
   // Pre-generation look & style choices
-  const [selectedTheme, setSelectedTheme] = useState<VisualLookTheme>("cyber");
+  const [selectedTheme, setSelectedTheme] = useState<VisualLookTheme>("oxford");
   const [targetSlideCount, setTargetSlideCount] = useState<number>(5);
+  const [selectedEngine, setSelectedEngine] = useState<AiEngine>("gemini");
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([
     "equations",
     "architecture-stack",
@@ -148,6 +151,7 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
       theme: selectedTheme,
       slideCount: targetSlideCount,
       archetypes: selectedWidgets,
+      engine: selectedEngine,
     };
 
     if (pdfMetadata) {
@@ -163,7 +167,7 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
         payload += `ABSTRACT & SUMMARY:\n"""\n${pdfMetadata.abstract}\n"""\n\n`;
       }
       payload += `USER DIRECTIVE: ${userInstructions}\n\n`;
-      payload += `SOURCE DOCUMENT CONTENT:\n"""\n${pdfMetadata.cleanText.slice(0, 24000)}\n"""`;
+      payload += `SOURCE DOCUMENT CONTENT:\n"""\n${pdfMetadata.cleanText.slice(0, 250000)}\n"""`;
 
       onGenerate(payload, options);
     } else if (text.trim()) {
@@ -254,8 +258,8 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
 
       {/* Preset Topics Pill Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono shrink-0 flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-cyan-400" /> Presets:
+        <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider font-mono shrink-0">
+          Presets:
         </span>
         {TOPIC_PRESETS.map((preset, idx) => (
           <button
@@ -266,7 +270,7 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
               setText(preset.prompt);
               clearPdf();
             }}
-            className="text-xs px-3 py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 hover:border-cyan-500/50 text-slate-300 hover:text-white transition-all shrink-0 active:scale-95 disabled:opacity-40 shadow-sm"
+            className="text-xs px-3 py-1.5 rounded-full bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-neutral-800 hover:border-neutral-600 text-neutral-300 hover:text-white transition-all shrink-0 active:scale-95 disabled:opacity-40 shadow-sm"
           >
             {preset.label}
           </button>
@@ -279,10 +283,10 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`w-full rounded-2xl border-2 transition-all p-4 bg-slate-900/80 backdrop-blur-xl shadow-2xl flex flex-col gap-3 relative ${
+        className={`w-full rounded-2xl border transition-all p-4 bg-[#0a0a0a] backdrop-blur-xl shadow-2xl flex flex-col gap-3 relative ${
           isDragging
-            ? "border-cyan-400 bg-cyan-950/20 scale-[1.01]"
-            : "border-slate-700/80 hover:border-slate-600 focus-within:border-cyan-500/80 focus-within:shadow-cyan-500/10"
+            ? "border-cyan-400 bg-[#0d141f] scale-[1.01]"
+            : "border-neutral-800 hover:border-neutral-700 focus-within:border-cyan-500/80 focus-within:shadow-cyan-500/10"
         }`}
       >
         {/* Top Header info */}
@@ -419,20 +423,20 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
           </div>
 
           {/* Quick Options: Slide Count & Widgets */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/60">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-neutral-800">
             {/* Target Slide Count */}
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-slate-400">SLIDES:</span>
-              <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-lg border border-slate-700">
-                {[4, 5, 6, 8].map((count) => (
+              <span className="text-xs font-mono font-bold text-neutral-400">SLIDES:</span>
+              <div className="flex items-center gap-1 bg-[#111111] p-1 rounded-lg border border-neutral-800 overflow-x-auto max-w-[280px] sm:max-w-none scrollbar-none">
+                {[4, 6, 8, 10, 12, 14, 16, 18, 20].map((count) => (
                   <button
                     key={count}
                     type="button"
                     onClick={() => setTargetSlideCount(count)}
-                    className={`px-2.5 py-0.5 rounded text-xs font-mono font-bold transition-all ${
+                    className={`px-2 py-0.5 rounded text-xs font-mono font-bold transition-all ${
                       targetSlideCount === count
-                        ? "bg-cyan-500 text-black shadow-md font-black"
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-white text-black shadow-md font-black"
+                        : "text-neutral-400 hover:text-white"
                     }`}
                   >
                     {count}
@@ -441,16 +445,41 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
               </div>
             </div>
 
+            {/* AI Engine Selector */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-mono font-bold text-neutral-400">ENGINE:</span>
+              <div className="flex items-center gap-1 bg-[#111111] p-1 rounded-lg border border-neutral-800">
+                {[
+                  { id: "gemini" as const, label: "Gemini 3.8 Flash", activeClass: "bg-amber-400 text-black font-bold shadow-sm" },
+                  { id: "nvidia" as const, label: "Nemotron 120B", activeClass: "bg-emerald-400 text-black font-bold shadow-sm" },
+                  { id: "auto" as const, label: "Auto Hybrid", activeClass: "bg-cyan-400 text-black font-bold shadow-sm" },
+                ].map((eng) => (
+                  <button
+                    key={eng.id}
+                    type="button"
+                    onClick={() => setSelectedEngine(eng.id)}
+                    className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold transition-all ${
+                      selectedEngine === eng.id
+                        ? eng.activeClass
+                        : "text-neutral-400 hover:text-white"
+                    }`}
+                  >
+                    {eng.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Interactive Widget Archetypes */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-mono font-bold text-slate-400 hidden sm:inline">
+              <span className="text-xs font-mono font-bold text-neutral-400 hidden sm:inline">
                 COMPONENTS:
               </span>
               {[
-                { id: "equations", label: "📐 Formulas" },
-                { id: "architecture-stack", label: "🏢 Stack Conduit" },
-                { id: "protocol-matrix", label: "📡 Spectrum" },
-                { id: "telemetry-cable", label: "⚡ Packets" },
+                { id: "equations", label: "Formulas" },
+                { id: "architecture-stack", label: "Architecture Stack" },
+                { id: "protocol-matrix", label: "Matrix Grid" },
+                { id: "telemetry-cable", label: "Data Flow" },
               ].map((w) => {
                 const isActive = selectedWidgets.includes(w.id);
                 return (
@@ -460,8 +489,8 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
                     onClick={() => toggleWidget(w.id)}
                     className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-bold transition-all border ${
                       isActive
-                        ? "bg-fuchsia-500/25 border-fuchsia-400 text-fuchsia-200"
-                        : "bg-slate-800/60 border-slate-700 text-slate-500 hover:text-slate-300"
+                        ? "bg-neutral-800 border-neutral-600 text-white"
+                        : "bg-[#111111] border-neutral-800 text-neutral-500 hover:text-neutral-300"
                     }`}
                   >
                     {w.label}

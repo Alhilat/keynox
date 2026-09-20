@@ -16,9 +16,7 @@ import {
   Move,
   Eye,
   Sliders,
-  Image as ImageIcon,
 } from "lucide-react";
-import { ImageGeneratorModal } from "./ImageGeneratorModal";
 
 interface EditorStudioProps {
   presentation: Presentation;
@@ -34,30 +32,10 @@ export const EditorStudio: React.FC<EditorStudioProps> = ({
   const [selectedSceneIndex, setSelectedSceneIndex] = useState(0);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"elements" | "steps" | "json">("steps");
-  const [previewingStepIndex, setPreviewingStepIndex] = useState<number | null>(null);
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedStepIndex, setSelectedStepIndex] = useState<number | null>(null);
 
   const currentScene: Scene | undefined = presentation.scenes[selectedSceneIndex];
 
-  const handleInsertPhoto = (image: { src: string; alt: string; title: string }) => {
-    if (!currentScene) return;
-    const elId = `el-${Date.now()}`;
-    const newElement: Element = {
-      id: elId,
-      type: "image",
-      src: image.src,
-      alt: image.alt,
-      tag: "AI PHOTO",
-      title: image.title,
-      accentColor: "#38bdf8",
-    } as any;
-
-    updateCurrentScene((sc) => ({
-      ...sc,
-      elements: [...sc.elements, newElement],
-    }));
-    setSelectedElementId(elId);
-  };
 
   const updateCurrentScene = (updater: (scene: Scene) => Scene) => {
     if (!currentScene) return;
@@ -407,11 +385,11 @@ export const EditorStudio: React.FC<EditorStudioProps> = ({
                           <div className="my-auto space-y-1.5">
                             <img
                               src={(el as any).src}
-                              alt={(el as any).alt || "AI Photo"}
+                              alt={(el as any).alt || "Visual Asset"}
                               className="w-full h-20 object-cover rounded-lg border border-slate-800 shadow-md"
                             />
-                            <p className="text-[10px] font-mono text-cyan-400 truncate">
-                              {(el as any).alt || "NVIDIA NIM Photo"}
+                            <p className="text-[10px] font-mono text-neutral-400 truncate">
+                              {(el as any).alt || "Visual Asset"}
                             </p>
                           </div>
                         ) : (
@@ -461,13 +439,6 @@ export const EditorStudio: React.FC<EditorStudioProps> = ({
                       className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold transition-colors"
                     >
                       + Simulator
-                    </button>
-                    <button
-                      onClick={() => setIsImageModalOpen(true)}
-                      className="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors"
-                    >
-                      <ImageIcon className="w-3.5 h-3.5" />
-                      <span>+ Photo</span>
                     </button>
                   </div>
 
@@ -629,15 +600,6 @@ export const EditorStudio: React.FC<EditorStudioProps> = ({
           </div>
         </div>
       </div>
-
-      {/* NVIDIA NIM Photo Studio Modal */}
-      <ImageGeneratorModal
-        isOpen={isImageModalOpen}
-        onClose={() => setIsImageModalOpen(false)}
-        slideTitle={currentScene?.title}
-        slideCategory={currentScene?.category}
-        onInsertImage={handleInsertPhoto}
-      />
     </div>
   );
 };

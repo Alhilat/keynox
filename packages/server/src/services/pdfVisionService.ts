@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { config } from "../config";
+import { geminiService } from "./geminiService";
 
 export interface VisionExtractedDocument {
   title: string;
@@ -13,8 +14,8 @@ export interface VisionExtractedDocument {
 const VISION_MODEL = "meta/llama-3.2-11b-vision-instruct";
 
 /**
- * Uses NVIDIA NIM Multimodal Vision (meta/llama-3.2-11b-vision-instruct) to perform
- * deep document understanding on rendered PDF page images.
+ * Uses Gemini Multimodal Vision (or NVIDIA NIM meta/llama-3.2-11b-vision-instruct fallback)
+ * to perform deep document understanding on rendered PDF page images.
  * 
  * Captures:
  * 1. Architecture diagrams, figures, block diagrams, and system topologies.
@@ -26,6 +27,19 @@ export async function extractDocumentWithNvidiaVision(
   pageImagesBase64: string[],
   fileName?: string
 ): Promise<VisionExtractedDocument> {
+  // Attempt 0: Gemini Multimodal Vision (superior document OCR, tables & formulas)
+  if (geminiService.isAvailable()) {
+    try {
+      const geminiResult = await geminiService.extractDocumentVision(pageImagesBase64, fileName);
+      if (geminiResult && geminiResult.markdownContent && geminiResult.markdownContent.length > 100) {
+        console.log(`[pdfVisionService] Extracted ${geminiResult.pageCount} pages using Gemini Vision.`);
+        return geminiResult;
+      }
+    } catch (gErr: any) {
+      console.warn("[pdfVisionService] Gemini Vision failed, falling back to NVIDIA NIM:", gErr?.message);
+    }
+  }
+
   const apiKey = config.nvidiaApiKeyUltra || config.nvidiaApiKey;
   const openai = new OpenAI({
     apiKey,
@@ -101,7 +115,10 @@ Do NOT omit figures or tables. Transcribe everything faithfully.`;
 
   const titleMatch = combinedMarkdown.match(/#+\s+([A-Za-z0-9\s,\-\(\):]{5,90})/);
   if (titleMatch && titleMatch[1]) {
-    detectedTitle = titleMatch[1].trim();
+    const cand = titleMatch[1].trim();
+    if (!/^(?:listing|figure|fig|table|page|step\b)/i.test(cand)) {
+      detectedTitle = cand;
+    }
   }
 
   // Extract diagrams, tables, formulas for structured presentation usage

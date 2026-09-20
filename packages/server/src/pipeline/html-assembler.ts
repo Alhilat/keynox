@@ -1,4 +1,5 @@
 import { MASTER_DESIGN_SYSTEM_CSS } from "./token-optimizer";
+import { sanitizeAiTone } from "./stage3-creative-generator";
 
 export interface AssembleOptions {
   topic: string;
@@ -65,7 +66,7 @@ export function extractSlidesFromContent(raw: string): string[] {
           /<h2\b[^>]*>(?:.*?Slide\s+\d+[^<]*[–-]\s*)?([^<]+)<\/h2>(?:\s*<h3\b[^>]*>([^<]+)<\/h3>)?(?:\s*<p class="subtitle"[^>]*>([^<]+)<\/p>)?/i,
           (_, h2Text, h3Text, subText) => {
             const cleanTitle = (h3Text || h2Text || "Component Architecture").trim();
-            const subtitle = (subText || (h3Text ? h2Text : "") || "System Invariants and Runtime Telemetry").trim();
+            const subtitle = (subText || (h3Text ? h2Text : "") || "Core technical principles and runtime architecture").trim();
             return `<div class="slide-title-group">
     <div class="slide-category">SYSTEM ARCHITECTURE</div>
     <h2 class="slide-title">${cleanTitle}</h2>
@@ -120,7 +121,9 @@ export function assembleHyperDeckPresentation(options: AssembleOptions): string 
   // If no valid slides were parsed, wrap the raw content or generate structured default
   let renderedSlidesHtml = "";
   if (cleanSlides.length > 0) {
-    renderedSlidesHtml = cleanSlides.map((slide, idx) => {
+    renderedSlidesHtml = cleanSlides.map((rawSlide, idx) => {
+      // Apply comprehensive AI tone and pseudo-math sanitization
+      const slide = sanitizeAiTone(rawSlide);
       // Ensure first slide is active and others are not active
       let fixed = slide.replace(/\bactive\b/g, "");
       // Normalize id to sequential index matching thumbnails and controller
@@ -159,12 +162,12 @@ export function assembleHyperDeckPresentation(options: AssembleOptions): string 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(topic)} — HyperDeck</title>
+  <title>${escapeHtml(topic)} — Onyx</title>
   
   <!-- Preconnect & Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- GSAP Animation Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -179,7 +182,7 @@ export function assembleHyperDeckPresentation(options: AssembleOptions): string 
 ${MASTER_DESIGN_SYSTEM_CSS}
   </style>
 </head>
-<body class="theme-${options.theme || 'cyber'}">
+<body class="theme-${options.theme || 'oxford'}">
   <main class="hyperdeck-stage" id="hyperdeckStage">
     <!-- Progress Indicator -->
     <div class="progress-bar-wrap">
@@ -189,18 +192,11 @@ ${MASTER_DESIGN_SYSTEM_CSS}
     <!-- Executive Header -->
     <header class="stage-header">
       <div class="header-left">
-        <span class="badge">HYPERDECK</span>
+        <span class="badge">ONYX</span>
         <h1 class="deck-title">${escapeHtml(topic)}</h1>
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
-        <div class="theme-switcher">
-          <button type="button" onclick="setTheme('cyber')" class="theme-btn" title="Neon Cyber"><span class="theme-dot" style="background:#f43f5e;box-shadow:0 0 6px #f43f5e;"></span>Cyber</button>
-          <button type="button" onclick="setTheme('ocean')" class="theme-btn" title="Ocean Azure"><span class="theme-dot" style="background:#38bdf8;box-shadow:0 0 6px #38bdf8;"></span>Ocean</button>
-          <button type="button" onclick="setTheme('sunset')" class="theme-btn" title="Solar Sunset"><span class="theme-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b;"></span>Sunset</button>
-          <button type="button" onclick="setTheme('emerald')" class="theme-btn" title="Emerald Matrix"><span class="theme-dot" style="background:#10b981;box-shadow:0 0 6px #10b981;"></span>Emerald</button>
-          <button type="button" onclick="setTheme('cosmic')" class="theme-btn" title="Cosmic Amethyst"><span class="theme-dot" style="background:#c084fc;box-shadow:0 0 6px #c084fc;"></span>Cosmic</button>
-        </div>
-        <div class="badge badge-emerald" id="slideCounter">1 / ${effectiveCount}</div>
+        <div class="badge" id="slideCounter">1 / ${effectiveCount}</div>
       </div>
     </header>
 
@@ -295,10 +291,11 @@ ${renderedSlidesHtml}
               renderMathInElement(s, {
                 delimiters: [
                   { left: "$$", right: "$$", display: true },
-                  { left: "\\[", right: "\\]", display: true },
-                  { left: "$", right: "$", display: false },
-                  { left: "\\(", right: "\\)", display: false },
+                  { left: "\\\\[", right: "\\\\]", display: true },
+                  { left: "\\\\(", right: "\\\\)", display: false },
                 ],
+                ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+                ignoredClasses: ["terminal-card", "terminal-body", "terminal-cmd", "arch-stack", "disk-stripe", "stat-card"],
                 throwOnError: false,
               });
             } catch (e) {
@@ -722,10 +719,11 @@ ${renderedSlidesHtml}
         renderMathInElement(document.body, {
           delimiters: [
             { left: "$$", right: "$$", display: true },
-            { left: "\\[", right: "\\]", display: true },
-            { left: "$", right: "$", display: false },
-            { left: "\\(", right: "\\)", display: false },
+            { left: "\\\\[", right: "\\\\]", display: true },
+            { left: "\\\\(", right: "\\\\)", display: false },
           ],
+          ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+          ignoredClasses: ["terminal-card", "terminal-body", "terminal-cmd", "arch-stack", "disk-stripe", "stat-card"],
           throwOnError: false,
         });
       } catch (e) {

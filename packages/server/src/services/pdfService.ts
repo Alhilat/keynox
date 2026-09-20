@@ -1,5 +1,6 @@
 // @ts-ignore
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.js";
+import { sanitizeTitleString } from "../pipeline/topic-extractor";
 
 export interface ExtractedPdfData {
   title: string;
@@ -23,29 +24,66 @@ export function detectCleanTitle(firstPageText: string, fileName?: string): stri
     .replace(/^[\d\s\|\.\-\/]+(?:page)?[\d\s\|\.\-\/]*/i, "")
     .trim();
 
-  // Pattern 1: "Chapter X: Title"
-  const chapterMatch = cleaned.match(/^(?:chapter\s+\d+\s*[:\-—]\s*)([A-Za-z0-9\s,\-\(\):]{4,75})(?:\s+In this|\.|\n|$)/i);
-  if (chapterMatch && chapterMatch[1]) {
-    return chapterMatch[1].trim();
-  }
-
-  // Pattern 2: First prominent sentence or heading
-  const lines = cleaned.split(/[\r\n]+/).map((l) => l.trim()).filter((l) => l.length > 5);
-  for (const line of lines.slice(0, 3)) {
-    if (
-      !line.toLowerCase().startsWith("page") &&
-      !line.toLowerCase().startsWith("arxiv") &&
-      !line.toLowerCase().includes("in this chapter") &&
-      line.length >= 6 &&
-      line.length <= 80
-    ) {
-      // Remove leading Chapter X: if present
-      const stripped = line.replace(/^chapter\s+\d+\s*[:\-—]\s*/i, "").trim();
-      return stripped;
+  // Pattern 0: Book header line with chapter number, e.g. "50 3 Containers" or "3 Containers"
+  const bookHeaderMatch = firstPageText.match(/(?:^|\n)\s*(?:\d{1,4}\s+)?(?:chapter\s+)?([1-9]\d?)\s+([A-Z][A-Za-z0-9\s,\-\(\):]{2,50})(?:\n|$)/);
+  if (bookHeaderMatch && bookHeaderMatch[2]) {
+    const rawT = bookHeaderMatch[2].trim();
+    if (!/^(?:listing|figure|fig|table|page|drwx|total|contents|run\b|we\b|root\b|inode\b|sudo\b|ls\b|cat\b|sh\b)/i.test(rawT)) {
+      const secSub = firstPageText.match(/(?:\d+\.\d+\s+)([A-Z][A-Za-z\s]{3,35})/);
+      if (secSub && secSub[1] && !rawT.toLowerCase().includes(secSub[1].toLowerCase().trim())) {
+        return sanitizeTitleString(`${rawT}: ${secSub[1].trim()}`);
+      }
+      return sanitizeTitleString(rawT);
     }
   }
 
-  return fallback || "Technical Concept Explainer";
+  // Pattern 1: Explicit "Chapter X: Title"
+  const chapterMatch = cleaned.match(/^(?:chapter\s+\d+\s*[:\-—]\s*)([A-Za-z0-9\s,\-\(\):]{4,75})(?:\s+In this|\.|\n|$)/i);
+  if (chapterMatch && chapterMatch[1]) {
+    const rawT = chapterMatch[1].trim();
+    if (!/^(?:listing|figure|fig|table|page|drwx|total|contents|run\b|we\b|root\b)/i.test(rawT)) {
+      return sanitizeTitleString(rawT);
+    }
+  }
+
+  // Pattern 2: Section headings like "3.1 Linux Namespaces" or "3.2 Docker"
+  const sectionMatch = cleaned.match(/(?:\d+\.\d+\s+)([A-Z][A-Za-z\s]{3,40})/);
+  if (sectionMatch && sectionMatch[1]) {
+    const rawSec = sectionMatch[1].trim();
+    if (!/^(?:listing|figure|fig|table|page|drwx|total|contents|run\b|we\b|root\b)/i.test(rawSec)) {
+      return sanitizeTitleString(rawSec);
+    }
+  }
+
+  // Pattern 4: Prominent non-listing lines
+  const lines = cleaned.split(/[\r\n]+/).map((l) => l.trim()).filter((l) => l.length > 5);
+  for (const line of lines.slice(0, 10)) {
+    const lower = line.toLowerCase();
+    if (
+      !lower.startsWith("page") &&
+      !lower.startsWith("arxiv") &&
+      !lower.startsWith("listing") &&
+      !lower.startsWith("figure") &&
+      !lower.startsWith("fig.") &&
+      !lower.startsWith("table") &&
+      !lower.startsWith("$") &&
+      !lower.startsWith("#") &&
+      !lower.startsWith("drwx") &&
+      !lower.startsWith("total ") &&
+      !lower.startsWith("run ") &&
+      !lower.startsWith("we ") &&
+      !lower.includes("in this chapter") &&
+      line.length >= 6 &&
+      line.length <= 80
+    ) {
+      const stripped = line.replace(/^chapter\s+\d+\s*[:\-—]\s*/i, "").replace(/^\d+\s+/, "").trim();
+      if (!/^(?:listing|figure|fig|table|run\b)/i.test(stripped)) {
+        return sanitizeTitleString(stripped);
+      }
+    }
+  }
+
+  return sanitizeTitleString(fallback) || "Technical Concept Explainer";
 }
 
 export interface ExtractedPdfData {

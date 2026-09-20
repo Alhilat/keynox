@@ -8,14 +8,11 @@ import {
   Check,
   Code,
   Layers,
-  Sparkles,
   FileText,
-  Image as ImageIcon,
   Monitor,
   Play,
   LayoutGrid,
 } from "lucide-react";
-import { ImageGeneratorModal } from "./ImageGeneratorModal";
 
 interface HtmlPresentationViewerProps {
   html: string;
@@ -37,7 +34,6 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [showOutline, setShowOutline] = useState(false);
-  const [showImageModal, setShowImageModal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [totalSlidesCount, setTotalSlidesCount] = useState(1);
@@ -146,7 +142,7 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
 
     const win = window.open(
       "",
-      "HyperdeckPresenterWindow",
+      "OnyxPresenterWindow",
       "width=1120,height=750,menubar=no,toolbar=no,location=no,status=no,resizable=yes"
     );
     if (!win) {
@@ -160,16 +156,16 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>HyperDeck Presenter Console &bull; ${safeTitle}</title>
+  <title>Onyx Presenter Console &bull; ${safeTitle}</title>
   <style>
     :root {
-      --bg: #07090e;
-      --panel: #0d121d;
-      --border: #1e293b;
-      --accent: #06b6d4;
-      --accent-glow: rgba(6, 182, 212, 0.25);
+      --bg: #000000;
+      --panel: #0a0a0a;
+      --border: #262626;
+      --accent: #ffffff;
+      --accent-glow: rgba(255, 255, 255, 0.15);
       --text: #f8fafc;
-      --text-muted: #94a3b8;
+      --text-muted: #a3a3a3;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; user-select: none; }
@@ -408,7 +404,7 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
           <span style="font-weight: normal; font-size: 10px; color: #64748b;">AI Real-Time Teleprompter</span>
         </div>
         <div class="notes-content" id="notesContainer">
-          <div class="notes-cue">💡 Speak with high energy. Anchor on core metric benefits before diving into architectural nuances.</div>
+          <div class="notes-cue">Focus on core metric benefits before diving into architectural nuances.</div>
         </div>
       </div>
     </div>
@@ -518,11 +514,11 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
       const cue = document.createElement('div');
       cue.className = 'notes-cue';
       if (currentIndex === 0) {
-        cue.textContent = '🎙️ Hook the audience immediately with the core problem statement. Emphasize why legacy paradigms fail.';
+        cue.textContent = 'Hook the audience immediately with the core problem statement. Emphasize why legacy paradigms fail.';
       } else if (currentIndex === total - 1) {
-        cue.textContent = '🏁 Summarize final outcomes, synthesis conclusions, and open the floor for technical Q&A.';
+        cue.textContent = 'Summarize final outcomes, synthesis conclusions, and open the floor for technical Q&A.';
       } else {
-        cue.textContent = '🎯 Walk through each visual stage deliberately. Interact with the live 3D models or sliders to keep engagement high.';
+        cue.textContent = 'Walk through each visual stage deliberately. Interact with the live models or sliders to demonstrate mechanics.';
       }
       notesEl.appendChild(cue);
 
@@ -703,14 +699,7 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
             </button>
           )}
 
-          <button
-            onClick={() => setShowImageModal(true)}
-            className="p-2 rounded-lg bg-cyan-600/15 hover:bg-cyan-600/25 text-cyan-400 border border-cyan-500/30 transition-colors text-xs flex items-center gap-1.5 font-medium"
-            title="Generate Photorealistic Presentation Visual with NVIDIA FLUX"
-          >
-            <ImageIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">AI Photo</span>
-          </button>
+
 
           <button
             onClick={handleOpenPresenterConsole}
@@ -786,31 +775,16 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
             srcDoc={html}
             title={title}
             className="w-full h-full border-0 bg-[#07090e]"
-            sandbox="allow-scripts allow-modals allow-fullscreen"
+            sandbox="allow-scripts allow-modals allow-fullscreen allow-same-origin"
           />
         </div>
       </div>
 
       {/* Quick Navigation & Interaction Tip */}
-      <div className="w-full mt-3 px-2 flex items-center justify-between text-xs text-slate-500 font-mono">
+      <div className="w-full mt-3 px-2 flex items-center justify-between text-xs text-neutral-500 font-mono">
         <span>Click inside slide to enable keyboard shortcuts: Space / → (Next), ← (Prev), F (Fullscreen)</span>
-        <span className="text-emerald-400 font-bold">✓ Executable Web App</span>
+        <span className="text-emerald-400 font-bold font-mono text-[11px]">Executable Runtime</span>
       </div>
-
-      {/* NVIDIA NIM Photo Studio Modal */}
-      <ImageGeneratorModal
-        isOpen={showImageModal}
-        onClose={() => setShowImageModal(false)}
-        slideTitle={title}
-        onInsertImage={(img) => {
-          const a = document.createElement("a");
-          a.href = img.src;
-          a.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-photo.jpg`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        }}
-      />
     </div>
   );
 };

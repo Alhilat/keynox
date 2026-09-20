@@ -95,10 +95,13 @@ Fastify backend running on **port 3001**.
   - `POST /api/ai/stream-site`: Dual-Stage Nemotron stream synthesizing standalone interactive presentations.
 - **Modular Pipeline Architecture (`packages/server/src/pipeline/`)**:
   - `orchestrator.ts`: Master pipeline coordinator with LRU caching, watchdog, and streaming lifecycle management.
+  - `stage1-analyzer.ts`: Deep document & domain thesis extraction (Gemini 3.5 / Nemotron Nano Reasoning).
+  - `stage2-storyboard.ts`: Slide sequencing, visual architecture, and invariant planning.
+  - `stage3-creative-generator.ts`: Creative, bespoke slide synthesizer with KaTeX, 3D WebGL, and terminal consoles.
+  - `html-assembler.ts`: Standalone HTML packager embedding GSAP, KaTeX, navigation engine, and keyboard handlers.
+  - `html-to-ast.ts`: HTML to Presentation AST converter for the Visual Editor Studio.
   - `token-optimizer.ts`: Pre-bundled Master Obsidian & Glassmorphism design system saving ~65% output tokens.
-  - `stage1-architect.ts`: Nemotron 30B Nano Reasoning concept extractor & animation planner.
-  - `stage2-synthesizer.ts`: Nemotron 120B Super / Lightning interactive slide generator.
-  - `html-assembler.ts`: Clean standalone HTML packager embedding GSAP, KaTeX, navigation engine, and keyboard handlers.
+  - `topic-extractor.ts`: Title and topic extractor with chapter & section heading detection.
   - `cache.ts`: In-memory LRU prompt cache for instant repeat queries.
 
 ---
