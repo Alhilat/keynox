@@ -180,7 +180,27 @@ export const NAVIGATION_RUNTIME = `
     window.goToSlide = goToSlide;
     window.toggleFullscreen = toggleFullscreen;
 
+    // Click on slide to advance (unless clicking buttons, interactive controls, or selecting text)
+    document.addEventListener('click', (e) => {
+      // Don't advance if text was selected for copying
+      const sel = window.getSelection ? window.getSelection().toString() : '';
+      if (sel && sel.trim().length > 0) return;
+
+      // Don't advance if clicking on buttons, inputs, links, sliders, or drawing canvas
+      const interactive = e.target.closest('button, a, input, select, textarea, .thumb-btn, .stage-chevron, .controls-bar, .top-zoom-controls, .sim-slider, input[type="range"], .three-canvas');
+      if (interactive) return;
+
+      // Advance if clicked inside viewport/slide and not in drawing mode
+      const insideStage = e.target.closest('.slides-viewport, .slide');
+      if (insideStage && (typeof currentTool === 'undefined' || currentTool === 'scroll')) {
+        nextSlide();
+      }
+    });
+
     window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+        return;
+      }
       if (['ArrowRight', 'Space', 'j', 'PageDown'].includes(e.key)) {
         e.preventDefault();
         nextSlide();
@@ -198,7 +218,7 @@ export const NAVIGATION_RUNTIME = `
       } else if (e.ctrlKey && (e.key === 'y' || e.key === 'Y')) {
         e.preventDefault();
         if (typeof window.redo === 'function') window.redo();
-      } else if (!e.ctrlKey && !e.altKey && !e.metaKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      } else if (!e.ctrlKey && !e.altKey && !e.metaKey) {
         if (e.key === 'p' || e.key === 'P') {
           if (typeof toggleAnnotationBar === 'function') { toggleAnnotationBar(true); setTool('pen'); }
         } else if (e.key === 'h' || e.key === 'H') {

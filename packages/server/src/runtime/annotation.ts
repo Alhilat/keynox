@@ -150,6 +150,7 @@ export const ANNOTATION_RUNTIME = `
       if (drawingCanvas) {
         drawingCanvas.style.pointerEvents = (tool === 'scroll') ? 'none' : 'auto';
         drawingCanvas.style.cursor = (tool === 'scroll') ? 'default' : 'crosshair';
+        drawingCanvas.style.zIndex = (tool === 'scroll') ? '5' : '999';
       }
     };
 

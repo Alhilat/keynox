@@ -104,10 +104,41 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(html);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(html);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
+      throw new Error("Clipboard API unavailable");
+    } catch {
+      // Robust fallback using textarea selection for HTTP and restricted iframes
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = html;
+        textarea.style.position = "fixed";
+        textarea.style.top = "0";
+        textarea.style.left = "0";
+        textarea.style.opacity = "0";
+        textarea.style.pointerEvents = "none";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const success = document.execCommand("copy");
+        document.body.removeChild(textarea);
+        if (success) {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+          return;
+        }
+      } catch (err) {
+        console.error("[HtmlPresentationViewer] Copy fallback failed:", err);
+      }
+      // If clipboard write is completely blocked by browser, open the code inspector
+      setShowCode(true);
+    }
   };
 
   const handleDownload = () => {
@@ -167,20 +198,23 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
   return (
     <div className="w-full max-w-7xl mx-auto flex flex-col items-center animate-fadeIn">
       {/* Top Presentation Toolbar Box */}
-      <div className="w-full bg-slate-900/90 border border-slate-800/90 backdrop-blur-xl rounded-2xl p-3 sm:px-4 sm:py-3 shadow-xl mb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all">
+      <div className="w-full bg-[#0a0a0c]/90 border border-white/[0.08] backdrop-blur-2xl rounded-2xl p-3 sm:px-4 sm:py-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] mb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all relative overflow-hidden">
+        {/* Subtle top ambient sheen */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/[0.12] to-transparent pointer-events-none" />
+
         <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-cyan-400 shrink-0 shadow-inner">
-            <Layers className="w-4 h-4" />
+          <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/90 shrink-0 shadow-sm">
+            <Layers className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2 truncate">
+            <h2 className="text-sm sm:text-base font-semibold text-white tracking-tight flex items-center gap-2 truncate">
               <span className="truncate">{title.replace(/^TOPIC:\s*["']?|["']?$/gi, "")}</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold uppercase tracking-wider shrink-0 shadow-sm">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/[0.1] text-neutral-300 font-semibold uppercase tracking-wider shrink-0 shadow-sm">
                 16:9 Keynote
               </span>
             </h2>
-            <p className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+            <p className="text-[11px] text-neutral-400 flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block shadow-[0_0_6px_rgba(52,211,153,0.7)]" />
               <span>Interactive Web App &bull; GSAP Animations &bull; Offline Ready</span>
             </p>
           </div>
@@ -190,59 +224,59 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <button
             onClick={() => setShowCode(!showCode)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm ${
+            className={`px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm active:scale-95 ${
               showCode
-                ? "bg-indigo-600/30 text-indigo-300 border-indigo-500/50 shadow-indigo-500/10"
-                : "bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white border-slate-700/80"
+                ? "bg-white/[0.12] text-white border-white/[0.2] shadow-white/5"
+                : "bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 hover:text-white border-white/[0.08] hover:border-white/[0.16]"
             }`}
             title="Inspect Generated HTML/CSS/JS Source"
           >
-            <Code className="w-3.5 h-3.5 text-indigo-400" />
+            <Code className="w-3.5 h-3.5 text-neutral-400" />
             <span>Code</span>
           </button>
 
           <button
             onClick={handleCopy}
-            className="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-white/[0.16] text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
             title="Copy HTML to Clipboard"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-neutral-400" />}
             <span>{copied ? "Copied!" : "Copy"}</span>
           </button>
 
           <button
             onClick={handleDownload}
-            className="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-white/[0.16] text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
             title="Download Standalone Presentation HTML"
           >
-            <Download className="w-3.5 h-3.5 text-cyan-400" />
+            <Download className="w-3.5 h-3.5 text-neutral-400" />
             <span>Download HTML</span>
           </button>
 
           <button
             onClick={handleExportPptx}
-            className="px-3 py-1.5 rounded-xl bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/30 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-white/[0.16] text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
             title="Export to PowerPoint (.pptx)"
           >
-            <Download className="w-3.5 h-3.5 text-orange-400" />
+            <Download className="w-3.5 h-3.5 text-amber-400/90" />
             <span>Export PPTX</span>
           </button>
 
           <button
             onClick={handleOpenNewTab}
-            className="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 hover:text-white border border-white/[0.08] hover:border-white/[0.16] text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
             title="Open Presentation in New Browser Tab"
           >
-            <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+            <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
             <span>New Tab</span>
           </button>
 
           <button
             onClick={handleFullscreen}
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-cyan-500/20 active:scale-95"
+            className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-semibold text-xs flex items-center gap-1.5 transition-all shadow-[0_0_16px_rgba(255,255,255,0.12)] active:scale-95"
             title={isFullscreen ? "Exit Fullscreen (Esc)" : "Present Fullscreen (F)"}
           >
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-black" /> : <Maximize2 className="w-3.5 h-3.5 text-black" />}
             <span>{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
           </button>
         </div>
@@ -250,12 +284,12 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
 
       {/* Code Inspector Drawer */}
       {showCode && (
-        <div className="w-full mb-4 rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden shadow-2xl">
-          <div className="px-4 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
-            <span className="font-bold text-slate-200">Generated Presentation Source Code</span>
-            <span className="text-[11px] text-slate-500">{html.length} characters</span>
+        <div className="w-full mb-4 rounded-2xl bg-[#0a0a0c] border border-white/[0.08] overflow-hidden shadow-2xl">
+          <div className="px-4 py-2 bg-white/[0.02] border-b border-white/[0.08] flex items-center justify-between text-xs font-mono text-neutral-400">
+            <span className="font-semibold text-neutral-200">Generated Presentation Source Code</span>
+            <span className="text-[11px] text-neutral-500">{html.length} characters</span>
           </div>
-          <pre className="p-4 max-h-72 overflow-y-auto text-xs font-mono text-emerald-300/90 leading-relaxed whitespace-pre-wrap select-text">
+          <pre className="p-4 max-h-72 overflow-y-auto text-xs font-mono text-emerald-400/90 leading-relaxed whitespace-pre-wrap select-text">
             {html}
           </pre>
         </div>
@@ -273,7 +307,7 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
           className={
             isFullscreen
               ? "fixed inset-0 w-screen h-screen z-50 bg-[#07090e] flex flex-col m-0 p-0 rounded-none border-0"
-              : "w-full aspect-[16/9] mx-auto bg-[#07090e] rounded-2xl overflow-hidden shadow-2xl border border-slate-800/90 flex flex-col relative transition-all ring-1 ring-white/5"
+              : "w-full aspect-[16/9] mx-auto bg-[#07090e] rounded-2xl overflow-hidden shadow-2xl border border-white/[0.08] flex flex-col relative transition-all ring-1 ring-white/5"
           }
           style={
             isFullscreen
@@ -289,7 +323,8 @@ export const HtmlPresentationViewer: React.FC<HtmlPresentationViewerProps> = ({
             srcDoc={html}
             title={title}
             className="w-full h-full border-0 bg-[#07090e]"
-            sandbox="allow-scripts allow-modals allow-fullscreen allow-same-origin"
+            sandbox="allow-scripts allow-modals allow-fullscreen allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
+            allow="clipboard-read; clipboard-write; fullscreen"
           />
         </div>
       </div>

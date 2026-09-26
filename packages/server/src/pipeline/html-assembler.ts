@@ -313,7 +313,7 @@ ${MASTER_DESIGN_SYSTEM_CSS}
       width: 100%;
       height: 100%;
       pointer-events: none;
-      z-index: 999;
+      z-index: 5;
       touch-action: none;
     }
   </style>
