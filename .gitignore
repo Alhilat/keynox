@@ -27,6 +27,7 @@ coverage/
 # IDE & OS
 .vscode/
 .idea/
+.kombai/
 .DS_Store
 *.suo
 *.ntvs*
@@ -36,3 +37,4 @@ coverage/
 
 # Scratch & temporary artifacts
 scratch/
+fastrun.txt

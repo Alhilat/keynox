@@ -1,6 +1,5 @@
 import React from "react";
 import { Scene } from "@presentation/schema";
-import { Layers, ChevronRight, Sparkles, Activity } from "lucide-react";
 
 interface SlideNavigatorProps {
   scenes: Scene[];

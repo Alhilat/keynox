@@ -1,121 +1,101 @@
 import OpenAI from "openai";
 import { config } from "../config";
-import { sanitizeDocumentContent } from "./topic-extractor";
 import { geminiService } from "../services/geminiService";
+import { Stage1Extraction, Stage2Strategy } from "./types/sixStageTypes";
+import { parseTolerantJson } from "./utils/tolerantJson";
 
 export interface Stage2StoryboardResult {
   storyboard: string;
+  strategy: Stage2Strategy;
   usedModel?: string;
 }
 
-const PRIMARY_MODEL = "nvidia/nemotron-3-super-120b-a12b";
-const FALLBACK_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning";
+const TIER1_MODEL = config.nvidiaReasoningModel || "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning";
+const TIER2_MODEL = config.nvidiaModel || "nvidia/nemotron-3-super-120b-a12b";
 
 /**
- * Model 2: Presentation Content & Visuals/Photos Director
- * 
- * Takes the deep domain extraction from Model 1 and designs the complete
- * presentation storyboard:
- * 1. Writes the exact text for what we call slides (headlines, narrative explanations,
- *    concrete metrics, mathematical derivations).
- * 2. Explicitly specifies what photos and visual assets are needed for each slide
- *    (photorealistic NVIDIA FLUX photo prompts, SVG diagram layouts, interactive simulators).
+ * Stage 2: Strategist (Nemotron 30B / Fallbacks)
+ * Receives Stage 1 extraction and plans slide-by-slide structure,
+ * linking each slide to specific technical_payload items.
  */
 export async function runStage2Storyboard(
   cleanTopic: string,
-  analysisText: string,
+  stage1Output: Stage1Extraction | string,
   targetCount: number,
   onChunk: (delta: string, isReasoning: boolean) => void,
-  engine: "gemini" | "nvidia" | "auto" = "auto"
+  engine: "gemini" | "nvidia" | "auto" = "auto",
+  signal?: AbortSignal
 ): Promise<Stage2StoryboardResult> {
   let storyboardText = "";
-  let usedModel = PRIMARY_MODEL;
-  const cleanAnalysis = sanitizeDocumentContent(analysisText);
+  let usedModel = TIER1_MODEL;
+  const maxTokens = 4500;
+
+  const stage1JsonStr = typeof stage1Output === "string" ? stage1Output : JSON.stringify(stage1Output, null, 2);
 
   const apiKey = config.nvidiaApiKeyUltra || config.nvidiaApiKey;
   const openai = new OpenAI({
     apiKey,
     baseURL: config.nvidiaBaseUrl,
+    timeout: 15000,
   });
 
-  const prompt = `You are an executive Presentation Director & Visual Storyboard Architect (Model 2 in a 3-stage presentation pipeline).
-You are given the deep domain analysis and technical extraction from Model 1 for: "${cleanTopic}".
+  const prompt = `You are a master presentation strategist.
+You receive extracted analysis and plan slide-by-slide structure.
 
-DOMAIN KNOWLEDGE EXTRACTION FROM MODEL 1:
-"""
-${cleanAnalysis}
-"""
+CRITICAL RULES:
+- Return ONLY valid JSON. Zero explanation. Zero markdown.
+- Purpose "hook", "closing", and "transition" slides are EXEMPT from payload references
+- ALL other slides MUST reference at least one technical_payload item
+- No slide can have generic content_summary words:
+  "overview", "introduction", "key points", "summary" are banned
+- Use actual terminology from the analysis
+- Plan exactly ${targetCount} slides (index 1 to ${targetCount})
 
-TARGET SLIDE COUNT: Exactly ${targetCount} Slides
+Analysis received:
+${stage1JsonStr}
 
-YOUR OBJECTIVE:
-1. Direct the visual architecture & narrative TEXT for each of the ${targetCount} slides.
-2. FULL DOCUMENT CHRONOLOGICAL SPAN & ZERO DUPLICATE SLIDES:
-   - STRICT ZERO REPETITION: Every single slide MUST cover a completely distinct chapter, section, or technical mechanism. NEVER output duplicate or near-identical slides! For example, NEVER generate multiple slides covering the exact same lifecycle, stages, or role overviews.
-   - Proportionally distribute the ${targetCount} slides across the ENTIRE document from page 1 to the final page. If the document covers Foundations, Evolution, Engineering Roles, Analytical Roles, Project Stages, Evaluation & Deployment, Industry Applications, Security vs Privacy, Threats (Ransomware, SQLi, Insider Threats), and Defense Solutions (Encryption, Masking, MFA), you MUST allocate slides so every major topic gets its own dedicated slide!
-3. ZERO PROMPT NOISE & ZERO BUZZWORDS: Never output prompt metadata ("TARGET SLIDE COUNT", "PREFERRED THEME") or canned filler ("Deterministic state validation", "Production scaling threshold") in your titles or content!
-4. MANDATORY AUTHENTIC VISUAL MODEL: For each slide, define the exact technical visual entity directly described in that specific section of the document:
-   - Architectural Subsystem Stack (e.g. abstraction layers, hierarchy of components, user vs kernel space)
-   - Entity Topologies & Boundaries (e.g. component relationships, containment boundaries, isolation domains)
-   - Protocol Sequences & Workflows (e.g. lifecycle stages, state transitions, build/execution pipelines)
-   - Technical Comparisons & Data Structures (e.g. side-by-side matrices, inode structures, flags table)
-   - Terminal Shell & Code Execution (e.g. real commands, system calls, listings, and outputs from that section)
-5. CLASSIC ACADEMIC RESTRAINT: Use consistent, restrained, dignified academic layouts (Oxford Blue, Slate, White). Do NOT use flashy neon colors, rainbow palettes, or AI buzzword badges.
+Return this exact schema:
+{
+  "slides": [
+    {
+      "index": 1,
+      "purpose": "hook | concept | proof | data | demo | transition | closing",
+      "title": "specific title using real terminology",
+      "content_summary": "exactly what this slide proves or shows",
+      "content_type": "text | math | chart | timeline | comparison | code | simulator | quote",
+      "technical_payload_refs": [],
+      "animation_energy": "calm | dynamic | explosive | subtle",
+      "is_hero": boolean,
+      "narrative_weight": "light | medium | heavy"
+    }
+  ],
+  "visual_direction": "dark | light | gradient | minimal | bold",
+  "color_hint": "specific color direction tied to domain and tone"
+}
 
-REQUIREMENTS FOR EACH SLIDE (SLIDE 1 TO SLIDE ${targetCount}):
-You MUST generate EXACTLY ${targetCount} slides numbered SLIDE 1 to SLIDE ${targetCount}. Never stop early!
-For every single slide, you MUST provide:
-- SLIDE NUMBER & TITLE: Direct, human, clear technical headline (e.g. "Network Topologies & Structural Arrangement" or "Firewall Architectures & Inspection Modes"). NEVER force the word "Invariant", "Taxonomy", or corporate buzzwords into titles!
-- SUBTITLE & CATEGORY: Short, concise category (e.g., NETWORK FOUNDATIONS, PERIMETER SECURITY, PROTOCOL ARCHITECTURE, INTRUSION DEFENSE, CRYPTOGRAPHY). Never use pipe "|" or buzzwords like "ARCHITECTURE | INVARIANTS". Subtitles must be natural, direct factual statements—NEVER robotic index-card intros ("This slide compares...", "This slide outlines...", "This slide examines...", "In this slide...") and NEVER participle filler ("Establishing foundational...").
-- SLIDE NARRATIVE & CONTENT (100% CONCRETE FACTS):
-  * Primary technical mechanism extracted from that section of the document.
-  * Real commands, flags, configuration snippets, and numeric metrics (e.g. port numbers, key types, IP addresses).
-- VISUAL MODEL & COMPONENT DIRECTIVE:
-  Specify the visual model and recommend the optimal template:
-  * TEMPLATE_01_HERO_SPLIT_OVERVIEW: Hero concept card + 3 key takeaways (.grid-split)
-  * TEMPLATE_02_TERMINAL_CODE_EXPLORER: Syntax-highlighted CLI terminal + explanation card (.terminal-card)
-  * TEMPLATE_03_CODE_DIFF_EVOLUTION: Side-by-side terminal/code cards (.diff-container)
-  * TEMPLATE_04_SEQUENTIAL_PIPELINE_4: 4-stage pipeline with packet pulses & SVG icons (.motion-pipeline)
-  * TEMPLATE_05_STREAMLINED_PIPELINE_3: 3-stage streamlined progression (.motion-pipeline)
-  * TEMPLATE_06_CONNECTED_TOPOLOGY_FLOW: Horizontal 4-node flow with arrows (.flow-diagram)
-  * TEMPLATE_07_DUAL_STREAM_CONVERGENCE: Parallel inputs merging into core engine (.flow-diagram)
-  * TEMPLATE_08_INTERACTIVE_SLIDER_SIMULATOR: Dynamic slider + telemetry gauge (.sim-container)
-  * TEMPLATE_09_COMPARISON_MATRIX_TABLE: Multi-dimension matrix table with status badges (.matrix-table)
-  * TEMPLATE_10_DYNAMIC_BAR_CHART_BENCHMARK: Quantitative bar chart with value labels (.chart-card)
-  * TEMPLATE_11_TRI_CARD_CONCEPT_GRID: 3 thematic cards side-by-side (.grid-3)
-  * TEMPLATE_12_QUAD_METRIC_DASHBOARD: 2x2 grid of key quantitative figures (.stat-grid)
-  * TEMPLATE_13_MATHEMATICAL_DERIVATION_STEP: KaTeX equation block ONLY IF real mathematical equations exist in the domain. NEVER invent fake pseudo-math for conceptual topics!
-  * TEMPLATE_14_STATE_MACHINE_TRANSITION: 3-state transition nodes with triggers (.state-diagram)
-  * TEMPLATE_15_HIERARCHICAL_LAYER_STACK: Vertical architectural layers (.layer-stack)
-  * TEMPLATE_16_INTERACTIVE_SVG_VENN: Overlapping SVG Venn diagram (.venn-container)
-  * TEMPLATE_17_THREE_JS_SPATIAL_WORLD: Interactive 3D WebGL orbit canvas (.three-container)
-  * TEMPLATE_18_CHRONOLOGICAL_TIMELINE: Milestone progression track (.timeline-track)
-  * TEMPLATE_19_PRO_CON_TRADE_OFF_STUDY: Academic benefits vs operational constraints (.grid-2)
-  * TEMPLATE_20_EXECUTIVE_CHECKLIST_SUMMARY: Verification and compliance checklist (.checklist-group)
+PAYLOAD REFERENCE RULE:
+- purpose "hook": technical_payload_refs must be []
+- purpose "closing": technical_payload_refs must be []
+- purpose "transition": technical_payload_refs must be []
+- ALL other purposes: at least one ref required
+- Every ref must exist in Stage 1 output
+- Invented content is a critical failure`;
 
-CRITICAL MANDATES:
-- NATURAL HUMAN VOICE: Write like a leading computer science professor at MIT, Stanford, or Oxford. Direct, clear, and dignified.
-- ZERO PSEUDO-MATH: Do NOT create fake boolean or set formulas for non-mathematical topics.
-- DIVERSITY: Vary templates across slides (do not use the same template twice in a row).
-- ZERO TEXT-ONLY ARTICLE SLOP: Every slide must feature an engaging, authentic visual structure from the catalog.
-- ABSOLUTELY NO EMOJIS: Maintain clean, professional, executive typography.
-- 100% domain fidelity derived from Model 1's extracted facts.`;
+  const systemInstruction = "You are a master presentation strategist. Return ONLY valid JSON. Zero explanation. Zero markdown.";
 
-  // Attempt 0: Pure Gemini requested explicitly by user
+  // Tier 1: Gemini if explicitly requested
   if (engine === "gemini" && geminiService.isAvailable()) {
     try {
+      signal?.throwIfAborted();
       usedModel = `google/${geminiService.getModel()}`;
       await geminiService.streamChat({
         messages: [
-          {
-            role: "system",
-            content:
-              "You are an executive Presentation Director and Visual Storyboard Architect. You write high-impact keynote slide copy and specify exact visual and photographic assets derived from technical domain analysis.",
-          },
+          { role: "system", content: systemInstruction },
           { role: "user", content: prompt },
         ],
-        temperature: 0.3,
-        maxTokens: 8000,
+        temperature: 0.2,
+        maxTokens,
+        signal,
         onReasoning: (delta) => onChunk(delta, true),
         onChunk: (delta) => {
           storyboardText += delta;
@@ -123,147 +103,118 @@ CRITICAL MANDATES:
         },
       });
 
-      if (storyboardText && storyboardText.trim().length >= 150) {
-        return { storyboard: storyboardText, usedModel };
+      const parsed = parseTolerantJson<Stage2Strategy>(storyboardText);
+      if (parsed.data?.slides && parsed.data.slides.length > 0) {
+        return { storyboard: storyboardText, strategy: parsed.data, usedModel };
       }
-    } catch (geminiErr: any) {
-      console.warn(`[Stage2Storyboard] Gemini error (${geminiErr?.message}). Falling back to Nemotron...`);
+    } catch (gErr: any) {
+      if (signal?.aborted) throw gErr;
+      console.warn(`[Stage2Storyboard] Gemini error: ${gErr?.message}. Falling back to NVIDIA...`);
       storyboardText = "";
     }
   }
 
-  // Attempt 1: NVIDIA Nemotron 120B Super (Primary Generator for "auto" & "nvidia")
+  // Tier 1: Nemotron 30B (NVIDIA / Auto)
   try {
-    usedModel = PRIMARY_MODEL;
+    signal?.throwIfAborted();
+    usedModel = TIER1_MODEL;
     const stream = await openai.chat.completions.create({
-      model: PRIMARY_MODEL,
+      model: TIER1_MODEL,
       messages: [
-        {
-          role: "system",
-          content:
-            "You are an executive Presentation Director and Visual Storyboard Architect. You write high-impact keynote slide copy and specify exact visual and photographic assets derived from technical domain analysis.",
-        },
+        { role: "system", content: systemInstruction },
         { role: "user", content: prompt },
       ],
-      max_tokens: 8000,
-      temperature: 0.3,
+      max_tokens: maxTokens,
+      temperature: 0.2,
       stream: true,
-    });
+    }, { signal });
 
     for await (const chunk of stream) {
       const reasoning = (chunk.choices?.[0]?.delta as any)?.reasoning_content || "";
-      if (reasoning) {
-        onChunk(reasoning, true);
-      }
+      if (reasoning) onChunk(reasoning, true);
       const delta = chunk.choices?.[0]?.delta?.content || "";
       if (delta) {
         storyboardText += delta;
         onChunk(delta, false);
       }
     }
-  } catch (err: any) {
-    console.warn(`[Stage2Storyboard] Primary model ${PRIMARY_MODEL} error (${err?.message}). Trying fallback ${FALLBACK_MODEL}...`);
-  }
 
-  // Attempt 2: Nemotron 30B Nano Reasoning (fast fallback)
-  if (!storyboardText || storyboardText.trim().length < 150) {
-    try {
-      storyboardText = "";
-      usedModel = FALLBACK_MODEL;
-      const stream = await openai.chat.completions.create({
-        model: FALLBACK_MODEL,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an executive Presentation Director and Visual Storyboard Architect. You write high-impact keynote slide copy and specify exact visual and photographic assets.",
-          },
-          { role: "user", content: prompt },
-        ],
-        max_tokens: 8000,
-        temperature: 0.3,
-        stream: true,
-      });
-
-      for await (const chunk of stream) {
-        const reasoning = (chunk.choices?.[0]?.delta as any)?.reasoning_content || "";
-        if (reasoning) {
-          onChunk(reasoning, true);
-        }
-        const delta = chunk.choices?.[0]?.delta?.content || "";
-        if (delta) {
-          storyboardText += delta;
-          onChunk(delta, false);
-        }
-      }
-    } catch (err: any) {
-      console.warn(`[Stage2Storyboard] Fallback model error:`, err?.message || err);
+    const parsed = parseTolerantJson<Stage2Strategy>(storyboardText);
+    if (parsed.data?.slides && parsed.data.slides.length > 0) {
+      return { storyboard: storyboardText, strategy: parsed.data, usedModel };
     }
+  } catch (err: any) {
+    if (signal?.aborted) throw err;
+    console.warn(`[Stage2Storyboard] Tier 1 (${TIER1_MODEL}) failed: ${err?.message}. Falling back to Tier 2...`);
+    storyboardText = "";
   }
 
-  // Attempt 3: Gemini Fallback (if NVIDIA failed and Gemini is available)
-  if ((!storyboardText || storyboardText.trim().length < 150) && geminiService.isAvailable()) {
+  // Tier 2: Nemotron 120B Super
+  try {
+    signal?.throwIfAborted();
+    usedModel = TIER2_MODEL;
+    storyboardText = "";
+    const stream = await openai.chat.completions.create({
+      model: TIER2_MODEL,
+      messages: [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.2,
+      stream: true,
+    }, { signal });
+
+    for await (const chunk of stream) {
+      const reasoning = (chunk.choices?.[0]?.delta as any)?.reasoning_content || "";
+      if (reasoning) onChunk(reasoning, true);
+      const delta = chunk.choices?.[0]?.delta?.content || "";
+      if (delta) {
+        storyboardText += delta;
+        onChunk(delta, false);
+      }
+    }
+
+    const parsed = parseTolerantJson<Stage2Strategy>(storyboardText);
+    if (parsed.data?.slides && parsed.data.slides.length > 0) {
+      return { storyboard: storyboardText, strategy: parsed.data, usedModel };
+    }
+  } catch (err: any) {
+    if (signal?.aborted) throw err;
+    console.warn(`[Stage2Storyboard] Tier 2 (${TIER2_MODEL}) failed: ${err?.message}. Falling back to Tier 3 (Gemini)...`);
+    storyboardText = "";
+  }
+
+  // Tier 3: Gemini 3.8 Flash Fallback
+  if (geminiService.isAvailable()) {
     try {
+      signal?.throwIfAborted();
       usedModel = `google/${geminiService.getModel()}`;
       await geminiService.streamChat({
         messages: [
-          {
-            role: "system",
-            content:
-              "You are an executive Presentation Director and Visual Storyboard Architect. You write high-impact keynote slide copy and specify exact visual and photographic assets.",
-          },
+          { role: "system", content: systemInstruction },
           { role: "user", content: prompt },
         ],
-        temperature: 0.3,
-        maxTokens: 8000,
+        temperature: 0.2,
+        maxTokens,
+        signal,
         onReasoning: (delta) => onChunk(delta, true),
         onChunk: (delta) => {
           storyboardText += delta;
           onChunk(delta, false);
         },
       });
+
+      const parsed = parseTolerantJson<Stage2Strategy>(storyboardText);
+      if (parsed.data?.slides && parsed.data.slides.length > 0) {
+        return { storyboard: storyboardText, strategy: parsed.data, usedModel };
+      }
     } catch (gErr: any) {
-      console.warn(`[Stage2Storyboard] Gemini fallback error:`, gErr?.message);
+      if (signal?.aborted) throw gErr;
+      console.warn(`[Stage2Storyboard] Tier 3 (Gemini) failed: ${gErr?.message}`);
     }
   }
 
-  // Fallback: Synthesize structured storyboard from analysis if API fails
-  if (!storyboardText || storyboardText.trim().length < 80) {
-    console.warn("[Stage2Storyboard] Generating structured storyboard from analysis...");
-    const lines = (analysisText || cleanTopic)
-      .split(/[\r\n]+/)
-      .map((l) => l.replace(/^[#*\-\s\d\.]+/, "").trim())
-      .filter((l) => l.length > 20 && !l.toUpperCase().startsWith("SECTION"));
-
-    const getConcept = (idx: number, fallback: string) => lines[idx] || `${fallback} of ${cleanTopic}`;
-
-    const dynamicSlides: string[] = [];
-    const themes = [
-      { cat: "SYSTEM ARCHITECTURE", arche: "Terminal Window or Split Hero Card", getPoint: () => getConcept(0, "Core architectural design and primary mechanisms") },
-      { cat: "EXECUTION PIPELINE", arche: "4-Stage Sequential Motion Pipeline (.motion-pipeline)", getPoint: () => getConcept(1, "Phase transitions and operational sequence") },
-      { cat: "DYNAMIC SIMULATION", arche: "Interactive Parameter Simulator (.sim-container)", getPoint: () => getConcept(2, "Operational parameter space and sensitivity evaluation") },
-      { cat: "SYSTEM TOPOLOGY", arche: "Connected Flow Topology (.flow-diagram)", getPoint: () => getConcept(3, "Component interaction graph and interface boundaries") },
-      { cat: "TRADE-OFF MATRIX", arche: "Dimensional Comparison Matrix (.matrix-table)", getPoint: () => getConcept(4, "Empirical benchmarks and resource trade-offs") },
-      { cat: "PERFORMANCE SCALING", arche: "Dynamic Visual Bar Chart (.chart-card)", getPoint: () => getConcept(5, "Throughput characteristics and quantitative bounds") },
-      { cat: "FAULT RESILIENCE", arche: "Multi-Dimensional Comparison Matrix (.matrix-table)", getPoint: () => getConcept(6, "Failure domain containment and recovery mechanisms") },
-      { cat: "PRODUCTION STANDARDS", arche: "Connected Architecture Flow Topology (.flow-diagram)", getPoint: () => getConcept(7, "Operational guarantees and verification") },
-    ];
-
-    for (let i = 0; i < targetCount; i++) {
-      const t = themes[i % themes.length];
-      const point = t.getPoint();
-      const slideTitle = point.length > 55 ? point.slice(0, 52) + "..." : point;
-      dynamicSlides.push(`SLIDE ${i + 1}: ${slideTitle}
-- CATEGORY: ${t.cat}
-- NARRATIVE: ${point}.
-- TECHNICAL_SPECS: Key mechanisms extracted from ${cleanTopic} domain analysis.
-- VISUAL_SPEC: ${t.arche} with authentic domain data.`);
-    }
-
-    storyboardText = dynamicSlides.join("\n\n");
-
-    onChunk("\n\n" + storyboardText, false);
-  }
-
-  return { storyboard: storyboardText, usedModel };
+  signal?.throwIfAborted();
+  throw new Error("Stage 2 (Strategist) failed across all 3 tiers.");
 }

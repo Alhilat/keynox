@@ -14,9 +14,10 @@ export async function runNemotronPipeline(
   onEvent: (event: PipelineEvent) => void,
   requestedSlideCount?: number,
   theme?: string,
-  engine?: "gemini" | "nvidia" | "auto"
+  engine?: "gemini" | "nvidia" | "auto",
+  signal?: AbortSignal
 ): Promise<{ outline: string; html: string }> {
-  return pipelineOrchestrator.execute(topic, onEvent, requestedSlideCount, theme, engine);
+  return pipelineOrchestrator.execute(topic, onEvent, requestedSlideCount, theme, engine, signal);
 }
 
 export function isHtmlFullyComplete(html: string): boolean {

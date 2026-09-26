@@ -44,5 +44,5 @@ export function useStreamThrottler(initialValue: string = "") {
     };
   }, []);
 
-  return { value, append, reset, setValue };
+  return { value, append, reset };
 }

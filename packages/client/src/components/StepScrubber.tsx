@@ -1,6 +1,6 @@
 import React from "react";
 import { Step } from "@presentation/schema";
-import { Check, Circle } from "lucide-react";
+import { Check } from "lucide-react";
 
 interface StepScrubberProps {
   steps: Step[];

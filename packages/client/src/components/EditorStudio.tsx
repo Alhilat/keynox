@@ -4,17 +4,7 @@ import {
   Play,
   Plus,
   Trash2,
-  Copy,
-  Layers,
-  Sparkles,
   Zap,
-  Code,
-  Type,
-  Square,
-  Activity,
-  ChevronRight,
-  Move,
-  Eye,
   Sliders,
 } from "lucide-react";
 
@@ -31,8 +21,7 @@ export const EditorStudio: React.FC<EditorStudioProps> = ({
 }) => {
   const [selectedSceneIndex, setSelectedSceneIndex] = useState(0);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"elements" | "steps" | "json">("steps");
-  const [selectedStepIndex, setSelectedStepIndex] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"elements" | "steps">("steps");
 
   const currentScene: Scene | undefined = presentation.scenes[selectedSceneIndex];
 
@@ -91,7 +80,7 @@ export const EditorStudio: React.FC<EditorStudioProps> = ({
   };
 
   // Add Element to current slide
-  const handleAddElement = (type: "card" | "text" | "equation" | "interactive-widget") => {
+  const handleAddElement = (type: "card" | "text" | "equation" | "interactive-widget" | "physics-widget" | "code-widget" | "matrix-widget") => {
     if (!currentScene) return;
     const elId = `el-${Date.now()}`;
     let newElement: Element;
@@ -124,6 +113,30 @@ export const EditorStudio: React.FC<EditorStudioProps> = ({
         type: "interactive-widget",
         widgetType: "boolean-simulator",
         title: "Live Hardware Logic Simulator",
+        config: {},
+      };
+    } else if (type === "physics-widget") {
+      newElement = {
+        id: elId,
+        type: "interactive-widget",
+        widgetType: "physics-slider",
+        title: "Dynamic Physics Simulator",
+        config: { defaultMass: 10, defaultForce: 50 },
+      };
+    } else if (type === "code-widget") {
+      newElement = {
+        id: elId,
+        type: "interactive-widget",
+        widgetType: "code-block",
+        title: "Code Terminal",
+        config: {},
+      };
+    } else if (type === "matrix-widget") {
+      newElement = {
+        id: elId,
+        type: "interactive-widget",
+        widgetType: "comparison-matrix",
+        title: "Comparison Matrix",
         config: {},
       };
     } else {
@@ -434,12 +447,32 @@ export const EditorStudio: React.FC<EditorStudioProps> = ({
                     >
                       + Text
                     </button>
-                    <button
-                      onClick={() => handleAddElement("interactive-widget")}
-                      className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold transition-colors"
-                    >
-                      + Simulator
-                    </button>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <button
+                        onClick={() => handleAddElement("interactive-widget")}
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold transition-colors"
+                      >
+                        + Logic Sim
+                      </button>
+                      <button
+                        onClick={() => handleAddElement("physics-widget")}
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold transition-colors"
+                      >
+                        + Physics Sim
+                      </button>
+                      <button
+                        onClick={() => handleAddElement("code-widget")}
+                        className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-mono font-bold transition-colors"
+                      >
+                        + Code Terminal
+                      </button>
+                      <button
+                        onClick={() => handleAddElement("matrix-widget")}
+                        className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-mono font-bold transition-colors"
+                      >
+                        + Matrix
+                      </button>
+                    </div>
                   </div>
 
                   <button

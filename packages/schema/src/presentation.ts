@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { StepActionSchema } from "./actions";
+import { PhysicsSliderConfigSchema } from "./physics";
 
 // Token for fine-grained equation manipulation
 export const MathTokenSchema = z.object({
@@ -69,7 +70,7 @@ export const InteractiveWidgetElementSchema = BaseElementSchema.extend({
   type: z.literal("interactive-widget"),
   widgetType: z.enum(["boolean-simulator", "code-block", "comparison-matrix", "physics-slider"]).default("boolean-simulator"),
   title: z.string().optional(),
-  config: z.record(z.any()).default({}).optional(),
+  config: z.union([PhysicsSliderConfigSchema, z.record(z.string(), z.unknown())]).default({}).optional(),
 });
 
 export const ElementSchema = z.discriminatedUnion("type", [

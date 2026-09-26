@@ -1,7 +1,8 @@
-import { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { runNemotronPipeline } from "../services/nemotronPipeline";
-import { generatePresentationWithDeepSeek, streamPresentationGeneration } from "../services/deepseek";
+import { generatePresentationWithDeepSeek } from "../services/deepseek";
+import { createDisconnectGuard } from "../pipeline/disconnectGuard";
 
 const GenerateRequestSchema = z.object({
   topic: z.string().min(1, "Topic cannot be empty"),
@@ -13,9 +14,19 @@ const GenerateRequestSchema = z.object({
   engine: z.enum(["gemini", "nvidia", "auto"]).optional(),
 });
 
+function isAbortError(err: any): boolean {
+  return (
+    err?.name === "AbortError" ||
+    err?.code === 20 ||
+    err?.code === "ABORT_ERR" ||
+    /aborted|canceled|cancelled/i.test(err?.message || "")
+  );
+}
+
 export const aiRoutes: FastifyPluginAsync = async (fastify) => {
-  // Two-Stage Nemotron/Gemini Streaming Pipeline (Nano 30B / Gemini Outline -> Ultra 550B / Gemini Full HTML/CSS/JS Site)
-  fastify.post("/stream", async (request, reply) => {
+  // Shared SSE handler for the Nemotron/Gemini streaming pipeline.
+  // Registered under both /stream and /stream-site (legacy alias).
+  const handleStream = async (request: FastifyRequest, reply: FastifyReply) => {
     const validatedInput = GenerateRequestSchema.safeParse(request.body);
     if (!validatedInput.success) {
       return reply.status(400).send({ error: "Invalid topic parameter" });
@@ -28,57 +39,50 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
     reply.raw.setHeader("Connection", "keep-alive");
     reply.raw.flushHeaders?.();
 
+    const guard = createDisconnectGuard(request);
+    const { signal } = guard;
+    const safeWrite = (event: unknown) => {
+      if (signal.aborted) return;
+      if (reply.raw.destroyed || reply.raw.writableEnded) return;
+      try {
+        reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
+      } catch {
+        guard.dispose();
+      }
+    };
+
     try {
       await runNemotronPipeline(
         topic,
         (event) => {
-          reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
+          safeWrite(event);
         },
         slideCount,
         theme,
-        engine
+        engine,
+        signal
       );
     } catch (err: any) {
-      reply.raw.write(
-        `data: ${JSON.stringify({ type: "error", message: err?.message || "Unknown error" })}\n\n`
-      );
+      if (signal.aborted || isAbortError(err)) {
+        request.log.info("SSE client disconnected — LLM pipeline aborted");
+        return;
+      }
+      safeWrite({ type: "error", message: err?.message || "Unknown error" });
     } finally {
-      reply.raw.end();
+      guard.dispose();
+      try {
+        if (!reply.raw.destroyed && !reply.raw.writableEnded) reply.raw.end();
+      } catch {
+        /* client already gone */
+      }
     }
-  });
+  };
+
+  // Two-Stage Nemotron/Gemini Streaming Pipeline (Nano 30B / Gemini Outline -> Ultra 550B / Gemini Full HTML/CSS/JS Site)
+  fastify.post("/stream", handleStream);
 
   // Alias for stream-site
-  fastify.post("/stream-site", async (request, reply) => {
-    const validatedInput = GenerateRequestSchema.safeParse(request.body);
-    if (!validatedInput.success) {
-      return reply.status(400).send({ error: "Invalid topic parameter" });
-    }
-
-    const { topic, slideCount, theme, engine } = validatedInput.data;
-
-    reply.raw.setHeader("Content-Type", "text/event-stream");
-    reply.raw.setHeader("Cache-Control", "no-cache");
-    reply.raw.setHeader("Connection", "keep-alive");
-    reply.raw.flushHeaders?.();
-
-    try {
-      await runNemotronPipeline(
-        topic,
-        (event) => {
-          reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
-        },
-        slideCount,
-        theme,
-        engine
-      );
-    } catch (err: any) {
-      reply.raw.write(
-        `data: ${JSON.stringify({ type: "error", message: err?.message || "Unknown error" })}\n\n`
-      );
-    } finally {
-      reply.raw.end();
-    }
-  });
+  fastify.post("/stream-site", handleStream);
 
   // Standard non-streaming fallback endpoint
   fastify.post("/generate-presentation", async (request, reply) => {
@@ -178,6 +182,54 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         error: "Failed to generate photo with NVIDIA NIM",
         message: err?.message || "Unknown error",
       });
+    }
+  });
+
+  // Export Presentation AST or HTML to PowerPoint (.pptx) Endpoint
+  fastify.post("/export-pptx", async (request, reply) => {
+    try {
+      const body = request.body as any;
+      if (!body) {
+        return reply.status(400).send({ error: "Invalid request payload" });
+      }
+
+      let presentation: any = body;
+      if (body.html && typeof body.html === "string") {
+        const { convertHtmlToPresentationAst } = await import("../pipeline/html-to-ast");
+        presentation = convertHtmlToPresentationAst(body.title || body.topic || "Presentation", body.html);
+      }
+
+      if (!presentation || !presentation.scenes || !Array.isArray(presentation.scenes)) {
+        return reply.status(400).send({ error: "Invalid presentation object or HTML structure" });
+      }
+
+      const { exportPresentationToPptx } = await import("../services/pptxExporter");
+      const buffer = await exportPresentationToPptx(presentation);
+
+      reply.header("Content-Type", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+      reply.header("Content-Disposition", `attachment; filename="${(presentation.title || "presentation").replace(/[^a-z0-9]/gi, "_")}.pptx"`);
+      return reply.send(buffer);
+    } catch (err: any) {
+      request.log.error(err);
+      return reply.status(500).send({ error: "Failed to export PPTX", message: err?.message });
+    }
+  });
+
+  // Slide Presenter Voice Script Endpoint
+  fastify.post("/narrate-slide", async (request, reply) => {
+    try {
+      const { topic, slideTitle, slideContentText } = request.body as {
+        topic: string;
+        slideTitle: string;
+        slideContentText: string;
+      };
+
+      const { ttsService } = await import("../services/ttsService");
+      const script = await ttsService.generateSlideScript(topic || "Technical Overview", slideTitle || "Slide", slideContentText || "");
+      return reply.send({ success: true, script });
+    } catch (err: any) {
+      request.log.error(err);
+      return reply.status(500).send({ error: "Failed to generate narration", message: err?.message });
     }
   });
 };

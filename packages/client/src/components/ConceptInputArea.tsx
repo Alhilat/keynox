@@ -10,15 +10,28 @@ import {
   Landmark,
   Compass,
   Scroll,
-  Palette,
   ChevronDown,
   Sparkles,
   Paperclip,
   Layers,
+  Zap,
+  Cpu,
+  LayoutGrid,
 } from "lucide-react";
 import { extractPdfDocument, ExtractedPdfResult } from "../utils/pdfExtractor";
 
-export type VisualLookTheme = "oxford" | "cambridge" | "harvard" | "heidelberg" | "princeton";
+export type VisualLookTheme =
+  | "midnight"
+  | "slate"
+  | "monochrome"
+  | "cobalt"
+  | "emerald"
+  | "crimson"
+  | "oxford"
+  | "cambridge"
+  | "harvard"
+  | "heidelberg"
+  | "princeton";
 export type AiEngine = "gemini" | "nvidia" | "auto";
 
 export interface GenerationOptions {
@@ -42,53 +55,56 @@ const VISUAL_LOOKS: {
   badgeColor: string;
 }[] = [
   {
-    id: "oxford",
-    name: "Oxford Navy",
-    icon: Landmark,
-    desc: "Academic Navy & Crisp Slate",
-    swatch: "from-blue-600 to-indigo-900",
-    badgeColor: "bg-blue-500",
+    id: "midnight",
+    name: "Midnight Obsidian",
+    icon: Sparkles,
+    desc: "Deep Obsidian Glass & Electric Cyan",
+    swatch: "from-sky-500 to-slate-950",
+    badgeColor: "bg-sky-500",
   },
   {
-    id: "cambridge",
-    name: "Cambridge Slate",
-    icon: BookOpen,
-    desc: "Minimalist Silver & Chalk",
-    swatch: "from-slate-400 to-neutral-800",
+    id: "slate",
+    name: "Slate Minimal",
+    icon: Layers,
+    desc: "Refined Titanium & Cool Slate",
+    swatch: "from-slate-400 to-slate-900",
     badgeColor: "bg-slate-400",
   },
   {
-    id: "harvard",
-    name: "Harvard Crimson",
-    icon: GraduationCap,
-    desc: "Ivy League Burgundy & Warm Slate",
-    swatch: "from-red-600 to-rose-950",
-    badgeColor: "bg-red-500",
+    id: "monochrome",
+    name: "Pure Monochrome",
+    icon: LayoutGrid,
+    desc: "High-Contrast Charcoal & Crisp White",
+    swatch: "from-zinc-100 to-zinc-900",
+    badgeColor: "bg-zinc-300",
   },
   {
-    id: "heidelberg",
-    name: "Heidelberg Scholar",
-    icon: Compass,
-    desc: "Classical Botanical & Forest Green",
-    swatch: "from-emerald-600 to-teal-950",
+    id: "cobalt",
+    name: "Royal Cobalt",
+    icon: Zap,
+    desc: "Deep Navy & Electric Sapphire",
+    swatch: "from-blue-500 to-blue-950",
+    badgeColor: "bg-blue-500",
+  },
+  {
+    id: "emerald",
+    name: "Obsidian Emerald",
+    icon: Cpu,
+    desc: "Cyber Matrix & Precision Mint",
+    swatch: "from-emerald-500 to-emerald-950",
     badgeColor: "bg-emerald-500",
-  },
-  {
-    id: "princeton",
-    name: "Princeton Bronze",
-    icon: Scroll,
-    desc: "Antique Scholar Bronze & Ochre",
-    swatch: "from-amber-600 to-amber-950",
-    badgeColor: "bg-amber-500",
   },
 ];
 
-const ARCHETYPE_OPTIONS = [
-  { id: "equations", label: "Formulas & Derivations" },
-  { id: "architecture-stack", label: "Architecture Stack" },
-  { id: "protocol-matrix", label: "Comparison Matrix" },
-  { id: "telemetry-cable", label: "Interactive Data Flow" },
-];
+import { ARCHETYPE_REGISTRY, VisualArchetypeId } from "@presentation/schema";
+
+const ARCHETYPE_OPTIONS: { id: VisualArchetypeId; label: string; desc: string }[] = Object.values(ARCHETYPE_REGISTRY).map(
+  (a) => ({
+    id: a.id,
+    label: a.name,
+    desc: a.description,
+  })
+);
 
 const SLIDE_COUNT_OPTIONS = [4, 6, 8, 10, 12, 16];
 
@@ -103,14 +119,16 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
   const [pdfMetadata, setPdfMetadata] = useState<ExtractedPdfResult | null>(null);
 
   // Configuration options
-  const [selectedTheme, setSelectedTheme] = useState<VisualLookTheme>("oxford");
+  const [selectedTheme, setSelectedTheme] = useState<VisualLookTheme>("midnight");
   const [targetSlideCount, setTargetSlideCount] = useState<number>(6);
   const [selectedEngine, setSelectedEngine] = useState<AiEngine>("auto");
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([
-    "equations",
-    "architecture-stack",
-    "protocol-matrix",
-    "telemetry-cable",
+    "interactive-simulator",
+    "motion-pipeline",
+    "equation-morpher",
+    "benchmark-matrix",
+    "code-terminal",
+    "architecture-topology",
   ]);
 
   // Dropdown / Popover UI states

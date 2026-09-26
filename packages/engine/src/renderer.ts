@@ -7,7 +7,17 @@ import {
   ShapeElement,
   ImageElement,
   InteractiveWidgetElement,
+  PhysicsSliderConfigSchema,
+  freeWidgetConfig,
+  textOr,
 } from "@presentation/schema";
+import { renderPhysicsWidget as renderGenericPhysicsWidget } from "./physicsRenderer";
+import {
+  renderBooleanSimulatorWidget,
+  renderLegacyPhysicsWidget,
+  renderCodeBlockWidget,
+  renderComparisonMatrixWidget,
+} from "./widgets";
 
 export class DOMRenderer {
   public static readonly STAGE_WIDTH = 1280;
@@ -15,6 +25,7 @@ export class DOMRenderer {
 
   private stageEl: HTMLElement | null = null;
   private resizeObserver: ResizeObserver | null = null;
+  private widgetCleanups: Array<() => void> = [];
 
   /**
    * Render an entire scene into the presentation container
@@ -27,6 +38,7 @@ export class DOMRenderer {
 
     container.innerHTML = "";
     container.setAttribute("data-scene-id", scene.id);
+    this.runWidgetCleanups();
 
     // Outer viewport wrapper (centers the 16:9 stage)
     const viewport = document.createElement("div");
@@ -563,403 +575,51 @@ export class DOMRenderer {
     container.className = "w-full h-full flex flex-col justify-center select-none py-1";
 
     if (widgetType === "boolean-simulator") {
-      this.renderBooleanSimulatorWidget(element, container);
+      renderBooleanSimulatorWidget(element, container);
     } else if (widgetType === "physics-slider") {
       this.renderPhysicsWidget(element, container);
     } else if (widgetType === "code-block") {
-      this.renderCodeBlockWidget(element, container);
+      renderCodeBlockWidget(element, container);
     } else if (widgetType === "comparison-matrix") {
-      this.renderComparisonMatrixWidget(element, container);
+      renderComparisonMatrixWidget(element, container);
     } else {
-      this.renderBooleanSimulatorWidget(element, container);
+      renderBooleanSimulatorWidget(element, container);
     }
 
     parent.appendChild(container);
   }
 
-  private renderBooleanSimulatorWidget(element: InteractiveWidgetElement, container: HTMLElement): void {
-    const wrapper = document.createElement("div");
-    wrapper.className = "flex flex-col gap-3 w-full";
-
-    let stateA = true;
-    let stateB = false;
-
-    // Signal Controls Row
-    const controlsRow = document.createElement("div");
-    controlsRow.className = "grid grid-cols-2 gap-3";
-
-    const btnA = document.createElement("button");
-    btnA.type = "button";
-    btnA.className =
-      "p-2.5 rounded-xl border flex items-center justify-between transition-all duration-200 cursor-pointer shadow-md active:scale-95";
-
-    const btnB = document.createElement("button");
-    btnB.type = "button";
-    btnB.className =
-      "p-2.5 rounded-xl border flex items-center justify-between transition-all duration-200 cursor-pointer shadow-md active:scale-95";
-
-    controlsRow.appendChild(btnA);
-    controlsRow.appendChild(btnB);
-    wrapper.appendChild(controlsRow);
-
-    // Gates Grid (4 gates: AND, OR, NOT, XOR)
-    const gatesGrid = document.createElement("div");
-    gatesGrid.className = "grid grid-cols-4 gap-2";
-
-    const createGateBox = (name: string, formula: string, rule: string) => {
-      const box = document.createElement("div");
-      box.className =
-        "p-2.5 rounded-xl border transition-all duration-200 flex flex-col justify-between";
-      box.innerHTML = `
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-[10px] font-mono font-bold text-slate-400">${name}</span>
-          <div class="gate-led w-2 h-2 rounded-full transition-all"></div>
-        </div>
-        <div class="gate-val text-sm font-mono font-black my-0.5 transition-all"></div>
-        <div class="flex items-center justify-between text-[9px] font-mono text-slate-500 mt-0.5">
-          <span>${formula}</span>
-          <span class="truncate max-w-[65px]">${rule}</span>
-        </div>
-      `;
-      return box;
-    };
-
-    const andBox = createGateBox("AND", "A ∧ B", "Both 1");
-    const orBox = createGateBox("OR", "A ∨ B", "Either 1");
-    const notBox = createGateBox("NOT", "¬A", "Invert A");
-    const xorBox = createGateBox("XOR", "A ⊕ B", "Strictly 1");
-
-    gatesGrid.appendChild(andBox);
-    gatesGrid.appendChild(orBox);
-    gatesGrid.appendChild(notBox);
-    gatesGrid.appendChild(xorBox);
-    wrapper.appendChild(gatesGrid);
-
-    // Live Interactive Truth Table
-    const ttWrapper = document.createElement("div");
-    ttWrapper.className =
-      "p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[10px] font-mono";
-    ttWrapper.innerHTML = `
-      <div class="flex items-center justify-between text-slate-500 font-bold border-b border-slate-800 pb-1 mb-1 px-2">
-        <span>A</span><span>B</span><span>A ∧ B</span><span>A ∨ B</span><span>¬A</span><span>A ⊕ B</span><span>TRUTH STATE</span>
-      </div>
-      <div class="tt-rows flex flex-col gap-0.5">
-        <div data-state="00" class="tt-row flex items-center justify-between px-2 py-0.5 rounded transition-all">
-          <span>0</span><span>0</span><span>0</span><span>0</span><span>1</span><span>0</span><span class="tt-tag opacity-0 text-[9px] font-bold text-cyan-400">ACTIVE ROW</span>
-        </div>
-        <div data-state="01" class="tt-row flex items-center justify-between px-2 py-0.5 rounded transition-all">
-          <span>0</span><span>1</span><span>0</span><span>1</span><span>1</span><span>1</span><span class="tt-tag opacity-0 text-[9px] font-bold text-cyan-400">ACTIVE ROW</span>
-        </div>
-        <div data-state="10" class="tt-row flex items-center justify-between px-2 py-0.5 rounded transition-all">
-          <span>1</span><span>0</span><span>0</span><span>1</span><span>0</span><span>1</span><span class="tt-tag opacity-0 text-[9px] font-bold text-cyan-400">ACTIVE ROW</span>
-        </div>
-        <div data-state="11" class="tt-row flex items-center justify-between px-2 py-0.5 rounded transition-all">
-          <span>1</span><span>1</span><span>1</span><span>1</span><span>0</span><span>0</span><span class="tt-tag opacity-0 text-[9px] font-bold text-cyan-400">ACTIVE ROW</span>
-        </div>
-      </div>
-    `;
-    wrapper.appendChild(ttWrapper);
-
-    const updateUI = () => {
-      // Button A
-      if (stateA) {
-        btnA.className =
-          "p-2.5 rounded-xl border border-emerald-500/60 bg-emerald-950/40 text-white flex items-center justify-between shadow-lg shadow-emerald-500/15 cursor-pointer transition-all";
-        btnA.innerHTML = `
-          <div class="text-left">
-            <span class="text-[9px] font-mono text-emerald-400 uppercase font-bold block">SIGNAL A (HIGH)</span>
-            <span class="text-xs font-mono font-bold">Input A: 1 (TRUE)</span>
-          </div>
-          <span class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 text-[10px] font-mono font-black">HIGH</span>
-        `;
-      } else {
-        btnA.className =
-          "p-2.5 rounded-xl border border-slate-800 bg-slate-950/60 text-slate-400 flex items-center justify-between cursor-pointer hover:border-slate-700 transition-all";
-        btnA.innerHTML = `
-          <div class="text-left">
-            <span class="text-[9px] font-mono text-slate-500 uppercase font-bold block">SIGNAL A (LOW)</span>
-            <span class="text-xs font-mono font-bold">Input A: 0 (FALSE)</span>
-          </div>
-          <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-mono font-bold">LOW</span>
-        `;
-      }
-
-      // Button B
-      if (stateB) {
-        btnB.className =
-          "p-2.5 rounded-xl border border-emerald-500/60 bg-emerald-950/40 text-white flex items-center justify-between shadow-lg shadow-emerald-500/15 cursor-pointer transition-all";
-        btnB.innerHTML = `
-          <div class="text-left">
-            <span class="text-[9px] font-mono text-emerald-400 uppercase font-bold block">SIGNAL B (HIGH)</span>
-            <span class="text-xs font-mono font-bold">Input B: 1 (TRUE)</span>
-          </div>
-          <span class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 text-[10px] font-mono font-black">HIGH</span>
-        `;
-      } else {
-        btnB.className =
-          "p-2.5 rounded-xl border border-slate-800 bg-slate-950/60 text-slate-400 flex items-center justify-between cursor-pointer hover:border-slate-700 transition-all";
-        btnB.innerHTML = `
-          <div class="text-left">
-            <span class="text-[9px] font-mono text-slate-500 uppercase font-bold block">SIGNAL B (LOW)</span>
-            <span class="text-xs font-mono font-bold">Input B: 0 (FALSE)</span>
-          </div>
-          <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-mono font-bold">LOW</span>
-        `;
-      }
-
-      const andVal = stateA && stateB;
-      const orVal = stateA || stateB;
-      const notVal = !stateA;
-      const xorVal = (stateA || stateB) && !(stateA && stateB);
-
-      const updateGateBox = (box: HTMLElement, val: boolean) => {
-        const led = box.querySelector(".gate-led") as HTMLElement;
-        const text = box.querySelector(".gate-val") as HTMLElement;
-        if (val) {
-          box.className =
-            "p-2.5 rounded-xl border border-emerald-500/60 bg-emerald-950/30 text-white shadow-lg shadow-emerald-500/15 flex flex-col justify-between transition-all";
-          led.className =
-            "gate-led w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981] animate-pulse";
-          text.className = "gate-val text-sm font-mono font-black my-0.5 text-emerald-400";
-          text.textContent = "TRUE (1)";
-        } else {
-          box.className =
-            "p-2.5 rounded-xl border border-slate-800 bg-slate-950/50 text-slate-400 flex flex-col justify-between transition-all";
-          led.className = "gate-led w-2 h-2 rounded-full bg-slate-700";
-          text.className = "gate-val text-sm font-mono font-black my-0.5 text-slate-500";
-          text.textContent = "FALSE (0)";
-        }
-      };
-
-      updateGateBox(andBox, andVal);
-      updateGateBox(orBox, orVal);
-      updateGateBox(notBox, notVal);
-      updateGateBox(xorBox, xorVal);
-
-      // Truth Table Highlight
-      const activeStateKey = `${stateA ? "1" : "0"}${stateB ? "1" : "0"}`;
-      ttWrapper.querySelectorAll(".tt-row").forEach((row) => {
-        const el = row as HTMLElement;
-        const tag = el.querySelector(".tt-tag") as HTMLElement;
-        if (el.getAttribute("data-state") === activeStateKey) {
-          el.className =
-            "tt-row flex items-center justify-between px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/50 text-cyan-200 font-bold transition-all shadow-sm";
-          if (tag) tag.style.opacity = "1";
-        } else {
-          el.className =
-            "tt-row flex items-center justify-between px-2 py-0.5 rounded text-slate-400 opacity-50 transition-all";
-          if (tag) tag.style.opacity = "0";
-        }
-      });
-    };
-
-    btnA.addEventListener("click", () => {
-      stateA = !stateA;
-      updateUI();
-    });
-
-    btnB.addEventListener("click", () => {
-      stateB = !stateB;
-      updateUI();
-    });
-
-    updateUI();
-    container.appendChild(wrapper);
-  }
-
+  /**
+   * Renders a physics-slider widget from its typed config when present,
+   * falling back to the legacy F=ma sandbox for untyped configs.
+   */
   private renderPhysicsWidget(element: InteractiveWidgetElement, container: HTMLElement): void {
-    const wrapper = document.createElement("div");
-    wrapper.className = "flex flex-col gap-3 w-full";
-
-    let mass = 2; // kg
-    let force = 10; // N
-
-    const controls = document.createElement("div");
-    controls.className = "grid grid-cols-2 gap-3";
-    controls.innerHTML = `
-      <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
-        <div class="flex justify-between text-xs font-mono mb-1.5">
-          <span class="text-slate-400">Mass (m):</span>
-          <span class="mass-val text-blue-400 font-bold">2 kg</span>
-        </div>
-        <input type="range" min="0.5" max="10" step="0.5" value="2" class="mass-slider w-full accent-blue-500 cursor-pointer" />
-      </div>
-      <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
-        <div class="flex justify-between text-xs font-mono mb-1.5">
-          <span class="text-slate-400">Force (F):</span>
-          <span class="force-val text-emerald-400 font-bold">10 N</span>
-        </div>
-        <input type="range" min="1" max="50" step="1" value="10" class="force-slider w-full accent-emerald-500 cursor-pointer" />
-      </div>
-    `;
-    wrapper.appendChild(controls);
-
-    const readout = document.createElement("div");
-    readout.className =
-      "p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between";
-    readout.innerHTML = `
-      <div class="font-mono text-xs text-slate-300">
-        Newton's 2nd Law: <span class="text-white font-bold">a = F / m</span>
-      </div>
-      <div class="accel-val px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-sm">
-        a = 5.0 m/s²
-      </div>
-    `;
-    wrapper.appendChild(readout);
-
-    const massSlider = controls.querySelector(".mass-slider") as HTMLInputElement;
-    const forceSlider = controls.querySelector(".force-slider") as HTMLInputElement;
-    const massVal = controls.querySelector(".mass-val") as HTMLElement;
-    const forceVal = controls.querySelector(".force-val") as HTMLElement;
-    const accelVal = readout.querySelector(".accel-val") as HTMLElement;
-
-    const updatePhysics = () => {
-      mass = parseFloat(massSlider.value);
-      force = parseFloat(forceSlider.value);
-      const accel = (force / Math.max(0.1, mass)).toFixed(1);
-      massVal.textContent = `${mass} kg`;
-      forceVal.textContent = `${force} N`;
-      accelVal.textContent = `a = ${accel} m/s²`;
-    };
-
-    massSlider.addEventListener("input", updatePhysics);
-    forceSlider.addEventListener("input", updatePhysics);
-
-    container.appendChild(wrapper);
+    const parsed = PhysicsSliderConfigSchema.safeParse(element.config ?? {});
+    if (parsed.success) {
+      this.widgetCleanups.push(renderGenericPhysicsWidget(container, parsed.data));
+      return;
+    }
+    renderLegacyPhysicsWidget(element, container);
   }
 
-  private renderCodeBlockWidget(element: InteractiveWidgetElement, container: HTMLElement): void {
-    const config = element.config || {};
-    const code = config.code || (element as any).code || `// Production Architecture Implementation
-function evaluateConsensus(quorum: number, nodes: Node[]): ConsensusState {
-  const activeVotes = nodes.filter(n => n.hasVoted && n.isHealthy).length;
-  const isSupermajority = activeVotes >= Math.floor(quorum / 2) + 1;
-  return { committed: isSupermajority, timestamp: Date.now() };
-}`;
-    const language = config.language || "typescript";
-    const filename = config.filename || `${language}_impl.${language === "python" ? "py" : language === "rust" ? "rs" : "ts"}`;
-
-    const wrapper = document.createElement("div");
-    wrapper.className =
-      "w-full rounded-xl bg-slate-950/90 border border-slate-800 shadow-2xl overflow-hidden font-mono text-xs";
-
-    // Code Window Top Bar
-    const topBar = document.createElement("div");
-    topBar.className =
-      "px-3.5 py-2.5 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between";
-    topBar.innerHTML = `
-      <div class="flex items-center gap-2">
-        <div class="flex items-center gap-1.5">
-          <span class="w-2.5 h-2.5 rounded-full bg-red-500/80"></span>
-          <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
-        </div>
-        <span class="text-slate-400 text-[11px] font-semibold ml-2">${filename}</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">${language}</span>
-        <button class="btn-copy-code px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[10px] transition-colors">Copy</button>
-      </div>
-    `;
-    wrapper.appendChild(topBar);
-
-    // Code Content with Line Numbers
-    const codeBody = document.createElement("div");
-    codeBody.className = "p-3.5 max-h-56 overflow-y-auto flex gap-3 text-[11px] leading-relaxed select-text";
-
-    const lines = code.split("\n");
-    const lineNums = document.createElement("div");
-    lineNums.className = "text-slate-600 select-none text-right pr-2 border-r border-slate-800/80";
-    lineNums.innerHTML = lines.map((_: string, i: number) => `<div>${i + 1}</div>`).join("");
-
-    const codeLines = document.createElement("pre");
-    codeLines.className = "flex-1 text-slate-200 overflow-x-auto whitespace-pre font-mono";
-    
-    // Highlight syntax tokens lightly
-    const formatted = code
-      .replace(/(function|const|let|var|return|if|else|import|export|class|type|interface)\b/g, '<span class="text-purple-400 font-bold">$1</span>')
-      .replace(/(true|false|null|undefined|\d+)/g, '<span class="text-amber-300">$1</span>')
-      .replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="text-emerald-300">$1</span>')
-      .replace(/(\/\/.*$)/gm, '<span class="text-slate-500 italic">$1</span>');
-
-    codeLines.innerHTML = formatted;
-
-    codeBody.appendChild(lineNums);
-    codeBody.appendChild(codeLines);
-    wrapper.appendChild(codeBody);
-
-    const copyBtn = topBar.querySelector(".btn-copy-code") as HTMLButtonElement;
-    copyBtn.addEventListener("click", () => {
-      navigator.clipboard.writeText(code);
-      copyBtn.textContent = "Copied!";
-      copyBtn.className = "btn-copy-code px-2 py-0.5 rounded bg-emerald-600/30 text-emerald-300 text-[10px]";
-      setTimeout(() => {
-        copyBtn.textContent = "Copy";
-        copyBtn.className = "btn-copy-code px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]";
-      }, 1500);
-    });
-
-    container.appendChild(wrapper);
-  }
-
-  private renderComparisonMatrixWidget(element: InteractiveWidgetElement, container: HTMLElement): void {
-    const config = element.config || {};
-    const columns: string[] = config.columns || ["Architecture", "Throughput", "Latency", "Fault Tolerance"];
-    const rows: Array<{ name: string; values: string[]; status?: string }> = config.rows || [
-      { name: "Monolithic Pattern", values: ["100K req/s", "< 1ms", "Low (Single point)", "High Efficiency"], status: "HIGH_PERF" },
-      { name: "Microservices Pattern", values: ["45K req/s", "~ 15ms", "High (Isolated failures)", "Scalable Teams"], status: "MODULAR" },
-      { name: "Event-Driven Stream", values: ["250K msg/s", "~ 5ms", "Guaranteed Replay", "Eventual Sync"], status: "REACTIVE" },
-    ];
-
-    const wrapper = document.createElement("div");
-    wrapper.className =
-      "w-full rounded-xl bg-slate-950/90 border border-slate-800 shadow-2xl overflow-hidden font-mono text-xs";
-
-    const table = document.createElement("table");
-    table.className = "w-full text-left border-collapse";
-
-    // Header
-    const thead = document.createElement("thead");
-    thead.className = "bg-slate-900/90 border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400";
-    let thHtml = "<tr>";
-    columns.forEach((c) => {
-      thHtml += `<th class="px-3.5 py-2.5">${c}</th>`;
-    });
-    thHtml += "</tr>";
-    thead.innerHTML = thHtml;
-    table.appendChild(thead);
-
-    // Body
-    const tbody = document.createElement("tbody");
-    tbody.className = "divide-y divide-slate-800/60 text-[11px]";
-
-    rows.forEach((r, idx) => {
-      const tr = document.createElement("tr");
-      tr.className = "hover:bg-slate-900/50 transition-colors cursor-pointer group";
-
-      let rowHtml = `<td class="px-3.5 py-2.5 font-bold text-white flex items-center gap-2">
-        <span class="w-1.5 h-1.5 rounded-full ${idx === 0 ? "bg-cyan-400" : idx === 1 ? "bg-indigo-400" : "bg-emerald-400"}"></span>
-        ${r.name}
-      </td>`;
-
-      (r.values || []).forEach((v, vIdx) => {
-        const isOptimal = v.toLowerCase().includes("high") || v.toLowerCase().includes("100k") || v.toLowerCase().includes("< 1ms") || v.toLowerCase().includes("guaranteed");
-        rowHtml += `<td class="px-3.5 py-2.5 ${isOptimal ? "text-emerald-400 font-semibold" : "text-slate-300"}">${v}</td>`;
-      });
-
-      tr.innerHTML = rowHtml;
-      tbody.appendChild(tr);
-    });
-
-    table.appendChild(tbody);
-    wrapper.appendChild(table);
-    container.appendChild(wrapper);
-  }
 
   public destroy(): void {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
     }
+    this.runWidgetCleanups();
+  }
+
+  /** Cancels widget animation loops torn down by scene changes. */
+  private runWidgetCleanups(): void {
+    for (const cleanup of this.widgetCleanups) {
+      try {
+        cleanup();
+      } catch {
+        /* widget already torn down */
+      }
+    }
+    this.widgetCleanups.length = 0;
   }
 }

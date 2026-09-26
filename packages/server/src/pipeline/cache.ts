@@ -19,13 +19,15 @@ class PresentationCache {
     this.maxSize = maxSize;
   }
 
-  private generateKey(topic: string, slideCount?: number): string {
-    const normalized = topic.trim().toLowerCase().replace(/\s+/g, " ");
-    return crypto.createHash("md5").update(`${normalized}:${slideCount || "auto"}`).digest("hex");
+  private generateKey(topic: string, slideCount?: number, theme?: string, engine?: string): string {
+    const normalized = topic.trim().toLowerCase().replace(/\s+/g, " ").slice(0, 2000);
+    const themeKey = (theme || "midnight").toLowerCase();
+    const engineKey = (engine || "auto").toLowerCase();
+    return crypto.createHash("md5").update(`${normalized}:${slideCount || "auto"}:${themeKey}:${engineKey}`).digest("hex");
   }
 
-  public get(topic: string, slideCount?: number): CachedPresentation | null {
-    const key = this.generateKey(topic, slideCount);
+  public get(topic: string, slideCount?: number, theme?: string, engine?: string): CachedPresentation | null {
+    const key = this.generateKey(topic, slideCount, theme, engine);
     const item = this.cache.get(key);
     if (!item) return null;
 
@@ -46,13 +48,20 @@ class PresentationCache {
       return null;
     }
 
+    // Invalidate if presentation has no slides
+    const slideMatches = (item.html.match(/<(?:section|div)\b[^>]*(?:\bid=["']slide\d+["']|\bclass=["'][^"']*(?<=[ "'])slide(?=[ "'])[^"']*["'])/gi) || []).length;
+    if (slideMatches < 1) {
+      this.cache.delete(key);
+      return null;
+    }
+
     // Refresh LRU position
     this.cache.delete(key);
     this.cache.set(key, item);
     return item;
   }
 
-  public set(topic: string, data: Omit<CachedPresentation, "timestamp">, slideCount?: number): void {
+  public set(topic: string, data: Omit<CachedPresentation, "timestamp">, slideCount?: number, theme?: string, engine?: string): void {
     // Never cache generic placeholder boilerplate
     if (
       data.html.includes("Intensity Factor (α)") ||
@@ -63,7 +72,13 @@ class PresentationCache {
       return;
     }
 
-    const key = this.generateKey(topic, slideCount);
+    // Never cache presentations with no slides
+    const slideMatches = (data.html.match(/<(?:section|div)\b[^>]*(?:\bid=["']slide\d+["']|\bclass=["'][^"']*(?<=[ "'])slide(?=[ "'])[^"']*["'])/gi) || []).length;
+    if (slideMatches < 1) {
+      return;
+    }
+
+    const key = this.generateKey(topic, slideCount, theme, engine);
 
     if (this.cache.size >= this.maxSize) {
       // Remove oldest entry

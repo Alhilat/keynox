@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { extractSlidesFromContent, extractCustomScripts, assembleHyperDeckPresentation } from "../pipeline/html-assembler";
-import { parseStoryboardIntoSlides, synthesizeFallbackSlide, resolveVisualTemplate, VISUAL_TEMPLATES, sanitizeAiTone, isValidSlideHtml } from "../pipeline/stage3-creative-generator";
+import { parseStoryboardIntoSlides, synthesizeFallbackSlide, sanitizeAiTone, isValidSlideHtml } from "../pipeline/stage3-creative-generator";
 import { detectTargetSlideCount } from "../services/slideCountDetector";
 import { presentationCache } from "../pipeline/cache";
 import { convertHtmlToPresentationAst } from "../pipeline/html-to-ast";
 import { extractCleanTopic, sanitizeDocumentContent, sanitizeTitleString } from "../pipeline/topic-extractor";
+import { parseStage1Json } from "../pipeline/stage1-analyzer";
 import { PresentationSchema } from "@presentation/schema";
 
 describe("HyperDeck Pipeline & Engine Test Suite", () => {
@@ -36,58 +37,43 @@ describe("HyperDeck Pipeline & Engine Test Suite", () => {
       expect(slides[0]).not.toContain('<span class="');
       expect(slides[0]).toContain("</div></div></section>");
     });
-  });
 
-  describe("20-Template Visual Catalog & Autonomous Selection", () => {
-    it("should contain exactly 20 rich production visual templates", () => {
-      const keys = Object.keys(VISUAL_TEMPLATES);
-      expect(keys.length).toBe(20);
-      expect(keys).toContain("TEMPLATE_01_HERO_SPLIT_OVERVIEW");
-      expect(keys).toContain("TEMPLATE_02_TERMINAL_CODE_EXPLORER");
-      expect(keys).toContain("TEMPLATE_03_CODE_DIFF_EVOLUTION");
-      expect(keys).toContain("TEMPLATE_04_SEQUENTIAL_PIPELINE_4");
-      expect(keys).toContain("TEMPLATE_05_STREAMLINED_PIPELINE_3");
-      expect(keys).toContain("TEMPLATE_06_CONNECTED_TOPOLOGY_FLOW");
-      expect(keys).toContain("TEMPLATE_07_DUAL_STREAM_CONVERGENCE");
-      expect(keys).toContain("TEMPLATE_08_INTERACTIVE_SLIDER_SIMULATOR");
-      expect(keys).toContain("TEMPLATE_09_COMPARISON_MATRIX_TABLE");
-      expect(keys).toContain("TEMPLATE_10_DYNAMIC_BAR_CHART_BENCHMARK");
-      expect(keys).toContain("TEMPLATE_11_TRI_CARD_CONCEPT_GRID");
-      expect(keys).toContain("TEMPLATE_12_QUAD_METRIC_DASHBOARD");
-      expect(keys).toContain("TEMPLATE_13_MATHEMATICAL_DERIVATION_STEP");
-      expect(keys).toContain("TEMPLATE_14_STATE_MACHINE_TRANSITION");
-      expect(keys).toContain("TEMPLATE_15_HIERARCHICAL_LAYER_STACK");
-      expect(keys).toContain("TEMPLATE_16_INTERACTIVE_SVG_VENN");
-      expect(keys).toContain("TEMPLATE_17_THREE_JS_SPATIAL_WORLD");
-      expect(keys).toContain("TEMPLATE_18_CHRONOLOGICAL_TIMELINE");
-      expect(keys).toContain("TEMPLATE_19_PRO_CON_TRADE_OFF_STUDY");
-      expect(keys).toContain("TEMPLATE_20_EXECUTIVE_CHECKLIST_SUMMARY");
-    });
+    it("should extract multiple <div class='slide slide-N'> elements and preserve nested components", () => {
+      const multiDivHtml = `
+        <div class="slide slide-1" style="position: absolute; inset: 0;">
+          <div class="slide-title-group">
+            <div class="slide-category">ARCHITECTURE</div>
+            <h2 class="slide-title">Slide 1</h2>
+          </div>
+          <div class="glass-card"><p>Card 1</p></div>
+        </div>
 
-    it("should prioritize explicit Model 2 TEMPLATE directives", () => {
-      const directive = `SLIDE 3: Execution Runtime\nTEMPLATE: TEMPLATE_02_TERMINAL_CODE_EXPLORER\nRun container demo with -pu flags`;
-      const template = resolveVisualTemplate(directive, 2);
-      expect(template.id).toBe("TEMPLATE_02_TERMINAL_CODE_EXPLORER");
-    });
+        <div class="slide slide-2" style="position: absolute; inset: 0;">
+          <div class="slide-title-group">
+            <div class="slide-category">RUNTIME</div>
+            <h2 class="slide-title">Slide 2</h2>
+          </div>
+          <div class="glass-card"><p>Card 2</p></div>
+        </div>
 
-    it("should autonomously infer templates from semantic keywords", () => {
-      // CLI / Docker commands -> Terminal
-      const cliTemplate = resolveVisualTemplate("Inspect PID namespaces with sudo unshare -p -f --mount-proc", 1);
-      expect(cliTemplate.id).toBe("TEMPLATE_02_TERMINAL_CODE_EXPLORER");
+        <div class="slide slide-3" style="position: absolute; inset: 0;">
+          <div class="slide-title-group">
+            <div class="slide-category">BENCHMARK</div>
+            <h2 class="slide-title">Slide 3</h2>
+          </div>
+          <div class="glass-card"><p>Card 3</p></div>
+        </div>
+      `;
 
-      // Layer stack / hierarchy -> Hierarchical Layer Stack
-      const layerTemplate = resolveVisualTemplate("Hierarchical abstraction layers from hardware to user space", 3);
-      expect(layerTemplate.id).toBe("TEMPLATE_15_HIERARCHICAL_LAYER_STACK");
-
-      // Metrics / KPIs -> Quad Metric Dashboard
-      const metricTemplate = resolveVisualTemplate("Throughput benchmarks and latency KPI dashboard metrics", 4);
-      expect(metricTemplate.id).toBe("TEMPLATE_12_QUAD_METRIC_DASHBOARD");
-
-      // Checklist / takeaways -> Executive Checklist Summary
-      const summaryTemplate = resolveVisualTemplate("Executive summary and key architectural takeaways checklist", 5);
-      expect(summaryTemplate.id).toBe("TEMPLATE_20_EXECUTIVE_CHECKLIST_SUMMARY");
+      const slides = extractSlidesFromContent(multiDivHtml);
+      expect(slides).toHaveLength(3);
+      expect(slides[0]).toContain("Slide 1");
+      expect(slides[0]).toContain("slide-title-group");
+      expect(slides[1]).toContain("Slide 2");
+      expect(slides[2]).toContain("Slide 3");
     });
   });
+
 
   describe("assembleHyperDeckPresentation", () => {
     it("should include KaTeX CSS and auto-render JS in presentation head", () => {
@@ -163,6 +149,8 @@ describe("HyperDeck Pipeline & Engine Test Suite", () => {
       expect(html).toContain('onclick="saveDrawings()"');
       expect(html).toContain('onclick="clearDrawings()"');
       expect(html).toContain('id="annotateToggleBtn"');
+      expect(html).toContain('id="clearBtn"');
+      expect(html).not.toContain('✏️');
 
       // Footer indicator & controls-bar floating position
       expect(html).toContain('id="footerSlideCounter"');
@@ -179,6 +167,8 @@ describe("HyperDeck Pipeline & Engine Test Suite", () => {
       expect(html).toContain('HYPERDECK_SET_FULLSCREEN');
       expect(html).toContain(':fullscreen .controls-bar');
       expect(html).toContain(':fullscreen .top-zoom-controls');
+      expect(html).toContain('.controls-bar.hidden');
+      expect(html).toContain('.top-zoom-controls.hidden');
     });
   });
 
@@ -289,6 +279,20 @@ SLIDE 2: VFS Subsystem
       const validated = PresentationSchema.safeParse(ast);
       expect(validated.success).toBe(true);
     });
+
+    it("should reject slides without source-derived elements instead of inventing cards", () => {
+      const generatedHtml = `
+        <section class="slide" id="slide0">
+          <div class="slide-title-group">
+            <h2 class="slide-title">Source Title</h2>
+          </div>
+        </section>
+      `;
+
+      expect(() => convertHtmlToPresentationAst("Source Topic", generatedHtml)).toThrow(
+        "contains no source-derived elements"
+      );
+    });
   });
 
   describe("extractCleanTopic", () => {
@@ -321,96 +325,65 @@ SLIDE 2: VFS Subsystem
   });
 
   describe("synthesizeFallbackSlide", () => {
-    it("should strip markdown asterisks and never produce empty slide titles", () => {
+    it("should preserve directive content without selecting a domain-specific template", () => {
       const directive = `
-- SLIDE NUMBER & TITLE:**
-TITLE:** Linux Namespaces – Kernel-Level Isolation
-- SUBTITLE & CATEGORY:** PHYSICAL TOPOLOGY
-- NARRATIVE & CONTENT**
-Primary Takeaway:** Containers achieve OS-level virtualisation by creating restricted views of system resources.
+TITLE: Marine Sensor Calibration
+CATEGORY: FIELD MEASUREMENTS
+Calibration drift is measured against the reference probe.
+The field protocol records temperature and salinity for each sample.
       `;
-      const html = synthesizeFallbackSlide("Containers", 0, 5, directive);
-      expect(html).toContain('<h2 class="slide-title">Linux Namespaces – Kernel-Level Isolation</h2>');
-      expect(html).toContain('<div class="slide-category">PHYSICAL TOPOLOGY</div>');
-      expect(html).not.toContain('**');
-      expect(html).toContain('<svg');
-      expect(html).not.toContain('⚙️');
-      expect(html).not.toContain('⚡');
+      const html = synthesizeFallbackSlide("Marine Sensor Calibration", 0, 2, directive);
+
+      expect(html).toContain('<h2 class="slide-title">Marine Sensor Calibration</h2>');
+      expect(html).toContain("Calibration drift is measured against the reference probe.");
+      expect(html).toContain("temperature and salinity");
+      expect(html).not.toContain("Superblock");
+      expect(html).not.toContain("Virtual Filesystem");
+      expect(html).not.toContain("100K req/s");
     });
 
-    it("should synthesize terminal explorer template without emojis and with clean code spans", () => {
-      const directive = `
-TITLE: Container Isolation CLI
-TEMPLATE: TEMPLATE_02_TERMINAL_CODE_EXPLORER
-sudo unshare --fork --pid --mount-proc /bin/bash
-ls /proc confirms new PID space
-      `;
-      const html = synthesizeFallbackSlide("Linux Containers", 1, 5, directive);
-      expect(html).toContain('class="terminal-card"');
-      expect(html).toContain('terminal-prompt');
-      expect(html).not.toContain('📦');
-      expect(html).not.toContain('🔧');
-      expect(html).not.toContain('💻');
+    it("should use analysis excerpts when the directive has little content", () => {
+      const html = synthesizeFallbackSlide(
+        "Atmospheric Imaging",
+        1,
+        2,
+        "TITLE: Atmospheric Imaging",
+        "Exposure time controls the signal-to-noise ratio.\nThe calibration target is captured before each observation."
+      );
+
+      expect(html).toContain("Exposure time controls the signal-to-noise ratio.");
+      expect(html).toContain("calibration target");
+      expect(html).not.toContain("Inode");
+      expect(html).not.toContain("Runtime &amp; Isolation Boundary");
     });
 
-    it("should never let prompt metadata like TARGET SLIDE COUNT or PREFERRED THEME become slide titles", () => {
-      const pollutedDirective = `
+    it("should escape source-derived text before inserting it into fallback HTML", () => {
+      const html = synthesizeFallbackSlide(
+        "Markup Safety",
+        0,
+        1,
+        "TITLE: Markup Safety\nThe payload contains <script>alert('x')</script> and must remain text."
+      );
+
+      expect(html).toContain("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;");
+      expect(html).not.toContain("<script>alert");
+    });
+
+    it("should remove prompt metadata from fallback content", () => {
+      const directive = `
 TARGET SLIDE COUNT: 4 Slides
 PREFERRED THEME: EMERALD
 SOURCE DOCUMENT CONTENT:
-TITLE: Inode Pointer Resolution
-Direct pointers link to 4KB blocks
-Single indirect pointer addresses 1024 blocks
+TITLE: Observable Climate Signals
+The input contains temperature anomalies from the source document.
       `;
-      const html = synthesizeFallbackSlide("The Filesystem", 0, 4, pollutedDirective);
+      const html = synthesizeFallbackSlide("Observable Climate Signals", 0, 4, directive);
+
       expect(html).not.toContain("TARGET SLIDE COUNT");
       expect(html).not.toContain("PREFERRED THEME");
       expect(html).not.toContain("SOURCE DOCUMENT");
-      expect(html).toContain("Inode Pointer Resolution");
-    });
-
-    it("should synthesize pointer-topology for Inode data structures", () => {
-      const inodeDirective = `
-TITLE: Inode Pointer Hierarchy
-Inodes contain 15 disk block pointers
-Direct pointers 0-11 link to 4KB blocks
-Single indirect pointer addresses 4MB of data
-Double indirect pointer addresses 4GB
-      `;
-      const html = synthesizeFallbackSlide("The Filesystem", 2, 4, inodeDirective);
-      expect(html).toContain('class="pointer-topology"');
-      expect(html).toContain("pointer-node");
-      expect(html).toContain("pointer-arrow-svg");
-    });
-
-    it("should synthesize disk-stripe for block group and superblock layouts", () => {
-      const stripeDirective = `
-TITLE: Ext4 Disk Block Group Layout
-Superblock stores fixed filesystem creation parameters
-Group Descriptors store block allocations
-Block Bitmap and Inode Bitmap track usage
-Inode Table contains file metadata
-Data Blocks contain file contents
-      `;
-      const html = synthesizeFallbackSlide("The Filesystem", 3, 4, stripeDirective);
-      expect(html).toContain('class="disk-stripe"');
-      expect(html).toContain('stripe-block stripe-cyan');
-      expect(html).toContain('Superblock');
-      expect(html).toContain('Group Descriptors');
-    });
-
-    it("should synthesize arch-stack for Virtual Filesystem (VFS) architecture", () => {
-      const vfsDirective = `
-TITLE: Virtual Filesystem (VFS) Abstraction
-User applications use POSIX open and read calls
-VFS provides a uniform switch layer over 50+ filesystems
-Concrete drivers like ext4, procfs, and tmpfs manage disk structures
-Device drivers and buffer cache handle physical storage
-      `;
-      const html = synthesizeFallbackSlide("The Filesystem", 1, 4, vfsDirective);
-      expect(html).toContain('class="arch-stack"');
-      expect(html).toContain('stack-tier');
-      expect(html).toContain('Virtual Filesystem Switch');
+      expect(html).toContain("Observable Climate Signals");
+      expect(html).toContain("temperature anomalies");
     });
   });
 
@@ -503,19 +476,19 @@ GNU/Linux supports over 50 types of filesystem.
       expect(cleaned).not.toContain("<caption>");
     });
 
-    it("should upgrade pseudo-CLI commands and childish binary chips", () => {
+    it("should preserve source commands and values instead of inventing replacements", () => {
       const raw = `
         <span class="terminal-cmd">$ network scan</span>
         <span class="terminal-cmd">$ port scan</span>
-        <span class="terminal-cmd">$ vulnerability scan</span>
         <div class="tier-chips"><span class="tier-chip">0</span><span class="tier-chip">1</span></div>
       `;
       const cleaned = sanitizeAiTone(raw);
-      expect(cleaned).toContain("$ nmap -sn 192.168.1.0/24");
-      expect(cleaned).toContain("$ nmap -sS -p 1-1024 192.168.1.50");
-      expect(cleaned).toContain("$ nmap --script=vuln 192.168.1.50");
-      expect(cleaned).toContain("NRZ / Manchester");
-      expect(cleaned).toContain("Binary Framing");
+      expect(cleaned).toContain("$ network scan");
+      expect(cleaned).toContain("$ port scan");
+      expect(cleaned).toContain('<span class="tier-chip">0</span>');
+      expect(cleaned).toContain('<span class="tier-chip">1</span>');
+      expect(cleaned).not.toContain("nmap");
+      expect(cleaned).not.toContain("NRZ / Manchester");
     });
 
     it("should strip robotic index-card prefixes from slide subtitles", () => {
@@ -629,6 +602,34 @@ Network Security`;
       expect(cleaned).toContain('class="motion-pipeline"');
       expect(cleaned).toContain('class="pipeline-stage"');
       expect(cleaned).toContain('class="stage-title"');
+    });
+
+    it("should parse structured Stage 1 JSON correctly even when wrapped in markdown code blocks", () => {
+      const mockLlmResponse = `\`\`\`json
+{
+  "core_thesis": "Linux Namespaces provide isolated resource views for container virtualization",
+  "target_audience": "Systems and security engineers",
+  "slide_count": 10,
+  "key_concepts": ["PID namespace", "mount namespace", "unshare", "chroot"],
+  "content_types_needed": {
+    "has_math": false,
+    "has_data": true,
+    "has_timeline": true,
+    "has_comparison": true,
+    "has_code": true
+  },
+  "domain": "tech",
+  "tone": "academic"
+}
+\`\`\``;
+
+      const parsed = parseStage1Json(mockLlmResponse);
+      expect(parsed).not.toBeNull();
+      expect(parsed?.core_thesis).toBe("Linux Namespaces provide isolated resource views for container virtualization");
+      expect(parsed?.slide_count).toBe(10);
+      expect(parsed?.domain).toBe("tech");
+      expect(parsed?.content_types_needed.has_code).toBe(true);
+      expect(parsed?.key_concepts).toHaveLength(4);
     });
   });
 });

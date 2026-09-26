@@ -3,6 +3,15 @@ import { DOMRenderer } from "./renderer";
 import { GSAPAnimator } from "./animator";
 import { PresentationAudio } from "./sound";
 
+export * from "./drawingHelpers";
+export * from "./fieldHelpers";
+export * from "./animationLoop";
+export * from "./formula";
+export * from "./physicsRenderer";
+export * from "./renderer";
+export * from "./animator";
+export * from "./sound";
+
 export interface EngineState {
   currentSceneIndex: number;
   currentStepIndex: number;

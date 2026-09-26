@@ -12,26 +12,14 @@ import {
   Check,
 } from "lucide-react";
 
-export interface PhotoLogItem {
-  prompt: string;
-  photoUrl?: string;
-  status: "rendering" | "done" | "error";
-  latencyMs?: number;
-}
-
 interface GenerationProcessViewerProps {
   isStreaming: boolean;
   activeStage: 1 | 2 | 3 | "done";
-  stage1Message: string;
   stage1Analysis: string;
-  stage2Message: string;
   stage2Storyboard: string;
-  stage3Message: string;
   stage3Reasoning: string;
   stage3Code: string;
-  photoLogs?: PhotoLogItem[];
   topic: string;
-  modelName?: string;
 }
 
 export const NemotronProcessViewer: React.FC<GenerationProcessViewerProps> = ({
