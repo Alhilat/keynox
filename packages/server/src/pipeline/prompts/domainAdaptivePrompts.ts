@@ -46,9 +46,19 @@ export function detectDocumentDomain(rawContent: string): DocumentDomain {
     "fourier", "laplace", "differential equation", "integral", "eigenvalue",
     "matrix", "vector space", "topology", "manifold", "gradient", "divergence",
     "hamiltonian", "lagrangian", "newton", "maxwell", "schrödinger", "planck",
+    "math", "mathematics", "solve", "algebra", "derive", "derivation", "derivative",
+    "prove", "proof", "evaluate", "simplify", "factor", "arithmetic", "fraction",
+    "trigonometry", "polynomial", "logarithm", "probability", "combinatorics",
   ];
   for (const sig of physicsMathSignals) {
     if (sample.includes(sig)) scores.physics_math += 2;
+  }
+  // Strong mathematical problem solving & notation patterns
+  if (
+    /(?:solve|calculate|evaluate|derive|find|compute)\b.*(?:equation|derivative|integral|root|limit|formula|sum|matrix|f\(x\)|x\b|y\b)/i.test(sample) ||
+    /\b(?:f\(x\)|dy\/dx|d\/dx|y'|y''|\d*x\s*[+\-=^]|\$\\int|\$y|\$x)\b/i.test(sample)
+  ) {
+    scores.physics_math += 4;
   }
 
   // CS / Algorithms signals
@@ -149,12 +159,20 @@ export function getDomainExtractionPrompt(domain: DocumentDomain, topic: string)
     case "physics_math":
       return `
 PHYSICS & MATHEMATICS DOMAIN EXTRACTION for "${topic}":
-1. GOVERNING EQUATIONS: List every equation with each variable's symbol, physical meaning, SI unit, and plausible numeric range.
-2. MENTAL MODELS: Identify 2-4 physical mental models (e.g. free-body diagrams, energy flow, field picture, phase space).
-3. DERIVATION STEPS: Extract key derivation steps where one formula transforms into another (useful for equation-morpher slides).
-4. WHITEBOARD VISUALS: Describe one drawable visual per equation (vectors, springs, waves, field lines, phase diagrams).
-5. NUMERIC EXAMPLES: Pull concrete numerical examples with actual computed values from the document.
-OUTPUT includes: governing equations (LaTeX notation), derivation chains, key constants with values, and worked examples.`;
+1. MATHEMATICAL QUESTION & PROBLEM SOLVING MANDATE:
+   If the topic asks to solve, calculate, evaluate, derive, or prove any mathematical problem:
+   - FULL STEP-BY-STEP SOLUTION: You MUST fully solve the mathematical problem from initial given conditions to the final result.
+   - ZERO FORGOTTEN / SKIPPED STEPS: You must NOT skip algebraic steps. Provide:
+     * Problem statement & given conditions
+     * Law / identity / theorem applied (e.g. Integration by Parts, Quadratic Formula, L'Hôpital's Rule)
+     * Every intermediate substitution, manipulation, factoring, and simplification step
+     * Final simplified answer with boxed KaTeX formula ($$ ... $$) and verification.
+   - TECHNICAL PAYLOAD: Every intermediate step MUST be its own distinct technical_payload item with exact KaTeX formula AND explanatory text.
+2. GOVERNING EQUATIONS: List every equation with each variable's symbol, mathematical/physical meaning, and domain.
+3. MENTAL MODELS & INTUITION: Identify 2-4 geometric, visual, or physical mental models (e.g. area under curve, vectors, energy balance, phase space).
+4. DERIVATION CHAINS: Extract complete step-by-step derivation chains where formulas transform into each other.
+5. WORKED EXAMPLES: Concrete worked numerical or symbolic calculations with verified answers.
+OUTPUT includes: complete step-by-step mathematical solutions (LaTeX notation $$ ... $$), governing equations, step justifications, and worked examples.`;
 
     case "cs_algorithms":
       return `
@@ -238,11 +256,18 @@ export function getDomainStoryboardRules(domain: DocumentDomain): string {
   switch (domain) {
     case "physics_math":
       return `DOMAIN STORYBOARD RULES (Physics & Mathematics):
-- At least one slide MUST use the "equation-morpher" archetype to animate a key formula step-by-step.
-- At least one slide MUST use "interactive-simulator" with sliders tied to the governing equation variables.
-- Simulator variables MUST use exact symbols, units, and ranges extracted from the document (e.g. m in kg, v in m/s).
-- FORBIDDEN: bullet-only slides with no visual/interactive element.
-- REQUIRED: specify "visualType" per simulator slide: projectile | wave | field-lines | spring-mass | pendulum | circuit.`;
+- MATHEMATICAL PROBLEM SOLVING PROGRESSION:
+  * If the topic involves solving a math question, calculate, evaluate, or derive a formula:
+    - Slide 1: Problem Definition, Given Conditions & Setup (purpose: "hook" or "concept")
+    - Slide 2: Governing Method / Theorem & Strategy (purpose: "concept")
+    - Middle Slides: Step-by-Step Derivation Phases (purpose: "proof", content_type: "math", archetype: "equation-morpher"). Dedicate at least 1-2 slides to walk through all intermediate algebraic manipulations.
+    - Final Slide: Evaluated Solution, Verification & Intuition (purpose: "demo" or "closing")
+  * ZERO FORGOTTEN STEPS: All mathematical steps from Stage 1 technical_payload MUST be referenced across slides.
+  * DELIBERATE ANIMATION PACING: Set animation_energy to "calm" or "subtle" on math slides. Steps must unfold deliberately so the audience can read each formula before the next arrives.
+  * NO BLANK SLIDES: Every math slide must feature prominent KaTeX displays ($$ ... $$) and clear explanatory cards.
+- At least one slide MUST use the "equation-morpher" archetype to animate formulas step-by-step.
+- For physics topics with dynamic parameters, use "interactive-simulator" with sliders tied to governing variables.
+- FORBIDDEN: bullet-only slides with no equation or visual element.`;
 
     case "cs_algorithms":
       return `DOMAIN STORYBOARD RULES (Computer Science & Algorithms):

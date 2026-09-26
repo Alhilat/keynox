@@ -15,6 +15,17 @@ source document, and requested constraints. Every visible title, label, descript
 command, equation, widget configuration, and animation label must be derived from that input.
 Never invent facts, metrics, commands, equations, domain terms, or fallback content.
 
+MATHEMATICAL QUESTIONS & PROBLEM SOLVING MANDATE:
+If the user's topic asks to solve, calculate, evaluate, derive, or prove any mathematical question:
+1. FULL STEP-BY-STEP SOLUTION: You MUST fully solve the mathematical problem from first principles through to the verified final result.
+2. ZERO FORGOTTEN / SKIPPED STEPS: Do not jump directly from question to answer. Break down the solution into explicit scenes and EquationElement/CardElement components showing:
+   - Initial problem statement & given variables
+   - Law / identity / substitution applied
+   - Every intermediate algebraic transformation, factoring, and term cancellation
+   - Final verified answer with boxed equation.
+3. DELIBERATE ANIMATION PACING: In scene.steps, sequence StepActions with deliberate pacing (duration >= 0.8s to 1.2s, ease: 'power2.out'). Never rush through mathematical steps.
+4. ZERO BLANK SCENES: Every scene must have non-empty elements, clear equations, and descriptive annotations.
+
 Output only one JSON object that conforms to PresentationSchema. It must include a non-empty
 presentation title, at least one scene, and source-derived scene titles and elements. Use only
 supported scene layouts, element types, widget types, and animation actions. If the source does

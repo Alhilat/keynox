@@ -29,7 +29,13 @@ export function isValidSlideHtml(html: string): boolean {
     clean.includes("anatomy-map") ||
     clean.includes("graph-stepper-container") ||
     clean.includes("calc-workbench") ||
-    clean.includes("sim-container");
+    clean.includes("sim-container") ||
+    clean.includes("equation-display") ||
+    clean.includes("equation-card") ||
+    clean.includes("math-step") ||
+    clean.includes("math-derivation") ||
+    clean.includes("data-expr") ||
+    clean.includes("$$");
 
   if (!hasContent) return false;
 
@@ -60,8 +66,15 @@ export function isValidSlideHtml(html: string): boolean {
   }
 
   // Ensure substantive text content (strip tags and check character count)
-  const textContent = clean.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  if (textContent.length < 60) {
+  let textContent = clean.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const dataExprs = clean.match(/data-expr=["']([^"']+)["']/g) || [];
+  for (const de of dataExprs) {
+    textContent += " " + de;
+  }
+  // Math slides have high symbolic density even if character count is lower
+  const hasMath = clean.includes("equation-display") || clean.includes("$$") || clean.includes("math-step") || clean.includes("data-expr");
+  const minThreshold = hasMath ? 35 : 60;
+  if (textContent.length < minThreshold) {
     return false;
   }
 
@@ -94,9 +107,15 @@ export function sanitizeAiTone(slideHtml: string): string {
   );
 
   // 2. Strip pseudo-math equations (e.g. $$ S = \text{Secure} \iff (\text{Confidentiality} \cap \text{Integrity}) $$)
+  // NEVER strip genuine mathematical equations containing numbers, operators, or math functions
   clean = clean.replace(
     /(?:<div[^>]*>)?\s*<div class="equation-display"[^>]*>[\s\S]*?\$\$[\s\S]*?\$\$[\s\S]*?<\/div>\s*(?:<\/div>)?/gi,
     (fullEquationBlock) => {
+      const hasRealMath =
+        /(?:\\frac|\\int|\\sqrt|\\sum|\\partial|\\sin|\\cos|\\tan|\\log|\\ln|\\lim|\\pm|\\cdot|\\times|\d+\s*[+\-*\/=^]|\b[xyzabcmn]\b|\^|_)/i.test(fullEquationBlock);
+      if (hasRealMath) {
+        return fullEquationBlock; // Preserve genuine math!
+      }
       if (
         /\\text\{(?:Secure|Confidentiality|Integrity|Availability|Protection|Privacy|Trust|Safety|Defense|Authentication|Authorization)\}/i.test(fullEquationBlock) ||
         (/\\text\{[A-Za-z\s]{4,}\}/i.test(fullEquationBlock) && /(?:\\cap|\\cup|\\iff|\\implies|\\land|\\lor)/.test(fullEquationBlock))
@@ -159,6 +178,10 @@ export function sanitizeAiTone(slideHtml: string): string {
   // 7. Convert inline styled rainbow cards to classic academic classes
   clean = clean.replace(/<div class="glass-card" style="border-top:\s*3px\s+solid\s+#f59e0b;[^"]*">/gi, '<div class="glass-card card-amber">');
   clean = clean.replace(/<div class="glass-card" style="border-top:\s*3px\s+solid\s+#0ea5e9;[^"]*">/gi, '<div class="glass-card card-cyan">');
+
+  // 8. Ban and replace legacy Courier / typewriter fonts with modern monospace variable
+  clean = clean.replace(/font-family:\s*['"]?(?:Courier(?:\s+New)?|Consolas|Monaco|monospace|serif)['"]?[^;}"']*/gi, "font-family: var(--font-mono)");
+  clean = clean.replace(/font-family:\s*[^;}"']*(?:Courier|courier-new)[^;}"']*/gi, "font-family: var(--font-mono)");
   clean = clean.replace(/<div class="glass-card" style="border-top:\s*3px\s+solid\s+#f43f5e;[^"]*">/gi, '<div class="glass-card card-rose">');
   clean = clean.replace(/<div class="glass-card" style="border-top:\s*3px\s+solid\s+#10b981;[^"]*">/gi, '<div class="glass-card card-emerald">');
   clean = clean.replace(/<div class="glass-card" style="border-top:\s*3px\s+solid\s+#6366f1;[^"]*">/gi, '<div class="glass-card card-indigo">');

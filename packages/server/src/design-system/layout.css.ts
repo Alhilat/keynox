@@ -33,14 +33,19 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-pre, code, kbd, samp, .terminal-card, .terminal-body {
-  font-family: var(--font-mono);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+pre, code, kbd, samp, .terminal-card, .terminal-body, .terminal-content, [class*="terminal"], [class*="code"], [class*="snippet"] {
+  font-family: var(--font-mono) !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
   text-rendering: optimizeLegibility;
   font-feature-settings: "liga" 1, "calt" 1;
   user-select: text;
   -webkit-user-select: text;
+}
+
+/* Universal Anti-Courier Enforcement: Replace legacy typewriter fonts with modern mono */
+[style*="Courier"], [style*="courier"], [style*="Courier New"], [style*="courier-new"] {
+  font-family: var(--font-mono) !important;
 }
 
 .hyperdeck-stage {
@@ -118,14 +123,35 @@ pre, code, kbd, samp, .terminal-card, .terminal-body {
   position: absolute;
   inset: 0;
   display: none;
-  padding: 32px 48px;
+  padding: 32px 48px 84px 48px;
   flex-direction: column;
-  overflow-y: auto;
+  overflow-y: auto !important;
+  overflow-x: hidden;
   opacity: 0;
   transform: scale(0.985);
-  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: text;
   -webkit-user-select: text;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.3) transparent;
+  scroll-behavior: smooth;
+}
+
+.slide::-webkit-scrollbar {
+  width: 6px;
+}
+
+.slide::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.slide::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.25);
+  border-radius: 9999px;
+}
+
+.slide::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.55);
 }
 
 .slide.active {
@@ -139,7 +165,7 @@ pre, code, kbd, samp, .terminal-card, .terminal-body {
   -webkit-user-select: text;
 }
 
-/* Staggered Element Entrance on Slide Activation */
+/* Staggered Element Entrance on Slide Activation (The Great Previous Animation) */
 @keyframes slideCardEntrance {
   from {
     opacity: 0;
@@ -151,7 +177,7 @@ pre, code, kbd, samp, .terminal-card, .terminal-body {
   }
 }
 
-.slide.active .glass-card,
+.slide.active .glass-card:not(.math-step-card),
 .slide.active .photo-card,
 .slide.active .chart-card,
 .slide.active .flow-diagram,
@@ -164,7 +190,12 @@ pre, code, kbd, samp, .terminal-card, .terminal-body {
 .slide.active .grid-2 > *:nth-child(2), .slide.active .grid-split > *:nth-child(2), .slide.active .grid-3 > *:nth-child(2) { animation-delay: 0.12s; }
 .slide.active .grid-3 > *:nth-child(3) { animation-delay: 0.2s; }
 
-.slide-title-group { margin-bottom: 22px; }
+/* Mathematical derivation steps animate deliberately via GSAP step sequence */
+.slide.active .math-step-card {
+  animation: none !important;
+}
+
+.slide-title-group { margin-bottom: 22px; flex-shrink: 0; }
 .slide-category { font-size: 13px; font-family: var(--font-mono); font-weight: 800; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.08em; }
 .slide-title { 
   font-family: var(--font-display);

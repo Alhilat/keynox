@@ -26,25 +26,30 @@ export function stage2PhysicsPrompt(): string {
 - FORBIDDEN: bullet-only slides. A slide with no visualType is rejected.`;
 }
 
-/** Stage 3 rules: vanilla-JS simulators built only from drawingHelpers. */
+/** Stage 3 rules: physics simulators and step-by-step mathematical problem solving. */
 export function stage3PhysicsPrompt(): string {
-  return `PHYSICS CODE RULES:
-- Vanilla JS only. Use ONLY these helpers from drawingHelpers.ts:
-  drawVector, drawSpring, drawWave, drawArrow, drawFieldLines,
-  drawGrid, drawLabel, animateLoop.
-- Compute ALL values from live slider state via a recalculate() function
-  wired to every input's "input" event. Never hardcode the output.
-- Display the formula with the active variable highlighted.
-GOOD (do this):
-<section class="slide"><div class="phys-widget">
-<div class="phys-formula">a = F / m</div><canvas></canvas>
-<input type="range" id="F" min="0" max="100" value="20">
-<script>const recalculate=()=>{const F=+FEl.value,M=+MEl.value;
-out.textContent="a = "+(F/M).toFixed(2);};</script></div></section>
-BAD — NEVER DO THIS:
-<section class="slide"><h2>Newton's Laws</h2>
-<ul><li>First law: inertia</li><li>Second law: F = ma</li>
-<li>Third law: action-reaction</li></ul></section>`;
+  return `PHYSICS & MATHEMATICS CODE RULES:
+1. MATHEMATICAL PROBLEM SOLVING & DERIVATIONS:
+   - If solving a math problem or deriving a formula, output explicit, sequential steps (.math-step-card or .equation-card):
+     * Include step badge (<span class="step-badge">STEP 01: [LAW/ACTION]</span>)
+     * Display equation in KaTeX: <div class="equation-display">$$ LATEX_FORMULA $$</div>
+     * Clear explanation of the algebraic transformation: <p class="step-explanation">...</p>
+   - ZERO SKIPPED STEPS: Present all intermediate manipulations (factoring, substitution, integration, simplification). Never jump directly from problem to final answer.
+   - DELIBERATE TIMELINE PACING (GSAP):
+     Math steps must animate with at least 1.4s to 2.0s pause between steps so audience can read and follow the algebra!
+     In window.initSlide_N(el):
+       const tl = gsap.timeline({ paused: true });
+       const steps = el.querySelectorAll(".math-step-card, .math-result-box");
+       steps.forEach((st, idx) => {
+         tl.fromTo(st, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.85, ease: "power2.out" }, idx === 0 ? "+=0.3" : "+=1.5");
+       });
+       return tl;
+   - ZERO BLANK SLIDES: Ensure every slide has complete, visible layout with headings, cards, and formulas.
+
+2. INTERACTIVE SIMULATORS (For dynamic physics parameters):
+   - Use <div class="calc-workbench"> with interactive sliders (<input type="range" class="sim-slider">) and real-time calculation readouts.
+   - Wire input events to live formula recalculations. Never hardcode the output.
+   - Display the governing formula with the active variable highlighted.`;
 }
 
 /** Per-slide quality gate prompt for the Nano critic model. */

@@ -25,9 +25,14 @@ export class GSAPAnimator {
 
         const toX = action.to.x !== undefined ? action.to.x * 1.33 : 0;
         const toY = action.to.y !== undefined ? action.to.y * 1.33 : 0;
+
+        try {
+          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        } catch (e) {}
+
         await tl.to(el, {
-          x: `+=${toX}`,
-          y: `+=${toY}`,
+          x: toX,
+          y: toY,
           duration: action.duration,
           ease: action.ease || "power2.out",
         });
@@ -84,6 +89,10 @@ export class GSAPAnimator {
         if (!el) return;
         this.audio.playHighlightPing();
 
+        try {
+          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        } catch (e) {}
+
         // Check if final green highlight
         if (action.color.includes("10b981") || action.color.includes("green") || action.color.includes("emerald")) {
           this.audio.playSuccessChime();
@@ -135,6 +144,10 @@ export class GSAPAnimator {
       case "transform": {
         const el = container.querySelector(`[data-id="${action.target}"]`) as HTMLElement;
         if (!el) return;
+
+        try {
+          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        } catch (e) {}
 
         await tl
           .to(el, {

@@ -10,6 +10,7 @@ import { extractPresentationAst } from "./presentationAstExtractor";
 import { MidPipelineCache } from "./cache/midPipelineCache";
 import { detectDocumentDomain } from "./prompts/domainAdaptivePrompts";
 import { Stage1Extraction, Stage2Strategy, Stage3ArtDirection, TechnicalPayloadItem } from "./types/sixStageTypes";
+import { config } from "../config";
 
 /** Stage-level cache: reuses Stage 1/2/3 artifacts across runs with 24-hour TTL */
 const midPipelineCache = new MidPipelineCache();
@@ -94,10 +95,12 @@ export class PipelineOrchestrator {
   ): Promise<{ outline: string; html: string }> {
     const { count: initialTargetCount, isExplicit, reason } = detectTargetSlideCount(topic, requestedSlideCount);
     let targetCount = initialTargetCount;
+    const activeEngine: "gemini" | "nvidia" | "auto" =
+      (engine === "auto" ? config.defaultAiProvider : engine) || "nvidia";
 
     // 0. Detect and lock document domain upfront
     const domain = detectDocumentDomain(topic);
-    console.log(`[PipelineOrchestrator] Document domain locked: "${domain}" (${targetCount} slides: ${reason})`);
+    console.log(`[PipelineOrchestrator] Domain: "${domain}" (${targetCount} slides), Engine: ${activeEngine}`);
 
     // 1. Instant Cache Check (24h TTL keyed by topic, count, theme, engine)
     const cached = presentationCache.get(topic, requestedSlideCount, theme, engine);
@@ -176,7 +179,7 @@ export class PipelineOrchestrator {
         processedInput,
         targetCount,
         (delta) => onEvent({ type: "stage1_chunk", delta }),
-        engine,
+        activeEngine,
         signal,
         domain
       );
@@ -228,7 +231,7 @@ export class PipelineOrchestrator {
         stage1Data || stage1AnalysisText,
         targetCount,
         (delta) => onEvent({ type: "stage2_chunk", delta }),
-        engine,
+        activeEngine,
         signal
       );
 
@@ -258,7 +261,7 @@ export class PipelineOrchestrator {
     const s3Result = await runStage3ArtDirector(
       stage2Strategy,
       (delta) => onEvent({ type: "stage3_chunk", delta }),
-      engine,
+      activeEngine,
       signal
     );
 
@@ -326,7 +329,7 @@ export class PipelineOrchestrator {
               slideStrategy,
               payloadItems: relevantPayloads,
               globalTheme: artDirection.global,
-              engine,
+              engine: activeEngine,
               signal,
             });
             break;
@@ -348,7 +351,7 @@ export class PipelineOrchestrator {
         }
 
         // Stage 5: Critic Audit & In-Place Repair
-        const auditResult = await auditAndRepairSlide(index, slideBrief, stage4Result.html, signal);
+        const auditResult = await auditAndRepairSlide(index, slideBrief, stage4Result.html, signal, activeEngine);
 
         // Immediate progressive SSE streaming
         onEvent({

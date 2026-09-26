@@ -49,10 +49,66 @@ export function getArchetypeDomContract(archetypeId: VisualArchetypeId): string 
     case "equation-morpher":
       return `
 [ARCHETYPE CONTRACT: ${def.name}]
-- Render a clean equation container: <div class="equation-container">.
-- Render the primary formula in KaTeX with highlighted variable spans: <div class="equation-display">$$ ... $$</div>.
-- Provide a step-by-step transformation breakdown with labeled transition badges explaining how each term evolves.
-- Include interactive token highlight cards explaining each variable's physical meaning and dimension.
+- DOM Architecture for Pedagogical Mathematical Derivations & Problem Solving:
+  <div class="math-derivation-container">
+    <div class="math-step-list">
+      <!-- Explicit Step 1: Initial Formulation / Problem Statement -->
+      <div class="math-step-card step-card-1">
+        <div class="step-header">
+          <span class="step-badge">STEP 01</span>
+          <span class="step-rule">Initial Formula &amp; Given Variables</span>
+        </div>
+        <div class="equation-display">$$ FORMULA_STEP_1 $$</div>
+        <p class="step-explanation">Explicit reason explaining the starting conditions and target goal.</p>
+      </div>
+
+      <!-- Explicit Step 2: Principle, Identity, or Substitution Applied -->
+      <div class="math-step-card step-card-2">
+        <div class="step-header">
+          <span class="step-badge">STEP 02</span>
+          <span class="step-rule">Apply Law / Substitution / Transformation</span>
+        </div>
+        <div class="equation-display">$$ FORMULA_STEP_2 $$</div>
+        <p class="step-explanation">Explanation of algebraic manipulation or identity substitution applied.</p>
+      </div>
+
+      <!-- Explicit Step 3: Intermediate Simplification / Factoring -->
+      <div class="math-step-card step-card-3">
+        <div class="step-header">
+          <span class="step-badge">STEP 03</span>
+          <span class="step-rule">Simplify &amp; Evaluate Terms</span>
+        </div>
+        <div class="equation-display">$$ FORMULA_STEP_3 $$</div>
+        <p class="step-explanation">Clear intermediate simplification showing where terms cancel or collect.</p>
+      </div>
+
+      <!-- Explicit Step 4: Final Evaluated Result -->
+      <div class="math-result-box step-card-final">
+        <div class="step-header">
+          <span class="step-badge badge-emerald">FINAL RESULT</span>
+          <span class="step-rule">Verified Solution</span>
+        </div>
+        <div class="equation-display">$$ FINAL_EVALUATED_RESULT $$</div>
+        <p class="step-explanation">Verification, physical interpretation, or edge case analysis.</p>
+      </div>
+    </div>
+  </div>
+
+- DELIBERATE ANIMATION PACING (GSAP TIMELINE MANDATE):
+  In window.initSlide_N(el):
+  const tl = gsap.timeline({ paused: true });
+  tl.fromTo(el.querySelectorAll(".slide-title-group, h2"), { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.6 });
+  const steps = el.querySelectorAll(".math-step-card, .math-result-box");
+  steps.forEach((st, idx) => {
+    // Deliberate 1.5s reading delay between steps so viewers can read and comprehend each step!
+    tl.fromTo(st,
+      { opacity: 0, y: 22 },
+      { opacity: 1, y: 0, duration: 0.85, ease: "power2.out" },
+      idx === 0 ? "+=0.3" : "+=1.5"
+    );
+  });
+  return tl;
+- NO BLANK SLIDES LAW: All equations MUST be enclosed in $$ ... $$ delimiters. Never leave empty divs or spans without content.
 `;
 
     case "motion-pipeline":

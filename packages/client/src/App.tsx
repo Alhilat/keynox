@@ -72,7 +72,7 @@ export function App() {
           theme: options?.theme || "cyber",
           slideCount: options?.slideCount || 5,
           archetypes: options?.archetypes || [],
-          engine: options?.engine || "gemini",
+          engine: options?.engine || "auto",
         }),
       });
 

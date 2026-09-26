@@ -24,4 +24,62 @@ describe("Presentation Engine Components", () => {
     expect(animator).toBeDefined();
     expect(animator.audio).toBeInstanceOf(PresentationAudio);
   });
+
+  it("should execute move action smoothly without throwing", async () => {
+    const animator = new GSAPAnimator();
+    let scrolled = false;
+    const target = {
+      classList: { contains: () => false },
+      scrollIntoView: () => { scrolled = true; },
+      style: {},
+    } as unknown as HTMLElement;
+    const container = {
+      querySelector: () => target,
+      querySelectorAll: () => [target],
+    } as unknown as HTMLElement;
+
+    await expect(
+      animator.executeAction(
+        {
+          action: "move",
+          target: "test-elem",
+          to: { x: 50, y: 100 },
+          duration: 0.1,
+          ease: "power2.out",
+        },
+        container
+      )
+    ).resolves.not.toThrow();
+
+    expect(scrolled).toBe(true);
+    animator.killAll();
+  });
+
+  it("should execute highlight action smoothly and trigger scrollIntoView", async () => {
+    const animator = new GSAPAnimator();
+    let scrolled = false;
+    const target = {
+      classList: { contains: (cls: string) => cls === "presentation-card" },
+      scrollIntoView: () => { scrolled = true; },
+      style: {},
+    } as unknown as HTMLElement;
+    const container = {
+      querySelector: () => target,
+      querySelectorAll: () => [target],
+    } as unknown as HTMLElement;
+
+    await animator.executeAction(
+      {
+        action: "highlight",
+        target: "test-card",
+        color: "#38bdf8",
+        duration: 0.1,
+        pulse: false,
+      },
+      container
+    );
+
+    expect(scrolled).toBe(true);
+    animator.killAll();
+  });
 });

@@ -137,6 +137,30 @@ ${codeLines}</code></pre>
     </div>
     <div class="callout-list">${callouts}\n    </div>
   </div>`;
+  } else if (archetypeId === "equation-morpher" || domain === "physics_math") {
+    const mathSteps = excerpts.slice(0, 3).map((step, idx) => `
+    <div class="math-step-card card-cyan">
+      <div class="step-header">
+        <span class="step-badge">STEP 0${idx + 1}</span>
+        <span class="step-rule">${escapeHtml(step.slice(0, 45))}</span>
+      </div>
+      <div class="equation-display">$$\\text{${escapeHtml(step.slice(0, 35))}}$$</div>
+      <p class="step-explanation">${escapeHtml(step)}</p>
+    </div>`).join("");
+    layoutBody = `
+  <div class="math-derivation-container">
+    <div class="math-step-list">
+      ${mathSteps || `
+      <div class="math-step-card card-cyan">
+        <div class="step-header">
+          <span class="step-badge">GOAL</span>
+          <span class="step-rule">${escapeHtml(title)}</span>
+        </div>
+        <div class="equation-display">$$\\text{${escapeHtml(title)}}$$</div>
+        <p class="step-explanation">${escapeHtml(primaryExcerpt)}</p>
+      </div>`}
+    </div>
+  </div>`;
   } else if (archetypeId === "hero-cinematic" || (slideIndex === 0 && supportingExcerpts.length === 0)) {
     layoutBody = `
   <div class="hero-cinematic">

@@ -318,6 +318,82 @@ export const PRIMITIVES_CSS = `/* Composable Semantic Primitives: Disk Stripes, 
   color: #f8fafc !important;
 }
 
+/* Mathematical Derivation & Step System */
+.math-derivation-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  overflow-y: auto;
+}
+.math-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+.math-step-card {
+  background: var(--bg-card, rgba(15, 23, 42, 0.7));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  border-left: 4px solid var(--accent-cyan, #38bdf8);
+  border-radius: 12px;
+  padding: 16px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.step-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+.step-badge.badge-emerald {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+.step-rule {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+}
+.step-explanation {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-main, #e2e8f0);
+}
+.math-result-box {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-left: 4px solid #10b981;
+  border-radius: 12px;
+  padding: 16px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 0 25px rgba(16, 185, 129, 0.1);
+}
+
 /* Resilient Structural Fallbacks & Aliases for Synthesized Topologies, Cards & Checklists */
 .tri-card-grid {
   display: grid;

@@ -268,10 +268,15 @@ ${archetypeContract}
 5. SVG OVER EMOJI: Use <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"> for all visual icons. No emoji.
 6. COMPLETE STRUCTURES: .arch-stack needs ≥ 3 tiers. .motion-pipeline needs ≥ 3 stages. .timeline-journey needs ≥ 3 milestone nodes. Tables need ≥ 4 rows.
 7. REAL CLI: Terminal cards use actual extracted commands with real flags and realistic output. Never use <tool_name> --flag <value>.
-8. MATH GATE: KaTeX <div class="equation-display">$$ ... $$</div> only for genuine symbolic math (calculus, probability, complexity, physics). Never set-theory of words.
-9. CSS PURITY: Use design system classes only. No inline style="color:#hex" overrides.
-10. OUTPUT GATE: Output ONLY the <section> block. No markdown, no explanation, no code fences. Start with <section.
-11. CLOSE IT: The section must end with </section>. No dangling tags.
+8. MATH GATE: KaTeX <div class="equation-display">$$ ... $$</div> for genuine symbolic math (calculus, probability, complexity, physics, algebra). Always enclose formulas in $$ ... $$ delimiters. Never output empty math containers.
+9. MATHEMATICAL PROBLEM SOLVING & DERIVATIONS:
+   If solving a math problem or presenting a derivation:
+   - Present every step in its own .math-step-card with a step badge (<span class="step-badge">STEP 01: [LAW/ACTION]</span>), KaTeX equation (<div class="equation-display">$$ ... $$</div>), and step explanation (<p class="step-explanation">...</p>).
+   - ZERO SKIPPED STEPS: Walk through all intermediate algebraic manipulations, factoring, substitution, and simplification. Never jump straight from problem to solution.
+   - ZERO BLANK SLIDES: Every slide must be rich with headings, equation displays, cards, and descriptive notes.
+10. CSS PURITY: Use design system classes only. No inline style="color:#hex" overrides.
+11. OUTPUT GATE: Output ONLY the <section> block. No markdown, no explanation, no code fences. Start with <section.
+12. CLOSE IT: The section must end with </section>. No dangling tags.
 
 ${domain === "physics_math" ? stage3PhysicsPrompt() : `INTERACTIVE SIMULATOR RULES:
 - If your archetype is "interactive-simulator", you MUST derive all slider parameters, formulas, and output values 100% from the slide's topic content.

@@ -41,12 +41,19 @@ export function sanitizeSlideDeterministic(
   // Strip prompt comments like <!-- Slide Brief ... -->
   html = html.replace(/<!--[\s\S]*?-->/g, "");
 
-  // Ensure mandatory styling container
-  if (!html.includes("position: absolute") || !html.includes("overflow: hidden")) {
+  // Strictly eradicate Courier, Courier New, and typewriter fonts that cause jagged Linux font rendering
+  html = html.replace(/font-family:\s*['"]?(?:Courier(?:\s+New)?|Consolas|Monaco|monospace|serif)['"]?[^;}"']*/gi, "font-family: var(--font-mono)");
+  html = html.replace(/font-family:\s*[^;}"']*(?:Courier|courier-new)[^;}"']*/gi, "font-family: var(--font-mono)");
+
+  // Ensure mandatory styling container with vertical scrolling support
+  if (!html.includes("position: absolute")) {
     html = html.replace(
       new RegExp(`<div([\\s\\S]*?)class="([^"]*slide-${index}[^"]*)"`, "i"),
-      `<div$1class="$2" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden;"`
+      `<div$1class="$2" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; padding-bottom: 84px;"`
     );
+  } else {
+    // Replace restrictive overflow: hidden with vertical scroll support so content is never cut off
+    html = html.replace(/overflow:\s*hidden/gi, "overflow-y: auto; overflow-x: hidden; padding-bottom: 84px");
   }
 
   // Ensure GSAP initialization function exists
@@ -55,13 +62,40 @@ export function sanitizeSlideDeterministic(
 <script>
 window.initSlide_${index} = function(el) {
   const tl = gsap.timeline({ paused: true });
-  tl.from(el.querySelectorAll(".slide-${index}-title, .slide-${index}-content, h1, h2, p"), {
-    opacity: 0,
-    y: 20,
-    stagger: 0.1,
-    duration: 0.6,
-    ease: "power2.out"
-  });
+  const mathSteps = el.querySelectorAll(".math-step-card, .math-result-box");
+  if (mathSteps.length > 0) {
+    tl.fromTo(el.querySelectorAll(".slide-${index}-title, .slide-${index}-subtitle, h1, h2"), 
+      { opacity: 0, y: -10 }, 
+      { opacity: 1, y: 0, duration: 0.6 }
+    );
+    mathSteps.forEach((st, i) => {
+      // Deliberate 1.4s pacing ONLY for genuine math derivation steps so audience can read each formula
+      tl.fromTo(st, 
+        { opacity: 0, y: 16 }, 
+        { 
+          opacity: 1, 
+          y: 0, 
+          duration: 0.8, 
+          ease: "power2.out",
+          onStart: function() {
+            try {
+              st.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } catch(e) {}
+          }
+        }, 
+        i === 0 ? "+=0.3" : "+=1.4"
+      );
+    });
+  } else {
+    // The previous GREAT animation: snappy, energetic, immediate reveal
+    tl.from(el.querySelectorAll(".slide-${index}-title, .slide-${index}-content, h1, h2, p"), {
+      opacity: 0,
+      y: 20,
+      stagger: 0.1,
+      duration: 0.6,
+      ease: "power2.out"
+    });
+  }
   return tl;
 };
 </script>`;
@@ -82,7 +116,8 @@ export async function auditAndRepairSlide(
   index: number,
   slideBrief: Stage3SlideBrief,
   stage4Html: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  engine?: "gemini" | "nvidia" | "auto"
 ): Promise<Stage5AuditResult> {
   const prompt = `You are a ruthless production auditor for cinematic HTML slides.
 You have ONE job: guarantee unbreakable quality.
@@ -93,10 +128,13 @@ Audit checklist — fail on ANY violation:
 □ GSAP in window.initSlide_${index} function returning tl
 □ No querySelector without scoping to el parameter
 □ No hardcoded hex colors — CSS variables only
-□ Slide is overflow: hidden — percentage dimensions only (no vw/vh)
+□ Slide supports vertical scroll if content overflows (overflow-y: auto, overflow-x: hidden) — percentage dimensions only (no vw/vh)
 □ No emojis or placeholder text
 □ No prompt metadata or comments
-□ KaTeX uses data-expr on .slide-${index}-katex spans
+□ KaTeX formulas wrapped in $$ ... $$ or data-expr and are non-empty
+□ Math derivation steps are deliberately paced (gap >= 1.2s between steps, never fast staggers)
+□ Zero blank slide (contains visible non-empty content, formulas, and cards)
+□ ZERO Courier, Courier New, or typewriter fonts — all code blocks and terminals MUST use var(--font-mono)
 □ No unclosed HTML tags
 □ Animation timing matches brief sequence
 
@@ -116,8 +154,8 @@ If ANY fail:
   const systemInstruction =
     "You are a strict code quality auditor. Return either the word APPROVED or the complete corrected HTML starting with <div. Zero explanation. Zero markdown.";
 
-  // Tier 1: Gemini 3.8 Flash
-  if (geminiService.isAvailable()) {
+  // Tier 1: Gemini Critic (only if enabled, available, and engine allows it)
+  if (config.geminiCriticEnabled && engine !== "nvidia" && geminiService.isAvailable()) {
     try {
       signal?.throwIfAborted();
       const reply = await geminiService.streamChat({

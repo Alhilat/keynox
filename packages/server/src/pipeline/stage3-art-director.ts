@@ -51,6 +51,21 @@ CRITICAL RULES:
   Light background (#BBBBBB–#FFFFFF) → text must be #0A0A0A to #222222
   Never use low-contrast combinations under any circumstance
 
+MATHEMATICAL STEP ANIMATION & PACING RULES (CRITICAL):
+For slides containing mathematical derivations, formulas, or problem-solving steps:
+1. DELIBERATE, READABLE PACING:
+   - Math derivation steps MUST NOT animate quickly or simultaneously!
+   - Each mathematical step requires sufficient cognitive time for the audience to read and comprehend the algebraic transformation.
+   - Space each derivation step with at least 1.4s to 2.0s between consecutive steps:
+     e.g., [
+       "0.0s — background renders and title reveals",
+       "0.8s — Step 1: Initial formula renders with step badge (duration 600ms ease-out)",
+       "2.4s — Step 2: Substitution & law application reveals with highlight (duration 800ms ease-out)",
+       "4.2s — Step 3: Intermediate algebraic simplification appears (duration 800ms ease-out)",
+       "6.0s — Step 4: Final evaluated solution glows emerald (duration 800ms ease-out)"
+     ]
+2. NEVER RUSH MATH: Staggering math steps at 100ms-200ms is FORBIDDEN. Give each step at least 1.4s of reading room.
+
 Strategy received:
 ${strategyJsonStr}
 

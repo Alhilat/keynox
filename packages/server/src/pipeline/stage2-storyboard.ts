@@ -3,6 +3,7 @@ import { config } from "../config";
 import { geminiService } from "../services/geminiService";
 import { Stage1Extraction, Stage2Strategy } from "./types/sixStageTypes";
 import { parseTolerantJson } from "./utils/tolerantJson";
+import { detectDocumentDomain, getDomainStoryboardRules, DocumentDomain } from "./prompts/domainAdaptivePrompts";
 
 export interface Stage2StoryboardResult {
   storyboard: string;
@@ -31,6 +32,8 @@ export async function runStage2Storyboard(
   const maxTokens = 4500;
 
   const stage1JsonStr = typeof stage1Output === "string" ? stage1Output : JSON.stringify(stage1Output, null, 2);
+  const detectedDomain = detectDocumentDomain(cleanTopic + " " + stage1JsonStr);
+  const domainRules = getDomainStoryboardRules(detectedDomain);
 
   const apiKey = config.nvidiaApiKeyUltra || config.nvidiaApiKey;
   const openai = new OpenAI({
@@ -50,6 +53,19 @@ CRITICAL RULES:
   "overview", "introduction", "key points", "summary" are banned
 - Use actual terminology from the analysis
 - Plan exactly ${targetCount} slides (index 1 to ${targetCount})
+
+${domainRules}
+
+MATHEMATICAL DERIVATION & PROBLEM SOLVING RULES:
+If the analysis contains mathematical equations or step-by-step problem derivations:
+1. COMPLETE STEP PROGRESSION:
+   - Slide 1: Problem Definition & Visual Setup (purpose: "hook" or "concept")
+   - Slide 2: Governing Method / Theorem Applied (purpose: "concept")
+   - Middle Slides (Slides 3 to ${targetCount - 1}): Step-by-Step Derivation Phases (purpose: "proof", content_type: "math"). Sequence through every algebraic step extracted in Stage 1!
+   - Final Slide: Evaluated Solution, Verification & Graphical Intuition (purpose: "closing" or "demo")
+2. ZERO FORGOTTEN STEPS: Every mathematical step in technical_payload MUST be referenced across slides. Do not skip intermediate steps.
+3. CALM ANIMATION ENERGY: Always set animation_energy to "calm" or "subtle" on math slides to guarantee readable, deliberate presentation pacing.
+4. ZERO BLANK SLIDES: Ensure every slide has detailed content_summary and valid payload refs.
 
 Analysis received:
 ${stage1JsonStr}

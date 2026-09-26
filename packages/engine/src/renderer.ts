@@ -109,7 +109,10 @@ export class DOMRenderer {
     // Slide Body Container
     const bodyContainer = document.createElement("div");
     bodyContainer.className =
-      "relative flex-1 w-full px-12 py-6 overflow-hidden flex flex-col justify-center";
+      "relative flex-1 w-full px-12 py-6 overflow-y-auto overflow-x-hidden flex flex-col justify-start pb-20 custom-scrollbar";
+    bodyContainer.style.scrollBehavior = "smooth";
+    bodyContainer.style.scrollbarWidth = "thin";
+    bodyContainer.style.scrollbarColor = "rgba(56, 189, 248, 0.3) transparent";
     stage.appendChild(bodyContainer);
 
     // Determine layout strategy
@@ -209,7 +212,7 @@ export class DOMRenderer {
   private renderHeroLayout(scene: Scene, container: HTMLElement): void {
     const heroWrapper = document.createElement("div");
     heroWrapper.className =
-      "w-full h-full flex flex-col items-center justify-center text-center max-w-4xl mx-auto py-6";
+      "w-full min-h-full flex flex-col items-center justify-center text-center max-w-4xl mx-auto py-6";
 
     const badge = document.createElement("div");
     badge.className =
@@ -254,7 +257,7 @@ export class DOMRenderer {
     const count = elements.length || 1;
 
     const grid = document.createElement("div");
-    let gridClasses = "w-full h-full grid gap-6 items-stretch";
+    let gridClasses = "w-full min-h-full grid gap-6 items-stretch";
 
     if (count <= 2) {
       gridClasses += " grid-cols-2";
@@ -279,7 +282,7 @@ export class DOMRenderer {
    */
   private renderSplitLayout(scene: Scene, container: HTMLElement): void {
     const grid = document.createElement("div");
-    grid.className = "w-full h-full grid grid-cols-2 gap-8 items-stretch";
+    grid.className = "w-full min-h-full grid grid-cols-2 gap-8 items-stretch";
 
     scene.elements.forEach((el, idx) => {
       const cardNode = this.createCardNodeFromElement(el, idx, idx === 0 ? "#38bdf8" : "#a855f7");
@@ -294,7 +297,7 @@ export class DOMRenderer {
    */
   private renderTimelineLayout(scene: Scene, container: HTMLElement): void {
     const wrapper = document.createElement("div");
-    wrapper.className = "w-full h-full flex flex-col justify-center";
+    wrapper.className = "w-full min-h-full flex flex-col justify-center";
 
     const flowContainer = document.createElement("div");
     flowContainer.className = "w-full grid grid-cols-3 gap-6 items-stretch relative";
@@ -320,7 +323,7 @@ export class DOMRenderer {
    */
   private renderStatLayout(scene: Scene, container: HTMLElement): void {
     const wrapper = document.createElement("div");
-    wrapper.className = "w-full h-full flex flex-col justify-center gap-6";
+    wrapper.className = "w-full min-h-full flex flex-col justify-center gap-6";
 
     // Top Stat Bar (High-contrast, large-format key numbers)
     const statsGrid = document.createElement("div");
@@ -380,7 +383,7 @@ export class DOMRenderer {
       this.renderCardsLayout(scene, container);
     } else {
       const grid = document.createElement("div");
-      grid.className = "w-full h-full grid grid-cols-3 gap-5 items-stretch overflow-y-auto pr-1";
+      grid.className = "w-full min-h-full grid grid-cols-3 gap-5 items-stretch pr-1";
       scene.elements.forEach((el, idx) => {
         const cardNode = this.createCardNodeFromElement(el, idx);
         grid.appendChild(cardNode);

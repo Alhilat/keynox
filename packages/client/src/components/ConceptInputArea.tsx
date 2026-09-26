@@ -32,7 +32,7 @@ export type VisualLookTheme =
   | "harvard"
   | "heidelberg"
   | "princeton";
-export type AiEngine = "gemini" | "nvidia" | "auto";
+export type AiEngine = "nvidia" | "auto";
 
 export interface GenerationOptions {
   theme: VisualLookTheme;
@@ -121,7 +121,7 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
   // Configuration options
   const [selectedTheme, setSelectedTheme] = useState<VisualLookTheme>("midnight");
   const [targetSlideCount, setTargetSlideCount] = useState<number>(6);
-  const [selectedEngine, setSelectedEngine] = useState<AiEngine>("auto");
+  const [selectedEngine, setSelectedEngine] = useState<AiEngine>("nvidia");
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([
     "interactive-simulator",
     "motion-pipeline",
@@ -456,10 +456,8 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
                 <Sparkles className="w-3 h-3 text-amber-400" />
                 <span>
                   {selectedEngine === "auto"
-                    ? "Auto (Nemotron + Gemini)"
-                    : selectedEngine === "nvidia"
-                    ? "Nemotron 120B"
-                    : "Gemini 3.8 Flash"}
+                    ? "Auto (Nemotron + Critic)"
+                    : "Nemotron 120B"}
                 </span>
                 <ChevronDown className="w-3 h-3 text-neutral-400" />
               </button>
@@ -472,7 +470,6 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
                   {[
                     { id: "auto" as const, name: "Auto (Nemotron + Critic)", desc: "NVIDIA Generator + Gemini Audit (Recommended)" },
                     { id: "nvidia" as const, name: "Nemotron 120B", desc: "Pure NVIDIA NIM Synthesis" },
-                    { id: "gemini" as const, name: "Gemini 3.8 Flash", desc: "Pure Google Gemini Generation" },
                   ].map((eng) => (
                     <button
                       key={eng.id}

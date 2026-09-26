@@ -72,25 +72,75 @@ ABSOLUTE RULES — violating any fails the audit:
    };
    </script>
 4. ALL querySelector scoped to el parameter — never document.querySelector
-5. Slide container sizing — CRITICAL:
+5. Slide container sizing & scrolling — CRITICAL:
    width: 100%;
    height: 100%;
    position: absolute;
    inset: 0;
-   overflow: hidden;
+   overflow-y: auto;
+   overflow-x: hidden;
+   padding-bottom: 84px;
    NEVER use vw, vh, vmin, vmax units.
    Slides live inside an auto-scaled 1280x720 16:9 stage.
    100vw = browser window width, NOT stage width.
    Using vw/vh will blow elements 2-3x outside the stage boundary.
    Percentage units only. Always.
+   Vertical scrolling is fully enabled so multi-step math derivations, diagrams, and content extending downwards can be freely scrolled and seen.
 6. NO emojis anywhere
 7. NO placeholder content, NO lorem ipsum
 8. NO code comments in output code
 9. NO markdown backticks in your output
-10. KaTeX: <span class="slide-${index}-katex" data-expr="LATEX"></span>
-    KaTeX renders BEFORE initSlide is called — do not animate elements before they render.
+10. KaTeX: Use <div class="slide-${index}-equation equation-display">$$ LATEX_EXPRESSION $$</div> for block equations, and <span class="slide-${index}-katex" data-expr="LATEX_EXPRESSION">$$ LATEX_EXPRESSION $$</span> for inline math. ALWAYS enclose LaTeX in $$ ... $$ delimiters so KaTeX renders immediately. Never output empty math spans.
 11. Output: starts with <div class="slide slide-${index}">
     ends with </div> — nothing before, nothing after.
+12. MATHEMATICAL STEP DERIVATIONS VS STANDARD SLIDE ANIMATION (CRITICAL):
+    A. IF this slide contains a mathematical problem solution or formula derivation:
+       - Structure each derivation step in its own container: <div class="slide-${index}-step math-step-card"> containing:
+         * Step badge: <span class="step-badge">STEP 01: [ACTION/LAW]</span>
+         * Formula: <div class="equation-display">$$ FORMULA $$</div>
+         * Explanatory text: <p class="step-explanation">Reason for the transformation...</p>
+       - ZERO SKIPPED STEPS: Present all intermediate algebraic, substitution, and factoring steps from the technical payload.
+       - DELIBERATE GSAP PACING:
+         window.initSlide_${index} = function(el) {
+           const tl = gsap.timeline({ paused: true });
+           tl.fromTo(el.querySelectorAll(".slide-${index}-title, .slide-${index}-subtitle"), { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.6 });
+           const steps = el.querySelectorAll(".slide-${index}-step, .math-step-card, .math-result-box");
+           steps.forEach((st, idx) => {
+             // Mandatory >= 1.5s cognitive reading delay between consecutive math steps & auto-scroll into view!
+             tl.fromTo(st, { opacity: 0, y: 16 }, { 
+               opacity: 1, 
+               y: 0, 
+               duration: 0.85, 
+               ease: "power2.out",
+               onStart: () => { try { st.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch(e){} }
+             }, idx === 0 ? "+=0.3" : "+=1.5");
+           });
+           return tl;
+         };
+    B. FOR ALL OTHER SLIDES (System Architecture, Tech Overviews, Comparisons, Keynotes):
+       - Keep the snappy, energetic, immediate staggered animation:
+         window.initSlide_${index} = function(el) {
+           const tl = gsap.timeline({ paused: true });
+           tl.from(el.querySelectorAll(".slide-${index}-title, .slide-${index}-content, h1, h2, p"), {
+             opacity: 0,
+             y: 20,
+             stagger: 0.1,
+             duration: 0.6,
+             ease: "power2.out"
+           });
+           return tl;
+         };
+13. ZERO BLANK SLIDES GUARANTEE:
+    - Every slide MUST contain substantive, visible layout: title group, container cards, formulas, and descriptive annotations.
+    - Do NOT apply CSS opacity: 0 or display: none without ensuring GSAP fromTo reveals them.
+    - Never render empty divs or containers without text.
+14. MANDATORY MODERN TYPOGRAPHY & ZERO COURIER / TYPEWRITER FONTS (CRITICAL):
+    - ABSOLUTELY NEVER use 'Courier', 'Courier New', or raw 'monospace' / 'serif' font-family anywhere!
+    - On Linux, Courier resolves to an ancient, pixelated, jagged 1980s typewriter font that looks broken.
+    - ALWAYS use CSS variables for all typography:
+      * var(--font-mono) for all code blocks, terminals, syntax highlighting, commands, chips, and metrics.
+      * var(--font-sans) for all body text, bullet points, and descriptions.
+      * var(--font-display) for all slide titles, headlines, and card headers.
 
 Global assets already loaded on page:
 - GSAP 3.12 + ScrollTrigger

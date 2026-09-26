@@ -21,6 +21,7 @@ export const NAVIGATION_RUNTIME = `
       slides.forEach((s, idx) => {
         if (idx === currentSlide) {
           s.classList.add('active');
+          s.scrollTop = 0; // Reset scroll position to top whenever entering a slide
           if (window.gsap) {
             gsap.fromTo(s.querySelectorAll('.glass-card, .glow-card, .matrix-table, .sim-container, .chart-card, .venn-container, .flow-diagram, .diff-container, .state-diagram, .disk-stripe, .pointer-topology'), 
               { opacity: 0, y: 16 }, 
@@ -107,7 +108,20 @@ export const NAVIGATION_RUNTIME = `
           }
         } catch (e) {
           console.warn('[Navigation] Slide init error:', e);
+          // Blank slide protection: reveal all elements if GSAP crashed or threw
+          activeSlide.querySelectorAll('*').forEach(function(node) {
+            if (node.style && node.style.opacity === '0') {
+              node.style.opacity = '1';
+            }
+          });
         }
+      } else if (activeSlide) {
+        // If no custom init function, guarantee no elements stay hidden at opacity 0
+        activeSlide.querySelectorAll('.math-step-card, .equation-card, .glass-card, [class*="step"]').forEach(function(node) {
+          if (node.style && node.style.opacity === '0') {
+            node.style.opacity = '1';
+          }
+        });
       }
 
       try {
@@ -180,7 +194,7 @@ export const NAVIGATION_RUNTIME = `
     window.goToSlide = goToSlide;
     window.toggleFullscreen = toggleFullscreen;
 
-    // Click on slide to advance (unless clicking buttons, interactive controls, or selecting text)
+    // Click on slide to advance (unless clicking buttons, interactive controls, cards, or selecting text)
     document.addEventListener('click', (e) => {
       // Don't advance if text was selected for copying
       const sel = window.getSelection ? window.getSelection().toString() : '';
@@ -190,7 +204,11 @@ export const NAVIGATION_RUNTIME = `
       const interactive = e.target.closest('button, a, input, select, textarea, .thumb-btn, .stage-chevron, .controls-bar, .top-zoom-controls, .sim-slider, input[type="range"], .three-canvas');
       if (interactive) return;
 
-      // Advance if clicked inside viewport/slide and not in drawing mode
+      // Don't advance if clicking directly on cards, math derivations, steps, code blocks, or tables
+      const isCardOrContent = e.target.closest('.glass-card, .glow-card, .math-step-card, .math-result-box, .equation-card, .equation-display, .pipeline-stage, .sim-container, .chart-card, .matrix-table, pre, code, .katex, [class*="step"], [class*="card"]');
+      if (isCardOrContent) return;
+
+      // Advance if clicked inside viewport/slide backdrop and not in drawing mode
       const insideStage = e.target.closest('.slides-viewport, .slide');
       if (insideStage && (typeof currentTool === 'undefined' || currentTool === 'scroll')) {
         nextSlide();
@@ -201,10 +219,46 @@ export const NAVIGATION_RUNTIME = `
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
         return;
       }
-      if (['ArrowRight', 'Space', 'j', 'PageDown'].includes(e.key)) {
+
+      const activeSlide = slides[currentSlide];
+      const isScrollable = activeSlide && (activeSlide.scrollHeight > activeSlide.clientHeight + 10);
+
+      if (e.key === 'ArrowDown') {
+        if (isScrollable && (activeSlide.scrollTop + activeSlide.clientHeight < activeSlide.scrollHeight - 15)) {
+          e.preventDefault();
+          activeSlide.scrollBy({ top: 120, behavior: 'smooth' });
+          return;
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (isScrollable && activeSlide.scrollTop > 10) {
+          e.preventDefault();
+          activeSlide.scrollBy({ top: -120, behavior: 'smooth' });
+          return;
+        }
+      } else if (e.key === 'PageDown') {
+        if (isScrollable && (activeSlide.scrollTop + activeSlide.clientHeight < activeSlide.scrollHeight - 20)) {
+          e.preventDefault();
+          activeSlide.scrollBy({ top: Math.max(200, activeSlide.clientHeight * 0.7), behavior: 'smooth' });
+          return;
+        }
         e.preventDefault();
         nextSlide();
-      } else if (['ArrowLeft', 'k', 'PageUp'].includes(e.key)) {
+        return;
+      } else if (e.key === 'PageUp') {
+        if (isScrollable && activeSlide.scrollTop > 20) {
+          e.preventDefault();
+          activeSlide.scrollBy({ top: -Math.max(200, activeSlide.clientHeight * 0.7), behavior: 'smooth' });
+          return;
+        }
+        e.preventDefault();
+        prevSlide();
+        return;
+      }
+
+      if (['ArrowRight', 'Space', 'j'].includes(e.key)) {
+        e.preventDefault();
+        nextSlide();
+      } else if (['ArrowLeft', 'k'].includes(e.key)) {
         e.preventDefault();
         prevSlide();
       } else if (e.key === 'f' || e.key === 'F') {

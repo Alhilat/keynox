@@ -4,6 +4,7 @@ import { extractCleanTopic } from "./topic-extractor";
 import { geminiService } from "../services/geminiService";
 import { Stage1Extraction } from "./types/sixStageTypes";
 import { parseTolerantJson } from "./utils/tolerantJson";
+import { detectDocumentDomain, getDomainExtractionPrompt, DocumentDomain } from "./prompts/domainAdaptivePrompts";
 
 export interface Stage1AnalysisResult {
   analysis: string;
@@ -36,6 +37,8 @@ export async function runStage1Analyzer(
   let analysisText = "";
   let usedModel = TIER1_MODEL;
   const maxTokens = 3500;
+  const activeDomain: DocumentDomain = (domainParam as DocumentDomain) || detectDocumentDomain(rawContent);
+  const domainGuidance = getDomainExtractionPrompt(activeDomain, cleanTopic);
 
   const apiKey = config.nvidiaApiKeyUltra || config.nvidiaApiKey;
   const openai = new OpenAI({
@@ -50,10 +53,19 @@ Your output feeds a 6-stage AI pipeline. Data loss here = garbage slides.
 CRITICAL RULES:
 - Return ONLY valid JSON. Zero explanation. Zero markdown. Zero preamble.
 - Never summarize technical content — extract it verbatim
-- Never invent or infer data not present in the input
+- Never invent or infer data not present in the input EXCEPT for mathematical questions / problems to solve
 - Extract TOP 12-18 technical_payload items maximum
 - Prioritize by importance to core thesis, not by order of appearance
 - If source has 50+ technical items, be ruthless — keep only the most critical
+
+MATHEMATICAL QUESTION & PROBLEM SOLVING MANDATE:
+If the user's input asks to solve a math problem, calculate an expression, prove a theorem, or derive a formula:
+1. FULL STEP-BY-STEP SOLUTION: You MUST fully solve the mathematical problem from first principles through to the verified final answer.
+2. ZERO SKIPPED OR FORGOTTEN STEPS: Do NOT jump from problem to answer. Every intermediate algebraic manipulation, substitution, factoring, differentiation, integration, or simplification must be an explicit item in technical_payload.
+3. DETAILED TECHNICAL PAYLOAD: For each step, include both the LaTeX equation ($$ ... $$) and the clear explanation of what mathematical rule was applied (e.g. "Step 2: Differentiating both sides with respect to x using chain rule: $$ ... $$").
+4. Flag "has_math": true in content_types_needed.
+
+${domainGuidance}
 
 Extract this exact schema:
 {
