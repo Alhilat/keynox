@@ -99,12 +99,14 @@ PAYLOAD REFERENCE RULE:
 
   const systemInstruction = "You are a master presentation strategist. Return ONLY valid JSON. Zero explanation. Zero markdown.";
 
-  // Tier 1: Gemini if explicitly requested
-  if (engine === "gemini" && geminiService.isAvailable()) {
+  // Tier 1: Gemini if explicitly requested or auto
+  if ((engine === "gemini" || engine === "auto") && geminiService.isAvailable()) {
     try {
       signal?.throwIfAborted();
-      usedModel = `google/${geminiService.getModel()}`;
+      const models = geminiService.getPlanningModels();
+      usedModel = `google/${models[0]}`;
       await geminiService.streamChat({
+        models,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt },
@@ -201,12 +203,14 @@ PAYLOAD REFERENCE RULE:
     storyboardText = "";
   }
 
-  // Tier 3: Gemini 3.8 Flash Fallback
+  // Tier 3: Gemini High-Quota Fallback
   if (geminiService.isAvailable()) {
     try {
       signal?.throwIfAborted();
-      usedModel = `google/${geminiService.getModel()}`;
+      const models = geminiService.getPlanningModels();
+      usedModel = `google/${models[0]}`;
       await geminiService.streamChat({
+        models,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt },

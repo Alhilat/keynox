@@ -67,13 +67,7 @@ export interface Stage3ArtDirection {
     font_primary: string;
     font_mono: string;
     transition_style: "morph" | "slide" | "fade" | "zoom" | string;
-    css_vars: {
-      "--color-bg": string;
-      "--color-primary": string;
-      "--color-accent": string;
-      "--color-text": string;
-      "--color-muted": string;
-    };
+    css_vars: Record<string, string>;
   };
   slides: Stage3SlideBrief[];
 }

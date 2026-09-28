@@ -4,6 +4,7 @@ import { config } from "../config";
 export interface StreamGeminiOptions {
   messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
   model?: string;
+  models?: string[];
   temperature?: number;
   maxTokens?: number;
   signal?: AbortSignal;
@@ -23,12 +24,88 @@ export interface GeminiVisionExtractedDocument {
 export class GeminiService {
   private client: OpenAI | null = null;
 
+  private rateLimitedUntil = new Map<string, number>();
+  private compilerIndex = 0;
+  // Proven 200 OK models with 15 RPM each (total 45 RPM combined capacity)
+  private readonly COMPILER_MODELS = [
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-3.6-flash",
+  ];
+
   public isAvailable(): boolean {
     return Boolean(config.geminiApiKey && config.geminiApiKey.trim().length > 10);
   }
 
+  public markRateLimited(model: string, cooldownMs = 60000): void {
+    this.rateLimitedUntil.set(model, Date.now() + cooldownMs);
+    console.warn(`[GeminiService] Circuit breaker: Marked ${model} as rate-limited/unhealthy for ${cooldownMs / 1000}s`);
+  }
+
+  public isModelRateLimited(model: string): boolean {
+    const until = this.rateLimitedUntil.get(model);
+    if (!until) return false;
+    if (Date.now() > until) {
+      this.rateLimitedUntil.delete(model);
+      return false;
+    }
+    return true;
+  }
+
   public getModel(): string {
-    return config.geminiModel || "gemini-3.8-flash";
+    return config.geminiModel || "gemini-3.5-flash-lite";
+  }
+
+  /**
+   * Rotary selection for Stage 4 slide compilation.
+   * Stripes requests between gemini-3.5-flash-lite, gemini-3.1-flash-lite, and gemini-3.6-flash (45 RPM combined pool).
+   */
+  public getCompilerModel(slideIndex?: number): string {
+    const available = this.COMPILER_MODELS.filter((m) => !this.isModelRateLimited(m));
+    const pool = available.length > 0 ? available : this.COMPILER_MODELS;
+    const idx = typeof slideIndex === "number" ? slideIndex : this.compilerIndex++;
+    return pool[Math.abs(idx) % pool.length];
+  }
+
+  public getCompilerModels(slideIndex?: number): string[] {
+    const primary = this.getCompilerModel(slideIndex);
+    return [primary, ...this.COMPILER_MODELS.filter((m) => m !== primary)];
+  }
+
+  /**
+   * High-intelligence models for Stage 1 scientific analysis and deep extraction.
+   * Prioritizes high-quota, rock-solid models that do not hit 503 high-demand errors.
+   */
+  public getReasoningModels(): string[] {
+    const candidates = [
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-flash-lite",
+      "gemini-3.6-flash",
+      "gemini-3.8-flash",
+    ];
+    const available = candidates.filter((m) => !this.isModelRateLimited(m));
+    return available.length > 0 ? available : candidates;
+  }
+
+  public getReasoningModel(): string {
+    return this.getReasoningModels()[0];
+  }
+
+  /**
+   * Balanced models for Stage 2 & 3 storyboarding and visual art direction.
+   */
+  public getPlanningModels(): string[] {
+    const candidates = [
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-flash-lite",
+      "gemini-3.6-flash",
+    ];
+    const available = candidates.filter((m) => !this.isModelRateLimited(m));
+    return available.length > 0 ? available : candidates;
+  }
+
+  public getPlanningModel(): string {
+    return this.getPlanningModels()[0];
   }
 
   public getClient(): OpenAI {
@@ -42,13 +119,15 @@ export class GeminiService {
   }
 
   /**
-   * High-speed streaming chat completion using Gemini 3.8 Flash
-   * Includes automatic exponential backoff retry for network disconnects and connection reset errors.
+   * High-speed streaming chat completion with ZERO-WAIT MULTI-MODEL FAILOVER.
+   * If any model returns 429, 503, 500, or 404, it is marked rate-limited and the request
+   * immediately attempts the next candidate model in the pool with zero sleeping delay.
    */
   public async streamChat(options: StreamGeminiOptions): Promise<string> {
     const {
       messages,
-      model = this.getModel(),
+      model,
+      models,
       temperature = 0.35,
       maxTokens = 4000,
       signal,
@@ -56,22 +135,32 @@ export class GeminiService {
       onChunk,
     } = options;
 
-    const delays = [0, 1500, 3000];
+    // Determine candidate model list
+    let candidateList: string[];
+    if (models && models.length > 0) {
+      candidateList = [...models];
+    } else if (model) {
+      candidateList = [model, ...this.COMPILER_MODELS.filter((m) => m !== model)];
+    } else {
+      candidateList = this.getReasoningModels();
+    }
+
+    // Sort to try non-rate-limited models first
+    const healthyModels = candidateList.filter((m) => !this.isModelRateLimited(m));
+    const toTry = healthyModels.length > 0 ? healthyModels : candidateList;
+
     let lastError: any = null;
 
-    for (let attempt = 0; attempt < delays.length; attempt++) {
-      if (delays[attempt] > 0) {
-        await new Promise((r) => setTimeout(r, delays[attempt]));
-      }
-
+    for (let i = 0; i < toTry.length; i++) {
+      const currentModel = toTry[i];
       signal?.throwIfAborted();
-      const client = this.getClient();
-      let accumulatedContent = "";
 
+      let accumulatedContent = "";
       try {
+        const client = this.getClient();
         const stream = await client.chat.completions.create(
           {
-            model,
+            model: currentModel,
             messages,
             temperature,
             max_tokens: maxTokens,
@@ -81,6 +170,7 @@ export class GeminiService {
         );
 
         for await (const chunk of stream) {
+          signal?.throwIfAborted();
           const delta = chunk.choices?.[0]?.delta;
           if (!delta) continue;
 
@@ -102,21 +192,39 @@ export class GeminiService {
           }
         }
 
-        return accumulatedContent;
+        if (accumulatedContent.trim().length > 0) {
+          return accumulatedContent;
+        }
       } catch (err: any) {
         if (signal?.aborted) throw err;
         lastError = err;
         const msg = String(err?.message || "");
-        console.warn(`[GeminiService] streamChat attempt ${attempt + 1}/${delays.length} failed: ${msg}`);
+        const status = err?.status;
+        const isQuotaOrOverload =
+          status === 429 ||
+          status === 503 ||
+          status === 500 ||
+          status === 404 ||
+          msg.includes("429") ||
+          msg.includes("503") ||
+          msg.includes("RESOURCE_EXHAUSTED") ||
+          msg.includes("high demand") ||
+          msg.includes("not found");
 
-        // If it is the last attempt, break and throw
-        if (attempt === delays.length - 1) {
-          break;
+        if (isQuotaOrOverload) {
+          this.markRateLimited(currentModel, 60000);
+          console.warn(
+            `[GeminiService] Model ${currentModel} returned ${status || msg}. Zero-wait failover to next model (${i + 1}/${toTry.length})...`
+          );
+          // Try next model immediately
+          continue;
         }
+
+        console.warn(`[GeminiService] Model ${currentModel} error: ${msg}. Attempting next candidate...`);
       }
     }
 
-    throw lastError || new Error("Gemini streamChat failed after retries");
+    throw lastError || new Error("All Gemini candidate models failed");
   }
 
   /**

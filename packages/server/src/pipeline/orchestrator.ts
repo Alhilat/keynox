@@ -300,7 +300,7 @@ export class PipelineOrchestrator {
             visual_concept: "high-contrast focal topology",
             typography: {
               title_weight: "700",
-              title_size: "clamp(2rem, 5vw, 4rem)",
+              title_size: "clamp(2rem, 5%, 4rem)",
               title_transform: "none",
               body_weight: "400",
             },
@@ -314,9 +314,9 @@ export class PipelineOrchestrator {
           if (item) relevantPayloads.push(item);
         }
 
-        // Stage 4: Compile single slide with exponential backoff on 429
+        // Stage 4: Compile single slide with rapid multi-tier fallback
         let stage4Result: { index: number; html: string } | null = null;
-        const delays = [0, 2000, 6000];
+        const delays = [0, 800, 2000];
 
         for (let attempt = 0; attempt < delays.length; attempt++) {
           if (delays[attempt] > 0) {
@@ -343,9 +343,9 @@ export class PipelineOrchestrator {
           // Fallback minimal slide if all retries failed
           stage4Result = {
             index,
-            html: `<div class="slide slide-${index}" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--color-bg, #0B0F19); color: var(--color-text, #F8FAFC); padding: 5%;">
+            html: `<div class="slide slide-${index}" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--bg-stage); color: var(--text-main); padding: 5%;">
               <h2 class="slide-${index}-title" style="font-size: 2.5rem; margin-bottom: 1rem;">${slideStrategy.title}</h2>
-              <p class="slide-${index}-desc" style="font-size: 1.25rem; max-width: 800px; text-align: center;">${slideStrategy.content_summary}</p>
+              <p class="slide-${index}-desc" style="font-size: 1.25rem; max-width: 800px; text-align: center; color: var(--text-muted);">${slideStrategy.content_summary}</p>
             </div>`,
           };
         }

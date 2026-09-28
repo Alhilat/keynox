@@ -32,7 +32,7 @@ export type VisualLookTheme =
   | "harvard"
   | "heidelberg"
   | "princeton";
-export type AiEngine = "nvidia" | "auto";
+export type AiEngine = "gemini" | "auto" | "nvidia";
 
 export interface GenerationOptions {
   theme: VisualLookTheme;
@@ -121,7 +121,7 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
   // Configuration options
   const [selectedTheme, setSelectedTheme] = useState<VisualLookTheme>("midnight");
   const [targetSlideCount, setTargetSlideCount] = useState<number>(6);
-  const [selectedEngine, setSelectedEngine] = useState<AiEngine>("nvidia");
+  const [selectedEngine, setSelectedEngine] = useState<AiEngine>("gemini");
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([
     "interactive-simulator",
     "motion-pipeline",
@@ -455,20 +455,23 @@ export const ConceptInputArea: React.FC<ConceptInputAreaProps> = ({
               >
                 <Sparkles className="w-3 h-3 text-amber-400" />
                 <span>
-                  {selectedEngine === "auto"
-                    ? "Auto (Nemotron + Critic)"
+                  {selectedEngine === "gemini"
+                    ? "Google Gemini"
+                    : selectedEngine === "auto"
+                    ? "Auto (Gemini + NVIDIA)"
                     : "Nemotron 120B"}
                 </span>
                 <ChevronDown className="w-3 h-3 text-neutral-400" />
               </button>
 
               {showEnginePicker && (
-                <div className="absolute left-0 bottom-full mb-2 w-56 p-1.5 rounded-xl bg-[#111116] border border-white/[0.12] shadow-2xl z-50 flex flex-col gap-1 backdrop-blur-xl">
+                <div className="absolute left-0 bottom-full mb-2 w-64 p-1.5 rounded-xl bg-[#111116] border border-white/[0.12] shadow-2xl z-50 flex flex-col gap-1 backdrop-blur-xl">
                   <div className="px-2 py-1 text-[10px] font-mono uppercase text-neutral-400 font-semibold tracking-wider">
                     AI Engine
                   </div>
                   {[
-                    { id: "auto" as const, name: "Auto (Nemotron + Critic)", desc: "NVIDIA Generator + Gemini Audit (Recommended)" },
+                    { id: "gemini" as const, name: "Google Gemini", desc: "Dual Rotary Flash-Lite + Flash Reasoning" },
+                    { id: "auto" as const, name: "Auto (Gemini + NVIDIA)", desc: "Gemini Primary + Nemotron Fallback" },
                     { id: "nvidia" as const, name: "Nemotron 120B", desc: "Pure NVIDIA NIM Synthesis" },
                   ].map((eng) => (
                     <button

@@ -104,12 +104,14 @@ Input: ${rawContent}`;
 
   const systemInstruction = "You are a precision document analyst and technical knowledge extractor. Return ONLY valid JSON. Zero explanation. Zero markdown. Zero preamble.";
 
-  // Tier 1: Nemotron 30B (or Gemini if engine === 'gemini')
-  if (engine === "gemini" && geminiService.isAvailable()) {
+  // Tier 1: Gemini if engine is gemini or auto
+  if ((engine === "gemini" || engine === "auto") && geminiService.isAvailable()) {
     try {
       signal?.throwIfAborted();
-      usedModel = `google/${geminiService.getModel()}`;
+      const models = geminiService.getReasoningModels();
+      usedModel = `google/${models[0]}`;
       await geminiService.streamChat({
+        models,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt },
@@ -209,12 +211,14 @@ Input: ${rawContent}`;
     analysisText = "";
   }
 
-  // Tier 3: Gemini 3.8 Flash Cross-Provider Fallback
+  // Tier 3: Gemini High-Quota Cross-Provider Fallback
   if (geminiService.isAvailable()) {
     try {
       signal?.throwIfAborted();
-      usedModel = `google/${geminiService.getModel()}`;
+      const models = geminiService.getReasoningModels();
+      usedModel = `google/${models[0]}`;
       await geminiService.streamChat({
+        models,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt },

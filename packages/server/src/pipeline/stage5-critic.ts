@@ -45,6 +45,28 @@ export function sanitizeSlideDeterministic(
   html = html.replace(/font-family:\s*['"]?(?:Courier(?:\s+New)?|Consolas|Monaco|monospace|serif)['"]?[^;}"']*/gi, "font-family: var(--font-mono)");
   html = html.replace(/font-family:\s*[^;}"']*(?:Courier|courier-new)[^;}"']*/gi, "font-family: var(--font-mono)");
 
+  // Check 1: Replace forbidden --color-* variables with global design system tokens
+  html = html
+    .replace(/var\(--color-bg(?:,[^)]+)?\)/g, 'var(--bg-stage)')
+    .replace(/var\(--color-text(?:,[^)]+)?\)/g, 'var(--text-main)')
+    .replace(/var\(--color-muted(?:,[^)]+)?\)/g, 'var(--text-muted)')
+    .replace(/var\(--color-accent(?:,[^)]+)?\)/g, 'var(--border-active)')
+    .replace(/var\(--color-primary(?:,[^)]+)?\)/g, 'var(--accent-cyan)')
+    .replace(/var\(--color-secondary(?:,[^)]+)?\)/g, 'var(--accent-indigo)')
+    .replace(/var\(--color-bg\)/g,      'var(--bg-stage)')
+    .replace(/var\(--color-text\)/g,    'var(--text-main)')
+    .replace(/var\(--color-muted\)/g,   'var(--text-muted)')
+    .replace(/var\(--color-accent\)/g,  'var(--border-active)')
+    .replace(/var\(--color-primary\)/g, 'var(--accent-cyan)')
+    .replace(/var\(--color-secondary\)/g,'var(--accent-indigo)');
+
+  // Check 2: Replace forbidden viewport units
+  html = html
+    .replace(/(\d*\.?\d+)vw/g, (_, n) => `${n}%`)
+    .replace(/(\d*\.?\d+)vh/g, (_, n) => `${n}%`)
+    .replace(/(\d*\.?\d+)vmin/g, (_, n) => `${n}%`)
+    .replace(/(\d*\.?\d+)vmax/g, (_, n) => `${n}%`);
+
   // Ensure mandatory styling container with vertical scrolling support
   if (!html.includes("position: absolute")) {
     html = html.replace(
@@ -128,6 +150,8 @@ Audit checklist — fail on ANY violation:
 □ GSAP in window.initSlide_${index} function returning tl
 □ No querySelector without scoping to el parameter
 □ No hardcoded hex colors — CSS variables only
+□ No --color-* variable references anywhere in HTML
+□ No vw/vh/vmin/vmax units anywhere in CSS
 □ Slide supports vertical scroll if content overflows (overflow-y: auto, overflow-x: hidden) — percentage dimensions only (no vw/vh)
 □ No emojis or placeholder text
 □ No prompt metadata or comments
@@ -151,6 +175,24 @@ If ANY fail:
 - Return complete corrected HTML only starting with <div class="slide slide-${index}">
 - No explanation. Never return APPROVED with fixed HTML.`;
 
+  // Step 1: Deterministic Pre-Flight Gatekeeper (Zero API Requests)
+  // If the slide is already clean and sound, approve immediately without burning LLM quota.
+  const deterministicResult = sanitizeSlideDeterministic(index, stage4Html);
+  if (!config.geminiCriticEnabled) {
+    return deterministicResult;
+  }
+
+  const isStructurallySound =
+    deterministicResult.html.startsWith("<div") &&
+    deterministicResult.html.includes(`slide-${index}`) &&
+    deterministicResult.html.includes(`window.initSlide_${index}`) &&
+    !deterministicResult.html.includes("```");
+
+  // If already 100% clean and well-formed, approve with zero API requests
+  if (isStructurallySound && deterministicResult.html.length >= 100 && deterministicResult.html === stage4Html.trim()) {
+    return { index, status: "approved", html: deterministicResult.html };
+  }
+
   const systemInstruction =
     "You are a strict code quality auditor. Return either the word APPROVED or the complete corrected HTML starting with <div. Zero explanation. Zero markdown.";
 
@@ -158,7 +200,9 @@ If ANY fail:
   if (config.geminiCriticEnabled && engine !== "nvidia" && geminiService.isAvailable()) {
     try {
       signal?.throwIfAborted();
+      const models = geminiService.getCompilerModels(index);
       const reply = await geminiService.streamChat({
+        models,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt },
@@ -232,3 +276,76 @@ If ANY fail:
   // Tier 3: Deterministic TypeScript Sanitizer (zero failure rate)
   return sanitizeSlideDeterministic(index, stage4Html);
 }
+
+/**
+ * Stage 5: Coalesced Batch Deck Critic
+ * Audits all presentation slides together in ONE unified request.
+ * Utilizes Gemini's 1M-token context window to eliminate the N+1 request problem.
+ */
+export async function auditAndRepairDeckBatch(
+  slides: Array<{ index: number; html: string; brief?: Stage3SlideBrief }>,
+  signal?: AbortSignal,
+  engine: "gemini" | "nvidia" | "auto" = "auto"
+): Promise<Stage5AuditResult[]> {
+  // Step 1: Pre-sanitize all slides deterministically (0 API requests)
+  const results = slides.map((s) => sanitizeSlideDeterministic(s.index, s.html));
+
+  // If critic is disabled, return deterministic sanitization directly
+  if (!config.geminiCriticEnabled) {
+    return results;
+  }
+
+  // If all slides are already clean and well-formed, return without making any API calls
+  const allClean = slides.every((s, i) => results[i].html === s.html.trim());
+  if (allClean) {
+    return results;
+  }
+
+  // Step 2: Unified Batch AI Audit for any presentation requiring deep review
+  try {
+    signal?.throwIfAborted();
+    const systemInstruction =
+      "You are a master keynote presentation auditor. Review this collection of presentation slides. Return the complete corrected presentation with all slides separated by <!-- SLIDE_BREAK -->.";
+
+    const bundlePrompt = slides
+      .map((s) => `<!-- SLIDE_BREAK -->\n<!-- SLIDE ${s.index} -->\n${s.html}`)
+      .join("\n\n");
+
+    let auditedBundle = "";
+
+    // Tier 1: Gemini Reasoning (Single Request for Entire Presentation)
+    if (engine === "gemini" && geminiService.isAvailable()) {
+      const models = geminiService.getReasoningModels();
+      auditedBundle = await geminiService.streamChat({
+        models,
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: `Audit and fix this entire deck:\n\n${bundlePrompt}` },
+        ],
+        temperature: 0.1,
+        maxTokens: 6000,
+        signal,
+      });
+    }
+
+    if (auditedBundle && auditedBundle.includes("<!-- SLIDE_BREAK -->")) {
+      const chunks = auditedBundle.split("<!-- SLIDE_BREAK -->").map((c) => c.trim()).filter(Boolean);
+      chunks.forEach((chunk) => {
+        const match = chunk.match(/slide-(\d+)/);
+        if (match) {
+          const slideIdx = parseInt(match[1], 10);
+          const res = results.find((r) => r.index === slideIdx);
+          if (res && chunk.startsWith("<div")) {
+            res.html = chunk;
+            res.status = "repaired";
+          }
+        }
+      });
+    }
+  } catch (err: any) {
+    console.warn(`[Stage5Critic] Batch audit warning: ${err?.message}. Using deterministic sanitization.`);
+  }
+
+  return results;
+}
+

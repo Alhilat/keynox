@@ -12,7 +12,7 @@ export interface Stage3ArtDirectorResult {
 }
 
 const TIER1_MODEL = config.nvidiaModel || "nvidia/nemotron-3-super-120b-a12b";
-const TIER2_MODEL = "meta/llama-3.3-70b-instruct";
+const TIER2_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning";
 
 /**
  * Stage 3: Art Director (Nemotron 120B / Fallbacks)
@@ -38,6 +38,63 @@ export async function runStage3ArtDirector(
     timeout: 20000,
   });
 
+  const cssVariableContract = `CSS VARIABLE CONTRACT — ABSOLUTE LAW:
+You MUST use ONLY these exact CSS variable names in your JSON output.
+Never invent new variable names. Never use --color-* naming.
+
+The global design system provides exactly these tokens:
+
+BACKGROUNDS:
+  --bg-primary      → page background (pure black)
+  --bg-stage        → presentation stage background  
+  --bg-card         → card/panel background
+  --bg-card-hover   → card hover state
+
+BORDERS:
+  --border-subtle   → default border color
+  --border-active   → active/accent border color
+
+TEXT:
+  --text-main       → primary text (#f8fafc)
+  --text-muted      → secondary text (#94a3b8)
+
+ACCENTS (use these for highlights, glows, badges):
+  --accent-blue     → #2563eb
+  --accent-cyan     → #3b82f6  ← DEFAULT accent, use this most
+  --accent-emerald  → #15803d
+  --accent-amber    → #b45309
+  --accent-rose     → #b91c1c
+  --accent-indigo   → #475569
+  --accent-purple   → #475569
+
+TYPOGRAPHY (never write font names directly):
+  --font-sans       → Inter, system-ui
+  --font-display    → Plus Jakarta Sans
+  --font-mono       → JetBrains Mono, Fira Code
+
+Your css_vars output object MUST use only keys from this list.
+Example of CORRECT output:
+{
+  "css_vars": {
+    "--bg-stage": "#05060a",
+    "--border-active": "#2563eb",
+    "--accent-cyan": "#2563eb",
+    "--text-main": "#f8fafc",
+    "--text-muted": "#94a3b8"
+  }
+}
+
+Example of FORBIDDEN output — NEVER do this:
+{
+  "css_vars": {
+    "--color-bg": "#05060a",      ← FORBIDDEN
+    "--color-text": "#f8fafc",    ← FORBIDDEN  
+    "--color-accent": "#2563eb",  ← FORBIDDEN
+    "--color-primary": "#3b82f6", ← FORBIDDEN
+    "--color-muted": "#94a3b8"    ← FORBIDDEN
+  }
+}`;
+
   const prompt = `You are a world-class creative director for cinematic presentations.
 You think in visuals, motion, and emotion. You never write code.
 
@@ -50,6 +107,8 @@ CRITICAL RULES:
   Dark background (#000000–#444444) → text must be #E0E0E0 to #FFFFFF
   Light background (#BBBBBB–#FFFFFF) → text must be #0A0A0A to #222222
   Never use low-contrast combinations under any circumstance
+
+${cssVariableContract}
 
 MATHEMATICAL STEP ANIMATION & PACING RULES (CRITICAL):
 For slides containing mathematical derivations, formulas, or problem-solving steps:
@@ -76,11 +135,11 @@ Return this exact schema:
     "font_mono": "monospace font for code slides",
     "transition_style": "morph | slide | fade | zoom",
     "css_vars": {
-      "--color-bg": "#hex",
-      "--color-primary": "#hex",
-      "--color-accent": "#hex",
-      "--color-text": "#hex",
-      "--color-muted": "#hex"
+      "--bg-stage": "#hex",
+      "--border-active": "#hex",
+      "--accent-cyan": "#hex",
+      "--text-main": "#hex",
+      "--text-muted": "#hex"
     }
   },
   "slides": [
@@ -90,12 +149,13 @@ Return this exact schema:
       "layout": "precise spatial description of every element",
       "visual_concept": "the one striking idea that makes this slide memorable",
       "local_overrides": {
-        "--color-bg": "#hex or null",
-        "--color-accent": "#hex or null"
+        "--bg-stage": "#hex or null",
+        "--border-active": "#hex or null",
+        "--accent-cyan": "#hex or null"
       },
       "typography": {
         "title_weight": "100 | 400 | 700 | 900",
-        "title_size": "clamp(2rem, 5vw, 5rem)",
+        "title_size": "clamp(2rem, 5%, 5rem)",
         "title_transform": "uppercase | lowercase | none",
         "body_weight": "300 | 400"
       },
@@ -117,14 +177,18 @@ A slide that is unreadable on a projector is a failed slide.
 If truncated mid-array: complete slide objects beat detailed early ones.
 Prioritize finishing all slides over perfecting the first few.`;
 
-  const systemInstruction = "You are a world-class creative director for interactive keynote presentations. Return ONLY valid JSON. Zero code. Zero markdown.";
+  const systemInstruction = `You are a world-class creative director for interactive keynote presentations. Return ONLY valid JSON. Zero code. Zero markdown.
 
-  // Tier 1: Gemini if explicitly selected
-  if (engine === "gemini" && geminiService.isAvailable()) {
+${cssVariableContract}`;
+
+  // Tier 1: Gemini if explicitly selected or auto
+  if ((engine === "gemini" || engine === "auto") && geminiService.isAvailable()) {
     try {
       signal?.throwIfAborted();
-      usedModel = `google/${geminiService.getModel()}`;
+      const models = geminiService.getPlanningModels();
+      usedModel = `google/${models[0]}`;
       await geminiService.streamChat({
+        models,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt },
@@ -236,12 +300,14 @@ Prioritize finishing all slides over perfecting the first few.`;
     rawText = "";
   }
 
-  // Tier 3: Gemini 3.8 Flash Fallback
+  // Tier 3: Gemini High-Quota Fallback
   if (geminiService.isAvailable()) {
     try {
       signal?.throwIfAborted();
-      usedModel = `google/${geminiService.getModel()}`;
+      const models = geminiService.getPlanningModels();
+      usedModel = `google/${models[0]}`;
       await geminiService.streamChat({
+        models,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt },

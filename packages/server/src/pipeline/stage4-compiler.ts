@@ -7,9 +7,10 @@ import {
   Stage4SlideResult,
   TechnicalPayloadItem,
 } from "./types/sixStageTypes";
+import { sanitizeSlideDeterministic } from "./stage5-critic";
 
 const TIER1_MODEL = config.nvidiaModel || "nvidia/nemotron-3-super-120b-a12b";
-const TIER2_MODEL = "meta/llama-3.3-70b-instruct";
+const TIER2_MODEL = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning";
 
 export interface CompileSlideOptions {
   index: number;
@@ -58,7 +59,42 @@ export async function compileSingleSlide(
           .join("\n\n")
       : "No technical payload required for this slide (hook, closing, or transition).";
 
+  const compilerContracts = `CSS VARIABLE CONTRACT — ABSOLUTE LAW:
+Use ONLY the global design system CSS variables listed below.
+Never write hardcoded hex colors. Never invent new variable names.
+Never use --color-* variables — they do not exist in this system.
+
+ALLOWED VARIABLES (copy-paste exactly as written):
+  var(--bg-primary)     var(--bg-stage)       var(--bg-card)
+  var(--bg-card-hover)  var(--border-subtle)  var(--border-active)
+  var(--text-main)      var(--text-muted)
+  var(--accent-blue)    var(--accent-cyan)     var(--accent-emerald)
+  var(--accent-amber)   var(--accent-rose)     var(--accent-indigo)
+  var(--font-sans)      var(--font-display)    var(--font-mono)
+
+FORBIDDEN — using any of these fails the audit immediately:
+  --color-bg  --color-text  --color-accent  
+  --color-muted  --color-primary  --color-secondary
+  Any hardcoded hex: #ffffff #000000 #3b82f6 etc.
+  Any hardcoded font name: 'Inter' 'JetBrains Mono' etc.
+
+UNIT CONTRACT — ABSOLUTE LAW:
+FORBIDDEN units: vw, vh, vmin, vmax
+ALLOWED units: %, px, rem, em
+
+FORBIDDEN:
+  font-size: clamp(2.5rem, 6vw, 5.5rem)  ← vw is FORBIDDEN
+  width: 100vw                             ← vw is FORBIDDEN
+  height: 100vh                            ← vh is FORBIDDEN
+
+CORRECT:
+  font-size: clamp(2.5rem, 6%, 5.5rem)
+  width: 100%
+  height: 100%`;
+
   const prompt = `You are a senior frontend engineer specializing in scoped cinematic HTML with GSAP animations.
+
+${compilerContracts}
 
 ABSOLUTE RULES — violating any fails the audit:
 1. ALL CSS classes prefixed with .slide-${index}-
@@ -160,8 +196,9 @@ ${payloadStr}
 Payload content is verbatim source material. Use it exactly. Generic content = audit failure.
 Return ONLY the raw HTML string starting with <div class="slide slide-${index}">. No markdown backticks.`;
 
-  const systemInstruction =
-    "You are an expert cinematic presentation UI compiler. Return ONLY raw HTML starting with <div and ending with </div>. Zero markdown backticks. Zero comments.";
+  const systemInstruction = `You are an expert cinematic presentation UI compiler. Return ONLY raw HTML starting with <div and ending with </div>. Zero markdown backticks. Zero comments.
+
+${compilerContracts}`;
 
   let rawHtml = "";
 
@@ -176,11 +213,13 @@ Return ONLY the raw HTML string starting with <div class="slide slide-${index}">
     return s.trim();
   };
 
-  // Tier 1: Gemini if explicitly requested
-  if (engine === "gemini" && geminiService.isAvailable()) {
+  // Tier 1: Gemini if explicitly requested or auto
+  if ((engine === "gemini" || engine === "auto") && geminiService.isAvailable()) {
     try {
       signal?.throwIfAborted();
+      const compilerModels = geminiService.getCompilerModels(index);
       rawHtml = await geminiService.streamChat({
+        models: compilerModels,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt },
@@ -190,13 +229,13 @@ Return ONLY the raw HTML string starting with <div class="slide slide-${index}">
         signal,
       });
 
-      const cleaned = cleanCode(rawHtml);
-      if (cleaned.startsWith("<div") && cleaned.includes(`slide-${index}`)) {
-        return { index, html: cleaned };
+      const sanitized = sanitizeSlideDeterministic(index, rawHtml);
+      if (sanitized.html && sanitized.html.length >= 80) {
+        return { index, html: sanitized.html };
       }
     } catch (gErr: any) {
       if (signal?.aborted) throw gErr;
-      console.warn(`[Stage4Compiler] Slide ${index} Gemini error: ${gErr?.message}. Falling back...`);
+      console.warn(`[Stage4Compiler] Slide ${index} Gemini error: ${gErr?.message}. Falling back immediately to NVIDIA...`);
     }
   }
 
@@ -214,9 +253,9 @@ Return ONLY the raw HTML string starting with <div class="slide slide-${index}">
     }, { signal });
 
     rawHtml = response.choices?.[0]?.message?.content || "";
-    const cleaned = cleanCode(rawHtml);
-    if (cleaned.startsWith("<div") && cleaned.includes(`slide-${index}`)) {
-      return { index, html: cleaned };
+    const sanitized = sanitizeSlideDeterministic(index, rawHtml);
+    if (sanitized.html && sanitized.html.length >= 80) {
+      return { index, html: sanitized.html };
     }
   } catch (err: any) {
     if (signal?.aborted) throw err;
@@ -237,20 +276,22 @@ Return ONLY the raw HTML string starting with <div class="slide slide-${index}">
     }, { signal });
 
     rawHtml = response.choices?.[0]?.message?.content || "";
-    const cleaned = cleanCode(rawHtml);
-    if (cleaned.startsWith("<div") && cleaned.includes(`slide-${index}`)) {
-      return { index, html: cleaned };
+    const sanitized = sanitizeSlideDeterministic(index, rawHtml);
+    if (sanitized.html && sanitized.html.length >= 80) {
+      return { index, html: sanitized.html };
     }
   } catch (err: any) {
     if (signal?.aborted) throw err;
     console.warn(`[Stage4Compiler] Slide ${index} Tier 2 (${TIER2_MODEL}) failed: ${err?.message}. Trying Tier 3...`);
   }
 
-  // Tier 3: Gemini 3.8 Flash Fallback
+  // Tier 3: Gemini Lite Rotary Fallback
   if (geminiService.isAvailable()) {
     try {
       signal?.throwIfAborted();
+      const compilerModels = geminiService.getCompilerModels(index);
       rawHtml = await geminiService.streamChat({
+        models: compilerModels,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt },
@@ -260,9 +301,9 @@ Return ONLY the raw HTML string starting with <div class="slide slide-${index}">
         signal,
       });
 
-      const cleaned = cleanCode(rawHtml);
-      if (cleaned.startsWith("<div") && cleaned.includes(`slide-${index}`)) {
-        return { index, html: cleaned };
+      const sanitized = sanitizeSlideDeterministic(index, rawHtml);
+      if (sanitized.html && sanitized.html.length >= 80) {
+        return { index, html: sanitized.html };
       }
     } catch (gErr: any) {
       if (signal?.aborted) throw gErr;
